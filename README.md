@@ -17,3 +17,5 @@
 5. AI Agent 서버 계층 연결
 
 사이트 코드는 `index.html`에서 실행합니다.
+
+_Last deployment trigger: 2026-08-21_
