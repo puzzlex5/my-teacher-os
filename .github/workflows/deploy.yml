@@ -29,6 +29,9 @@ jobs:
           node tests/core-tests.js
           node tests/v06-tests.js
           node tests/v07-tests.js
+          node --check app-v07.js
+          node --check seed-v07.js
+          node --check scripts/sync-comcigan.mjs
       - name: Verify v0.7 files
         run: test -f app-v07.html && test -f app-v07.js && test -f app-v07.css && test -f seed-v07.js && test -f scripts/sync-comcigan.mjs && test -f app-v06.js && test -f core-v06.js && test -f policy-registry.json
       - name: Setup Pages
