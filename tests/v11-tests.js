@@ -1,0 +1,10 @@
+const fs=require('fs');
+const assert=require('assert');
+const css=fs.readFileSync('app-v11.css','utf8');
+const js=fs.readFileSync('app-v11.js','utf8');
+const html=fs.readFileSync('app-v11.html','utf8');
+assert(css.includes('.side{')&&css.includes('.card,.metric')&&css.includes('@media(max-width:760px)'),'premium responsive styles missing');
+assert(css.includes('.live-slot.changed')&&css.includes('.lesson-recorder')&&css.includes('.skill-card'),'feature-specific visual styles missing');
+assert(js.includes('addNavGroups')&&js.includes('decorateDashboard'),'premium UI enhancer missing');
+assert(html.includes('app-v10.js')&&html.includes('app-v11.css')&&html.includes('app-v11.js'),'v11 loader chain incomplete');
+console.log('v0.11 premium UI smoke tests passed');
