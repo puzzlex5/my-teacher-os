@@ -1,0 +1,12 @@
+const assert=require('assert');
+const A=require('../core-v09.js');
+assert.strictEqual(A.sanitize('010-1234-5678'),'[연락처]');
+const r=A.analyze('오늘은 드럼 스트로크와 리듬 박자를 연습합니다. '.repeat(12));
+assert.ok(r.keywords.includes('드럼'));
+assert.ok(r.keywords.includes('스트로크'));
+assert.ok(r.autoAdvance);
+const low=A.analyze('안녕하세요');
+assert.strictEqual(low.autoAdvance,false);
+const safe=A.analyze('민수야 드럼 스트로크 연습하자 '.repeat(10));
+assert.ok(!safe.summary.includes('민수'));
+console.log('v0.9 lesson audio core tests passed');
