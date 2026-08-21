@@ -3,8 +3,9 @@
   try{
     const token=location.hash.slice('#timetable='.length).replace(/-/g,'+').replace(/_/g,'/');
     const pad='='.repeat((4-token.length%4)%4);
-    const json=decodeURIComponent(escape(atob(token+pad)));
-    const slots=JSON.parse(json);
+    const bin=atob(token+pad);
+    const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+    const slots=JSON.parse(new TextDecoder().decode(bytes));
     if(!Array.isArray(slots)||!slots.length)throw new Error('시간표 데이터가 없습니다.');
     const y=cur();
     if(!y){alert('학년도를 먼저 만든 뒤 같은 링크를 다시 열어 주세요.');return}
