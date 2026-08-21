@@ -34,17 +34,19 @@ jobs:
           node tests/v10-tests.js
           node tests/v11-tests.js
           node tests/v12-tests.js
+          node tests/v13-tests.js
           node --check app-v07.js
           node --check app-v08.js
           node --check app-v09.js
           node --check app-v10.js
           node --check app-v11.js
           node --check app-v12.js
+          node --check app-v13.js
           node --check core-v09.js
           node --check seed-v07.js
           node --check scripts/sync-comcigan.mjs
-      - name: Verify v0.12 files
-        run: test -f app-v12.html && test -f app-v12.js && test -f app-v12.css && test -f app-v11.html && test -f app-v10.js && test -f app-v09.js && test -f core-v09.js && test -f scripts/sync-comcigan.mjs && test -f policy-registry.json
+      - name: Verify v0.13 files
+        run: test -f app-v13.html && test -f app-v13.js && test -f app-v13.css && test -f app-v12.html && test -f app-v11.js && test -f app-v10.js && test -f app-v09.js && test -f core-v09.js && test -f scripts/sync-comcigan.mjs && test -f policy-registry.json
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
