@@ -1,0 +1,64 @@
+name: Sync Comcigan timetable
+
+on:
+  schedule:
+    - cron: '20 22 * * 0-4' # 07:20 KST, Monday-Friday
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: comcigan-sync
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check sync secrets
+        id: secrets
+        env:
+          COMCIGAN_SCHOOL_CODE: ${{ secrets.COMCIGAN_SCHOOL_CODE }}
+          COMCIGAN_TEACHER_INDEX: ${{ secrets.COMCIGAN_TEACHER_INDEX }}
+          TEACHEROS_SYNC_KEY: ${{ secrets.TEACHEROS_SYNC_KEY }}
+        run: |
+          if [ -n "$COMCIGAN_SCHOOL_CODE" ] && [ -n "$COMCIGAN_TEACHER_INDEX" ] && [ -n "$TEACHEROS_SYNC_KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Comcigan sync secrets are not configured; skipping."
+          fi
+
+      - name: Install pinned parser
+        if: steps.secrets.outputs.ready == 'true'
+        run: npm install --no-save --ignore-scripts comcigan@3.0.4
+
+      - name: Fetch and encrypt teacher timetable
+        if: steps.secrets.outputs.ready == 'true'
+        env:
+          COMCIGAN_SCHOOL_CODE: ${{ secrets.COMCIGAN_SCHOOL_CODE }}
+          COMCIGAN_TEACHER_INDEX: ${{ secrets.COMCIGAN_TEACHER_INDEX }}
+          TEACHEROS_SYNC_KEY: ${{ secrets.TEACHEROS_SYNC_KEY }}
+        run: node scripts/sync-comcigan.mjs
+
+      - name: Commit encrypted timetable only when changed
+        if: steps.secrets.outputs.ready == 'true'
+        run: |
+          git config user.name "teacher-os-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add live/comcigan.enc.json
+          if git diff --cached --quiet; then
+            echo "No timetable change."
+          else
+            git commit -m "Update encrypted live timetable"
+            git push
+          fi
