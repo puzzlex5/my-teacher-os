@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MY TEACHER OS</title>
+</head>
+<body>
+<script>
+(async()=>{
+  try{
+    let h=await fetch('./app-v05.html?v=7',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('기본 앱을 불러오지 못했습니다.');return r.text()});
+    h=h.replace('<link rel="stylesheet" href="app-v05.css">','<link rel="stylesheet" href="app-v05.css"><link rel="stylesheet" href="app-v06.css"><link rel="stylesheet" href="app-v07.css">');
+    h=h.replace('<script src="core-v05.js"><\/script>','<script src="core-v05.js"><\/script><script src="core-v06.js"><\/script>');
+    h=h.replace('<script src="app-v05.js"><\/script>','<script src="app-v05.js"><\/script><script src="app-v06.js"><\/script><script src="seed-v06.js"><\/script><script src="app-v07.js"><\/script><script src="seed-v07.js"><\/script>');
+    document.open();document.write(h);document.close();
+  }catch(e){document.body.innerHTML='<p style="font-family:sans-serif;padding:24px">Teacher OS를 불러오지 못했습니다: '+String(e.message||e)+'</p>'}
+})();
+</script>
+</body>
+</html>
