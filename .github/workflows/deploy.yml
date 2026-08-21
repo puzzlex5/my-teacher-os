@@ -29,7 +29,7 @@ jobs:
           node tests/core-tests.js
           node tests/v06-tests.js
       - name: Verify v0.6 files
-        run: test -f app-v06.html && test -f app-v06.js && test -f app-v06.css && test -f core-v06.js && test -f app-v05.html && test -f core-v05.js && test -f policy-registry.json
+        run: test -f app-v06.html && test -f app-v06.js && test -f app-v06.css && test -f core-v06.js && test -f seed-v06.js && test -f app-v05.html && test -f core-v05.js && test -f policy-registry.json
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
