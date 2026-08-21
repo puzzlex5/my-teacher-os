@@ -24,6 +24,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Run Teacher OS core tests
+        run: node tests/core-tests.js
+      - name: Verify v0.5 files
+        run: test -f app-v05.html && test -f app-v05.js && test -f app-v05.css && test -f core-v05.js && test -f policy-registry.json
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
