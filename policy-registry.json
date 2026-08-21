@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "lastChecked": "2026-08-21",
+  "maintainerNote": "공식 교육부·시도교육청 자료만 기준으로 사용. 연도별 지침은 새 자료가 발표되면 이전 연도 자료보다 우선한다.",
+  "national": {
+    "curriculum2022": {
+      "title": "교육부 2022 개정 교육과정 시행 일정",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458&lev=0&m=040401",
+      "facts": [
+        "2025학년도 중·고 1학년부터 적용",
+        "2026학년도 중·고 2학년까지 확대",
+        "2027학년도 중·고 3학년까지 확대되어 전 학년 적용"
+      ]
+    },
+    "highSchoolCredit": {
+      "title": "교육부 고교학점제 종합 추진계획",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=294&boardSeq=88188&lev=0&m=020402&opType=N&s=moe&statusYN=W",
+      "facts": [
+        "고등학교 2025학년도 이후 학점제 운영 모드로 관리",
+        "세부 이수·평가 운영은 해당 연도 교육부·교육청 지침을 함께 확인"
+      ]
+    }
+  },
+  "offices": {
+    "경기도교육청": {
+      "home": "https://www.goe.go.kr/",
+      "2026": {
+        "gradeManagement": {
+          "title": "2026학년도 경기도 중학교·고등학교 학업성적관리 시행지침 및 이해하기",
+          "url": "https://www.goe.go.kr/goe/na/ntt/selectNttInfo.do?mi=10961&nttSn=2340527",
+          "effective": "2026-03-01/2027-02-28"
+        },
+        "middleCurriculum": {
+          "title": "2026 함께 만들어가는 학생중심 학교교육과정 도움자료집 [중학교]",
+          "url": "https://www.goe.go.kr/goe/na/ntt/selectNttInfo.do?mi=10961&nttSn=2338654"
+        },
+        "highCurriculum": {
+          "title": "2026 함께 만들어가는 학생중심 학교교육과정 도움자료집 [고등학교]",
+          "url": "https://www.goe.go.kr/goe/na/ntt/selectNttInfo.do?mi=10961&nttSn=2340881"
+        },
+        "creditSupport": {
+          "title": "경기고교학점제 지원센터 · 고등학교 과목 안내",
+          "url": "https://more.goe.go.kr/hagjeomje/subList/30300002205"
+        }
+      },
+      "2027": {
+        "status": "pending",
+        "note": "2027학년도 학업성적관리 시행지침·교육과정 도움자료 발표 시 자동 점검 대상"
+      }
+    }
+  }
+}
