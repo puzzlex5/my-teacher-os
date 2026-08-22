@@ -38,12 +38,13 @@ jobs:
           fi
           ROOT_STATUS=$(curl -L -sS -o diagnostics/live-root.html -w '%{http_code}' 'https://puzzlex5.github.io/' || true)
           PROJECT_STATUS=$(curl -L -sS -o diagnostics/live-project.html -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/' || true)
-          V17_STATUS=$(curl -L -sS -o diagnostics/live-v17.html -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v17.html' || true)
+          V20_STATUS=$(curl -L -sS -o diagnostics/live-v20.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v20.js' || true)
+          V20CSS_STATUS=$(curl -L -sS -o diagnostics/live-v20.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v20.css' || true)
           V19_STATUS=$(curl -L -sS -o diagnostics/live-v19.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v19.js' || true)
           LIB_STATUS=$(curl -L -sS -o diagnostics/live-work-library.json -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/work-library.json' || true)
-          INDEX_HAS_V19=$(grep -q 'app-v19.js' diagnostics/live-project.html && echo true || echo false)
-          printf '{"root":"%s","project":"%s","v17":"%s","v19":"%s","workLibrary":"%s","indexHasV19":%s}\n' "$ROOT_STATUS" "$PROJECT_STATUS" "$V17_STATUS" "$V19_STATUS" "$LIB_STATUS" "$INDEX_HAS_V19" > diagnostics/live-http-status.json
-          head -c 700 diagnostics/live-project.html > diagnostics/live-project-head.txt || true
+          INDEX_HAS_V20=$(grep -q 'app-v20.js' diagnostics/live-project.html && echo true || echo false)
+          printf '{"root":"%s","project":"%s","v20":"%s","v20css":"%s","v19":"%s","workLibrary":"%s","indexHasV20":%s}\n' "$ROOT_STATUS" "$PROJECT_STATUS" "$V20_STATUS" "$V20CSS_STATUS" "$V19_STATUS" "$LIB_STATUS" "$INDEX_HAS_V20" > diagnostics/live-http-status.json
+          head -c 900 diagnostics/live-project.html > diagnostics/live-project-head.txt || true
           printf '{"checkedAt":"%s","sha":"%s","latestRunId":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GITHUB_SHA" "$RUN_ID" > diagnostics/pages-check.json
 
       - name: Commit diagnostics
