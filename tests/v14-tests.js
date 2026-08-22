@@ -9,4 +9,7 @@ if(!wf.includes("cron: '0 0 * * *'"))throw new Error('09:00 KST daily cron missi
 const app=fs.readFileSync('app-v14.js','utf8');
 if(!app.includes("./live/comcigan.json"))throw new Error('Plain live Comcigan feed missing');
 if(!app.includes('매일 오전 9시'))throw new Error('9am sync UI copy missing');
-console.log('v0.14 Comcigan sync tests passed');
+if(!app.includes('lockTimetableReadOnly'))throw new Error('Read-only timetable guard missing');
+if(!app.includes("q('#ttAdd')?.remove()"))throw new Error('Manual timetable add control must be removed');
+if(!app.includes("q('#ttExceptionAdd')?.remove()"))throw new Error('Manual exception control must be removed');
+console.log('v0.14 Comcigan sync + read-only timetable tests passed');
