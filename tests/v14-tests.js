@@ -1,0 +1,12 @@
+const fs=require('fs');
+const cfg=JSON.parse(fs.readFileSync('comcigan-config.json','utf8'));
+if(!cfg.enabled)throw new Error('Comcigan config must be enabled');
+if(Number(cfg.schoolCode)!==65231)throw new Error('Unexpected school code');
+if(Number(cfg.teacherIndex)!==37)throw new Error('Unexpected teacher index');
+if(!String(cfg.teacherName||'').trim())throw new Error('Teacher name is required');
+const wf=fs.readFileSync('.github/workflows/sync-comcigan.yml','utf8');
+if(!wf.includes("cron: '0 0 * * *'"))throw new Error('09:00 KST daily cron missing');
+const app=fs.readFileSync('app-v14.js','utf8');
+if(!app.includes("./live/comcigan.json"))throw new Error('Plain live Comcigan feed missing');
+if(!app.includes('매일 오전 9시'))throw new Error('9am sync UI copy missing');
+console.log('v0.14 Comcigan sync tests passed');
