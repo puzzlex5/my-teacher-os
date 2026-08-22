@@ -1,0 +1,40 @@
+name: Diagnose GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - diagnostics/pages-trigger.txt
+
+permissions:
+  contents: write
+  pages: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read Pages configuration and latest build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p diagnostics
+          curl -sS -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2026-03-10" "https://api.github.com/repos/$GITHUB_REPOSITORY/pages" > diagnostics/pages-site.json || true
+          curl -sS -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2026-03-10" "https://api.github.com/repos/$GITHUB_REPOSITORY/pages/builds/latest" > diagnostics/pages-build-latest.json || true
+          printf '{"checkedAt":"%s","sha":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GITHUB_SHA" > diagnostics/pages-check.json
+
+      - name: Commit diagnostics
+        run: |
+          git config user.name "teacher-os-diagnostics"
+          git config user.email "actions@users.noreply.github.com"
+          git add diagnostics/pages-site.json diagnostics/pages-build-latest.json diagnostics/pages-check.json
+          if git diff --cached --quiet; then
+            echo "No diagnostics change"
+          else
+            git commit -m "Record Pages diagnostics"
+            git push
+          fi
