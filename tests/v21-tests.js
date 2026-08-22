@@ -9,6 +9,8 @@ if(!app.includes('SENSITIVE_RE21'))throw new Error('sensitive-data exclusion mis
 if(!app.includes('상담·학폭·생활지도·민감정보는 자동 제외'))throw new Error('exclusion notice missing');
 if(!app.includes('evidenceIds'))throw new Error('draft-to-evidence linkage missing');
 if(!app.includes('history'))throw new Error('draft history missing');
+if(!app.includes("box.dataset.evidenceIds=Array.isArray(stored?.evidenceIds)?stored.evidenceIds.join(','):''"))throw new Error('stored draft evidence IDs are not restored into the editor');
+if(!app.includes('evidenceIds=gridIds.length?gridIds:(Array.isArray(prev.evidenceIds)?prev.evidenceIds:[])'))throw new Error('resaving a stored draft can erase evidence linkage');
 if(!css.includes('.v21-draft-grid'))throw new Error('draft grid CSS missing');
 if(!css.includes('@media(max-width:680px)'))throw new Error('mobile draft CSS missing');
 if(!index.includes('app-v21.js'))throw new Error('index does not load v21 JS');
