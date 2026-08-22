@@ -38,12 +38,14 @@ jobs:
           fi
           ROOT_STATUS=$(curl -L -sS -o diagnostics/live-root.html -w '%{http_code}' 'https://puzzlex5.github.io/' || true)
           PROJECT_STATUS=$(curl -L -sS -o diagnostics/live-project.html -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/' || true)
+          V21_STATUS=$(curl -L -sS -o diagnostics/live-v21.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v21.js' || true)
+          V21CSS_STATUS=$(curl -L -sS -o diagnostics/live-v21.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v21.css' || true)
           V20_STATUS=$(curl -L -sS -o diagnostics/live-v20.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v20.js' || true)
           V20CSS_STATUS=$(curl -L -sS -o diagnostics/live-v20.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v20.css' || true)
           V19_STATUS=$(curl -L -sS -o diagnostics/live-v19.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v19.js' || true)
           LIB_STATUS=$(curl -L -sS -o diagnostics/live-work-library.json -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/work-library.json' || true)
-          INDEX_HAS_V20=$(grep -q 'app-v20.js' diagnostics/live-project.html && echo true || echo false)
-          printf '{"root":"%s","project":"%s","v20":"%s","v20css":"%s","v19":"%s","workLibrary":"%s","indexHasV20":%s}\n' "$ROOT_STATUS" "$PROJECT_STATUS" "$V20_STATUS" "$V20CSS_STATUS" "$V19_STATUS" "$LIB_STATUS" "$INDEX_HAS_V20" > diagnostics/live-http-status.json
+          INDEX_HAS_V21=$(grep -q 'app-v21.js' diagnostics/live-project.html && echo true || echo false)
+          printf '{"root":"%s","project":"%s","v21":"%s","v21css":"%s","v20":"%s","v20css":"%s","v19":"%s","workLibrary":"%s","indexHasV21":%s}\n' "$ROOT_STATUS" "$PROJECT_STATUS" "$V21_STATUS" "$V21CSS_STATUS" "$V20_STATUS" "$V20CSS_STATUS" "$V19_STATUS" "$LIB_STATUS" "$INDEX_HAS_V21" > diagnostics/live-http-status.json
           head -c 900 diagnostics/live-project.html > diagnostics/live-project-head.txt || true
           printf '{"checkedAt":"%s","sha":"%s","latestRunId":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GITHUB_SHA" "$RUN_ID" > diagnostics/pages-check.json
 
