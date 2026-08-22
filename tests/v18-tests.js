@@ -1,0 +1,12 @@
+const fs=require('fs');
+const js=fs.readFileSync('app-v18.js','utf8');
+const css=fs.readFileSync('app-v18.css','utf8');
+const index=fs.readFileSync('index.html','utf8');
+if(!js.includes("@ssabrojs/hwpxjs@0.4.0"))throw new Error('Pinned browser HWP parser missing');
+if(!js.includes("ext==='hwp'"))throw new Error('Direct .hwp reader missing');
+if(!js.includes('.pdf,.xlsx,.xls,.csv,.txt,.docx,.hwp,.hwpx'))throw new Error('HWP upload accept list missing');
+for(const token of ['수업영향','동아리·창체','급식','평가방법','담당자/부서'])if(!js.includes(token))throw new Error('Expanded auto capture missing: '+token);
+if(!js.includes('V6.inferImpact'))throw new Error('Calendar lesson-impact enrichment missing');
+if(!css.includes('.hwp-ready'))throw new Error('HWP capability UI style missing');
+if(!index.includes('app-v18.js?v=18')||!index.includes('app-v18.css?v=18'))throw new Error('v0.18 assets not loaded from root');
+console.log('v0.18 HWP import tests passed');
