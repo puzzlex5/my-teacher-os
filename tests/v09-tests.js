@@ -1,4 +1,5 @@
 const assert=require('assert');
+const fs=require('fs');
 const A=require('../core-v09.js');
 assert.strictEqual(A.sanitize('010-1234-5678'),'[연락처]');
 const r=A.analyze('오늘은 드럼 스트로크와 리듬 박자를 연습합니다. '.repeat(12));
@@ -9,4 +10,11 @@ const low=A.analyze('안녕하세요');
 assert.strictEqual(low.autoAdvance,false);
 const safe=A.analyze('민수야 드럼 스트로크 연습하자 '.repeat(10));
 assert.ok(!safe.summary.includes('민수'));
-console.log('v0.9 lesson audio core tests passed');
+const app=fs.readFileSync('app-v09.js','utf8');
+assert.ok(app.includes("AUTO_MINUTES_KEY='teacherOS.lessonAutoMinutes'"));
+assert.ok(app.includes('return Number.isFinite(n)&&n>=5&&n<=180?n:40'));
+assert.ok(app.includes('setTimeout(()=>finishLesson(true)'));
+assert.ok(app.includes('일찍 종료'));
+assert.ok(app.includes("navigator.wakeLock.request('screen')"));
+assert.ok(app.includes("endedBy:automatic?'auto':'manual'"));
+console.log('v0.9 lesson audio core + one-tap auto-stop tests passed');
