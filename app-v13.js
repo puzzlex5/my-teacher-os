@@ -31,7 +31,7 @@
 
   function inboxItems(y){
     const out=[];
-    (y?.tasks||[]).filter(t=>!t.done).forEach(t=>{const date=taskDate(t);out.push({type:'할 일',title:t.text||'할 일',date,date||today(),d:date?dateDiff(date):null,view:'dashboard',priority:date?1:3})});
+    (y?.tasks||[]).filter(t=>!t.done).forEach(t=>{const date=taskDate(t);out.push({type:'할 일',title:t.text||'할 일',date:date||today(),d:date?dateDiff(date):null,view:'dashboard',priority:date?1:3})});
     (y?.assessments||[]).forEach(x=>x.due&&out.push({type:'평가',title:x.name||'평가',date:x.due,d:dateDiff(x.due),view:'assessment',priority:0}));
     (y?.projects||[]).forEach(x=>x.due&&out.push({type:'행정',title:x.name||'행정업무',date:x.due,d:dateDiff(x.due),view:'projects',priority:1}));
     (y?.clubs||[]).forEach(x=>x.due&&out.push({type:'동아리',title:x.name||'동아리',date:x.due,d:dateDiff(x.due),view:'clubs',priority:2}));
