@@ -1,0 +1,16 @@
+const fs=require('fs');
+const app=fs.readFileSync('app-v21.js','utf8');
+const css=fs.readFileSync('app-v21.css','utf8');
+const index=fs.readFileSync('index.html','utf8');
+if(!app.includes('선택 근거로 초안 3개 만들기'))throw new Error('three-draft generator UI missing');
+if(!app.includes("['A','B','C']"))throw new Error('A/B/C draft variants missing');
+if(!app.includes('EVIDENCE_KINDS21'))throw new Error('evidence allowlist missing');
+if(!app.includes('SENSITIVE_RE21'))throw new Error('sensitive-data exclusion missing');
+if(!app.includes('상담·학폭·생활지도·민감정보는 자동 제외'))throw new Error('exclusion notice missing');
+if(!app.includes('evidenceIds'))throw new Error('draft-to-evidence linkage missing');
+if(!app.includes('history'))throw new Error('draft history missing');
+if(!css.includes('.v21-draft-grid'))throw new Error('draft grid CSS missing');
+if(!css.includes('@media(max-width:680px)'))throw new Error('mobile draft CSS missing');
+if(!index.includes('app-v21.js'))throw new Error('index does not load v21 JS');
+if(!index.includes('app-v21.css'))throw new Error('index does not load v21 CSS');
+console.log('v0.21 evidence-based three-draft studio tests passed');
