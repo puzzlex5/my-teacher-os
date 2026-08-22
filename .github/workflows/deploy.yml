@@ -36,6 +36,7 @@ jobs:
           node tests/v12-tests.js
           node tests/v13-tests.js
           node tests/v14-tests.js
+          node tests/v15-tests.js
           node --check app-v07.js
           node --check app-v08.js
           node --check app-v09.js
@@ -44,11 +45,12 @@ jobs:
           node --check app-v12.js
           node --check app-v13.js
           node --check app-v14.js
+          node --check app-v15.js
           node --check core-v09.js
           node --check seed-v07.js
           node --check scripts/sync-comcigan.mjs
-      - name: Verify v0.14 files
-        run: test -f app-v14.html && test -f app-v14.js && test -f app-v14.css && test -f app-v13.html && test -f comcigan-config.json && test -f scripts/sync-comcigan.mjs && test -f .github/workflows/sync-comcigan.yml && test -f policy-registry.json
+      - name: Verify v0.15 files
+        run: test -f app-v15.html && test -f app-v15.js && test -f app-v15.css && test -f app-v14.html && test -f comcigan-config.json && test -f scripts/sync-comcigan.mjs && test -f .github/workflows/sync-comcigan.yml && test -f policy-registry.json
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
