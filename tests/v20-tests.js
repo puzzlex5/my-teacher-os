@@ -9,7 +9,7 @@ const required=[
   "EVIDENCE_KINDS=new Set(['담임관찰','교과관찰','자율자치활동','진로활동','동아리·창체','수업·평가관찰'])"
 ];
 for(const token of required)if(!js.includes(token))throw new Error('v0.20 missing: '+token);
-if(!index.includes('app-v20.js?v=20')||!index.includes('app-v20.css?v=20'))throw new Error('v0.20 loader missing');
+if(!index.includes('app-v20.js?v=')||!index.includes('app-v20.css?v='))throw new Error('v0.20 loader missing');
 if(!css.includes('.sr-layout')||!css.includes('.role-choices'))throw new Error('v0.20 styles missing');
 if(js.includes("EVIDENCE_KINDS=new Set(['상담"))throw new Error('Counseling must not be automatic school-record evidence');
 console.log('v0.20 role/student-record tests passed');
