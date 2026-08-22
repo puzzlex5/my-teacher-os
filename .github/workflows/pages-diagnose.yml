@@ -10,6 +10,7 @@ on:
 permissions:
   contents: write
   pages: read
+  actions: read
 
 jobs:
   diagnose:
@@ -18,20 +19,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Read Pages configuration and latest build
+      - name: Read Pages and deploy workflow diagnostics
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p diagnostics
-          curl -sS -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2026-03-10" "https://api.github.com/repos/$GITHUB_REPOSITORY/pages" > diagnostics/pages-site.json || true
-          curl -sS -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2026-03-10" "https://api.github.com/repos/$GITHUB_REPOSITORY/pages/builds/latest" > diagnostics/pages-build-latest.json || true
-          printf '{"checkedAt":"%s","sha":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GITHUB_SHA" > diagnostics/pages-check.json
+          H1="Accept: application/vnd.github+json"
+          H2="Authorization: Bearer $GH_TOKEN"
+          H3="X-GitHub-Api-Version: 2026-03-10"
+          curl -sS -H "$H1" -H "$H2" -H "$H3" "https://api.github.com/repos/$GITHUB_REPOSITORY/pages" > diagnostics/pages-site.json || true
+          curl -sS -H "$H1" -H "$H2" -H "$H3" "https://api.github.com/repos/$GITHUB_REPOSITORY/pages/builds/latest" > diagnostics/pages-build-latest.json || true
+          curl -sS -H "$H1" -H "$H2" -H "$H3" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/deploy.yml/runs?per_page=10" > diagnostics/deploy-runs.json || true
+          RUN_ID=$(jq -r '.workflow_runs[0].id // empty' diagnostics/deploy-runs.json)
+          if [ -n "$RUN_ID" ]; then
+            curl -sS -H "$H1" -H "$H2" -H "$H3" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/jobs" > diagnostics/deploy-latest-jobs.json || true
+          else
+            printf '{"message":"No deploy workflow run found"}\n' > diagnostics/deploy-latest-jobs.json
+          fi
+          printf '{"checkedAt":"%s","sha":"%s","latestRunId":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GITHUB_SHA" "$RUN_ID" > diagnostics/pages-check.json
 
       - name: Commit diagnostics
         run: |
           git config user.name "teacher-os-diagnostics"
           git config user.email "actions@users.noreply.github.com"
-          git add diagnostics/pages-site.json diagnostics/pages-build-latest.json diagnostics/pages-check.json
+          git add diagnostics/pages-site.json diagnostics/pages-build-latest.json diagnostics/deploy-runs.json diagnostics/deploy-latest-jobs.json diagnostics/pages-check.json
           if git diff --cached --quiet; then
             echo "No diagnostics change"
           else
