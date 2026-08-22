@@ -1,0 +1,16 @@
+{
+  "url": "https://api.github.com/repos/puzzlex5/my-teacher-os/pages",
+  "status": null,
+  "cname": null,
+  "custom_404": false,
+  "html_url": "https://puzzlex5.github.io/my-teacher-os/",
+  "build_type": "workflow",
+  "source": {
+    "branch": "main",
+    "path": "/"
+  },
+  "public": true,
+  "protected_domain_state": null,
+  "pending_domain_unverified_at": null,
+  "https_enforced": true
+}
