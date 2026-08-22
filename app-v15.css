@@ -1,0 +1,12 @@
+#timetable.timetable-auto-only #ttAdd,
+#timetable.timetable-auto-only #ttExceptionAdd,
+#timetable.timetable-auto-only .cell-add,
+#timetable.timetable-auto-only [data-tt-add],
+#timetable.timetable-auto-only [data-tt-edit],
+#ttDlg,#ttExceptionDlg{display:none!important}
+#timetable.timetable-auto-only .readonly-timetable td{cursor:default!important}
+#timetable.timetable-auto-only .readonly-timetable td:hover{background:inherit!important}
+#timetable.timetable-auto-only .readonly-timetable .slot{pointer-events:none}
+#timetable.timetable-auto-only .section-intro{align-items:center}
+#timetable.timetable-auto-only .section-intro::after{content:'컴시간 자동관리 · 직접 수정 없음';display:inline-flex;align-items:center;min-height:30px;padding:5px 10px;border-radius:999px;background:#edf8f2;border:1px solid #d7eee1;color:#176c46;font-size:11px;font-weight:800;white-space:nowrap}
+@media(max-width:760px){#timetable.timetable-auto-only .section-intro::after{align-self:flex-start;white-space:normal}}
