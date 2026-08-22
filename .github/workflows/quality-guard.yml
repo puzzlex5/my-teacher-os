@@ -1,0 +1,90 @@
+name: Teacher OS Quality Guard
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teacher-os-quality-guard
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Regression tests
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          node tests/v06-tests.js
+          node tests/v07-tests.js
+          node tests/v08-tests.js
+          node tests/v09-tests.js
+          node tests/v10-tests.js
+          node tests/v11-tests.js
+          node tests/v12-tests.js
+          node tests/v13-tests.js
+          node tests/v14-tests.js
+          node tests/v15-tests.js
+          node tests/v16-tests.js
+          node tests/v17-tests.js
+          node tests/v18-tests.js
+          node tests/v19-tests.js
+          node tests/v20-tests.js
+
+      - name: JavaScript syntax guard
+        run: |
+          set -euo pipefail
+          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
+            node --check "$f"
+          done
+
+      - name: Mobile layout guard
+        run: |
+          set -euo pipefail
+          grep -q 'app-v20.css' index.html
+          grep -q 'app-v20.js' index.html
+          grep -q 'height:auto!important' app-v20.css
+          grep -q 'max-height:76px!important' app-v20.css
+          grep -q 'safe-area-inset-bottom' app-v20.css
+
+      - name: Public-repo privacy guard
+        run: |
+          set -euo pipefail
+          find . -type f \( -iname '*.m4a' -o -iname '*.mp3' -o -iname '*.wav' -o -iname '*.aac' -o -iname '*.ogg' \) -not -path './.git/*' -print > /tmp/audio-files.txt
+          if [ -s /tmp/audio-files.txt ]; then
+            echo 'Audio files must not be committed to the public Teacher OS repository.'
+            cat /tmp/audio-files.txt
+            exit 1
+          fi
+
+      - name: Live site smoke test
+        run: |
+          set -euo pipefail
+          base='https://puzzlex5.github.io/my-teacher-os'
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v20.js" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v20.css" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/work-library.json" >/dev/null
+
+      - name: Quality summary
+        if: always()
+        run: |
+          {
+            echo '## Teacher OS Quality Guard'
+            echo ''
+            echo '- Regression tests: checked'
+            echo '- JavaScript syntax: checked'
+            echo '- Mobile navigation CSS: checked'
+            echo '- Public repository audio privacy: checked'
+            echo '- GitHub Pages live assets: checked'
+            echo ''
+            echo 'This workflow detects faults; the daily Teacher OS improvement automation handles safe corrective work.'
+          } >> "$GITHUB_STEP_SUMMARY"
