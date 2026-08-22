@@ -1,0 +1,7 @@
+/* v0.17 hard guard: no manual timetable or lesson-context editing */
+#timetable #ttAdd,#timetable #ttExceptionAdd,#timetable .cell-add,#timetable [data-tt-add],#timetable [data-tt-edit],#ttDlg,#ttExceptionDlg,#ttExceptionList,#lessonlog .lesson-target-row{display:none!important}
+#timetable .readonly-timetable td,#timetable #timetableTable td{cursor:default!important}
+.v17-build-chip{display:inline-flex;align-items:center;gap:5px;margin-left:8px;padding:5px 8px;border-radius:999px;background:#e8f7ef;color:#078848;border:1px solid #d1ebdc;font-size:10px;font-weight:900;vertical-align:middle}
+.v17-auto-note{margin-top:10px;padding:10px 12px;border-radius:12px;background:#f5faf7;border:1px solid #dfece5;color:#5b6c65;font-size:11px;line-height:1.55}
+#lessonlog .lesson-auto-context{display:grid!important}
+@media(max-width:600px){.v17-build-chip{margin-left:0;margin-top:7px}}
