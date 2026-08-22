@@ -40,21 +40,30 @@ jobs:
           node tests/v20-tests.js
           node tests/v21-tests.js
           node tests/v22-tests.js
+          node tests/v23-tests.js
 
       - name: JavaScript syntax guard
         run: |
           set -euo pipefail
-          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
+          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js app-v23.js core-v23.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
             node --check "$f"
           done
+
+      - name: Document intelligence guard
+        run: |
+          set -euo pipefail
+          grep -q 'PP-OCRv5' app-v23.js
+          grep -q 'pdf-hybrid-layout+ocr' app-v23.js
+          grep -q 'feedbackSignature' app-v23.js
+          grep -q '학생자료는 자동 적용 차단' app-v23.js
+          grep -q 'core-v23.js' index.html
+          grep -q 'app-v23.css' index.html
 
       - name: Mobile layout guard
         run: |
           set -euo pipefail
+          grep -q '@media(max-width:780px)' app-v23.css
           grep -q 'app-v22.css' index.html
-          grep -q 'app-v22.js' index.html
-          grep -q '@media(max-width:680px)' app-v22.css
-          grep -q 'grid-template-columns:1fr' app-v22.css
           grep -q 'height:auto!important' app-v20.css
           grep -q 'max-height:76px!important' app-v20.css
           grep -q 'safe-area-inset-bottom' app-v20.css
@@ -74,10 +83,11 @@ jobs:
           set -euo pipefail
           base='https://puzzlex5.github.io/my-teacher-os'
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/core-v23.js" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v23.js" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v23.css" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v22.js" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v22.css" >/dev/null
-          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v21.js" >/dev/null
-          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v21.css" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/work-library.json" >/dev/null
 
       - name: Quality summary
@@ -86,11 +96,12 @@ jobs:
           {
             echo '## Teacher OS Quality Guard'
             echo ''
-            echo '- Regression tests through v0.22: checked'
-            echo '- JavaScript syntax through v0.22: checked'
-            echo '- Mobile navigation and v0.22 recovery CSS: checked'
+            echo '- Regression tests through v0.23: checked'
+            echo '- JavaScript syntax through v0.23: checked'
+            echo '- Document Intelligence OCR/classifier safety: checked'
+            echo '- Mobile navigation and responsive document report: checked'
             echo '- Public repository audio privacy: checked'
-            echo '- GitHub Pages live assets through v0.22: checked'
+            echo '- GitHub Pages live assets through v0.23: checked'
             echo ''
             echo 'This workflow detects faults; the daily Teacher OS improvement automation handles safe corrective work.'
           } >> "$GITHUB_STEP_SUMMARY"
