@@ -2,40 +2,33 @@
   "total_count": 1,
   "jobs": [
     {
-      "id": 97057350769,
-      "run_id": 32583935725,
+      "id": 97063215722,
+      "run_id": 32586360728,
       "workflow_name": "Deploy to GitHub Pages",
       "head_branch": "main",
-      "run_url": "https://api.github.com/repos/puzzlex5/my-teacher-os/actions/runs/32583935725",
+      "run_url": "https://api.github.com/repos/puzzlex5/my-teacher-os/actions/runs/32586360728",
       "run_attempt": 1,
-      "node_id": "CR_kwDOT_GBP88AAAAWmRGkcQ",
-      "head_sha": "1a6fafdf93e5fb69c09efff59d628d75a1a571fb",
-      "url": "https://api.github.com/repos/puzzlex5/my-teacher-os/actions/jobs/97057350769",
-      "html_url": "https://github.com/puzzlex5/my-teacher-os/actions/runs/32583935725/job/97057350769",
-      "status": "in_progress",
+      "node_id": "CR_kwDOT_GBP88AAAAWmWsiag",
+      "head_sha": "bba79e3606e838b1b5fc256306f0e984e078e594",
+      "url": "https://api.github.com/repos/puzzlex5/my-teacher-os/actions/jobs/97063215722",
+      "html_url": "https://github.com/puzzlex5/my-teacher-os/actions/runs/32586360728/job/97063215722",
+      "status": "queued",
       "conclusion": null,
-      "created_at": "2026-08-22T16:11:01Z",
-      "started_at": "2026-08-22T16:11:04Z",
+      "created_at": "2026-08-22T16:59:16Z",
+      "started_at": "2026-08-22T16:59:16Z",
       "completed_at": null,
       "name": "deploy",
       "steps": [
-        {
-          "name": "Set up job",
-          "status": "in_progress",
-          "conclusion": null,
-          "number": 1,
-          "started_at": "2026-08-22T16:11:05Z",
-          "completed_at": null
-        }
+
       ],
-      "check_run_url": "https://api.github.com/repos/puzzlex5/my-teacher-os/check-runs/97057350769",
+      "check_run_url": "https://api.github.com/repos/puzzlex5/my-teacher-os/check-runs/97063215722",
       "labels": [
         "ubuntu-latest"
       ],
-      "runner_id": 1000001128,
-      "runner_name": "GitHub Actions 1000001128",
+      "runner_id": 0,
+      "runner_name": "",
       "runner_group_id": 0,
-      "runner_group_name": "GitHub Actions"
+      "runner_group_name": ""
     }
   ]
 }
