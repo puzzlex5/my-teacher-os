@@ -1,0 +1,12 @@
+const fs=require('fs');
+const js=fs.readFileSync('app-v16.js','utf8');
+const css=fs.readFileSync('app-v16.css','utf8');
+const html=fs.readFileSync('app-v16.html','utf8');
+if(!js.includes('COMCIGAN AUTO'))throw new Error('Comcigan lesson context card missing');
+if(!js.includes("liveTimetableWeeks"))throw new Error('Live timetable lookup missing');
+if(!js.includes('lessonTarget')||!js.includes('lessonPeriod'))throw new Error('Auto target/period binding missing');
+if(!js.includes('오늘 등록된 수업이 없습니다'))throw new Error('No-class guard missing');
+if(!js.includes('setInterval'))throw new Error('Periodic lesson context refresh missing');
+if(!css.includes('lesson-target-hidden'))throw new Error('Manual lesson selectors are not hidden');
+if(!html.includes('app-v16.js')||!html.includes('app-v16.css'))throw new Error('v0.16 loader missing assets');
+console.log('v0.16 lesson context tests passed');
