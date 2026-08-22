@@ -4,6 +4,13 @@ on:
   schedule:
     - cron: '0 0 * * *' # 09:00 KST every day
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'comcigan-config.json'
+      - 'scripts/sync-comcigan.mjs'
+      - '.github/workflows/sync-comcigan.yml'
 
 permissions:
   contents: write
