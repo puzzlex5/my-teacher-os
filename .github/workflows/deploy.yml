@@ -41,9 +41,10 @@ jobs:
           test -f comcigan-config.json
           test -f scripts/sync-comcigan.mjs
           test -f policy-registry.json
+          grep -q 'max-height:76px!important' app-v20.css
+          grep -q 'height:auto!important' app-v20.css
 
-      - name: Run regression checks without blocking site deploy
-        continue-on-error: true
+      - name: Run regression checks
         run: |
           node tests/core-tests.js
           node tests/v06-tests.js
