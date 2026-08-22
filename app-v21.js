@@ -80,6 +80,7 @@
   }
   function renderDraftCards21(variants,stored){
     const box=q21('#v21DraftGrid');if(!box)return;const data=variants||stored?.variants||null;
+    box.dataset.evidenceIds=Array.isArray(stored?.evidenceIds)?stored.evidenceIds.join(','):'';
     if(!data){box.innerHTML='<div class="empty v21-wide">근거를 선택하고 초안 3개 만들기를 누르세요.</div>';selectedVariant21='';updateSavebar21(stored);return}
     if(!selectedVariant21)selectedVariant21=stored?.selectedVariant||'';
     box.innerHTML=['A','B','C'].map(k=>`<article class="v21-draft-card ${selectedVariant21===k?'selected':''}" data-v21-card="${k}"><div class="v21-draft-title"><b>${VARIANT_LABEL21[k]}</b><button type="button" class="btn secondary tiny" data-v21-select="${k}">${selectedVariant21===k?'선택됨':'이 초안 선택'}</button></div><textarea class="field v21-draft-text" data-v21-text="${k}" rows="9">${esc21(data[k]||'')}</textarea></article>`).join('');updateSavebar21(stored)
@@ -101,7 +102,7 @@
   function saveDraft21(){
     const y=y21(),sid=selectedStudentId21();if(!y||!sid||!area21||!selectedVariant21)return;const ta=q21(`[data-v21-text="${selectedVariant21}"]`),text=ta?.value.trim();if(!text)return alert('저장할 초안 내용이 없습니다.');
     const variants={};['A','B','C'].forEach(k=>variants[k]=q21(`[data-v21-text="${k}"]`)?.value.trim()||'');
-    const evidenceIds=(q21('#v21DraftGrid')?.dataset.evidenceIds||'').split(',').filter(Boolean);const prev=currentDraft21(sid,area21,y)||{},history=Array.isArray(prev.history)?prev.history.slice(-9):[];if(prev.text)history.push({text:prev.text,selectedVariant:prev.selectedVariant||'',evidenceIds:prev.evidenceIds||[],savedAt:prev.updatedAt||new Date().toISOString()});
+    const prev=currentDraft21(sid,area21,y)||{},gridIds=(q21('#v21DraftGrid')?.dataset.evidenceIds||'').split(',').filter(Boolean),evidenceIds=gridIds.length?gridIds:(Array.isArray(prev.evidenceIds)?prev.evidenceIds:[]),history=Array.isArray(prev.history)?prev.history.slice(-9):[];if(prev.text)history.push({text:prev.text,selectedVariant:prev.selectedVariant||'',evidenceIds:prev.evidenceIds||[],savedAt:prev.updatedAt||new Date().toISOString()});
     y.studentDrafts[sid]=y.studentDrafts[sid]||{};y.studentDrafts[sid][area21]={...prev,text,selectedVariant:selectedVariant21,variants,evidenceIds,updatedAt:new Date().toISOString(),history};save21();q21('#v21DraftStatus').textContent='선택한 초안을 저장했습니다. 원문 근거와 연결도 함께 보존됩니다.';updateSavebar21(y.studentDrafts[sid][area21]);
   }
   function bind21(){
