@@ -21,10 +21,24 @@ for(const file of [...allJs,...allCss]){
   assert.ok(index.includes(file),`current live loader no longer references ${file}; reconcile v1 baseline before consolidation`);
 }
 
+function assertLoaderOrder(files,label){
+  let previous=-1;
+  for(const file of files){
+    const pos=index.indexOf(file);
+    assert.ok(pos>=0,`${label}: ${file} missing from live loader`);
+    assert.ok(pos>previous,`${label}: live loader order diverged before ${file}; update the v1 manifest intentionally before bundling`);
+    previous=pos;
+  }
+}
+
+assertLoaderOrder(manifest.coreJs,'core JS');
+assertLoaderOrder(manifest.appJs,'app JS');
+assertLoaderOrder(manifest.css,'CSS');
+
 assert.equal(allJs[0],'core-v05.js');
 assert.equal(manifest.appJs[0],'app-v05.js');
 assert.equal(manifest.appJs.at(-1),'app-v32.js');
 assert.equal(manifest.css[0],'app-v05.css');
 assert.equal(manifest.css.at(-1),'app-v32.css');
 
-console.log(`v1 consolidation baseline verified: ${allJs.length} JS + ${allCss.length} CSS historical layers`);
+console.log(`v1 consolidation baseline verified: ${allJs.length} JS + ${allCss.length} CSS historical layers, exact live-loader order preserved`);
