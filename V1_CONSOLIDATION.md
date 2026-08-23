@@ -15,6 +15,14 @@ The live loader currently composes many historical JS/CSS layers. This was usefu
 
 The live `main` branch remains untouched during consolidation. Work happens on `v1-consolidation` until parity gates pass.
 
+### Phase 1 status
+- Frozen live-loader order: **40 JS + 26 CSS layers**.
+- Deterministic separate-layer reference and one-JS/one-CSS bundled preview are generated from the same HTML shell.
+- Existing v05→v32 regression suite and consolidated runtime syntax checks pass.
+- Chromium startup/DOM/navigation parity now passes on **desktop (1280×900)** and **mobile (390×844)**.
+- The first real browser run exposed an existing clean-profile boot exception in v05: the automatic self-test called `renderHealth(null)` before a school year existed. The v1 baseline carries an explicit fail-safe guard so this no longer aborts a consolidated runtime.
+- This is a CI browser parity milestone, not yet a public 1.0 cutover or live-device validation.
+
 ## Phases
 
 ### Phase 1 — Runtime baseline and bundling
@@ -22,6 +30,7 @@ The live `main` branch remains untouched during consolidation. Work happens on `
 - Generate one ordered JS runtime bundle and one ordered CSS bundle without changing behavior.
 - Keep current regression tests as the parity baseline.
 - Add an asset manifest so missing/reordered legacy layers fail the build.
+- Compare deterministic separate-layer and bundled startup/navigation in real Chromium on desktop/mobile viewports.
 
 ### Phase 2 — State and lifecycle consolidation
 - One canonical state schema and migration layer.
