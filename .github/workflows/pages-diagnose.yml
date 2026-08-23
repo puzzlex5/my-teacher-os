@@ -19,58 +19,52 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Read Pages and deploy workflow diagnostics
+      - name: Read sanitized Pages and deploy diagnostics
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           mkdir -p diagnostics
           H1="Accept: application/vnd.github+json"
           H2="Authorization: Bearer $GH_TOKEN"
           H3="X-GitHub-Api-Version: 2026-03-10"
-          curl -sS -H "$H1" -H "$H2" -H "$H3" "https://api.github.com/repos/$GITHUB_REPOSITORY/pages" > diagnostics/pages-site.json || true
-          curl -sS -H "$H1" -H "$H2" -H "$H3" "https://api.github.com/repos/$GITHUB_REPOSITORY/pages/builds/latest" > diagnostics/pages-build-latest.json || true
-          curl -sS -H "$H1" -H "$H2" -H "$H3" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/deploy.yml/runs?per_page=10" > diagnostics/deploy-runs.json || true
-          RUN_ID=$(jq -r '.workflow_runs[0].id // empty' diagnostics/deploy-runs.json)
+
+          # Raw GitHub API responses can contain account/profile/email metadata.
+          # Keep them in /tmp only and commit a strict allowlist of operational fields.
+          curl -sS -H "$H1" -H "$H2" -H "$H3" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/deploy.yml/runs?per_page=5" > /tmp/deploy-runs.json || printf '{"workflow_runs":[]}\n' > /tmp/deploy-runs.json
+          RUN_ID=$(jq -r '.workflow_runs[0].id // empty' /tmp/deploy-runs.json)
+          jq '{runId:(.workflow_runs[0].id // null),status:(.workflow_runs[0].status // "unknown"),conclusion:(.workflow_runs[0].conclusion // null),headSha:(.workflow_runs[0].head_sha // null),createdAt:(.workflow_runs[0].created_at // null),updatedAt:(.workflow_runs[0].updated_at // null)}' /tmp/deploy-runs.json > diagnostics/deploy-status.json
+
           if [ -n "$RUN_ID" ]; then
-            curl -sS -H "$H1" -H "$H2" -H "$H3" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/jobs" > diagnostics/deploy-latest-jobs.json || true
+            curl -sS -H "$H1" -H "$H2" -H "$H3" "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID/jobs" > /tmp/deploy-jobs.json || printf '{"jobs":[]}\n' > /tmp/deploy-jobs.json
+            jq '{jobs:[.jobs[]? | {name,status,conclusion,steps:[.steps[]? | {name,status,conclusion}]}]}' /tmp/deploy-jobs.json > diagnostics/deploy-jobs.json
           else
-            printf '{"message":"No deploy workflow run found"}\n' > diagnostics/deploy-latest-jobs.json
+            printf '{"jobs":[]}\n' > diagnostics/deploy-jobs.json
           fi
-          ROOT_STATUS=$(curl -L -sS -o diagnostics/live-root.html -w '%{http_code}' 'https://puzzlex5.github.io/' || true)
-          PROJECT_STATUS=$(curl -L -sS -o diagnostics/live-project.html -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/' || true)
-          CORE31_STATUS=$(curl -L -sS -o diagnostics/live-core-v31.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v31.js' || true)
-          V31_STATUS=$(curl -L -sS -o diagnostics/live-v31.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v31.js' || true)
-          V31CSS_STATUS=$(curl -L -sS -o diagnostics/live-v31.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v31.css' || true)
-          CORE30_STATUS=$(curl -L -sS -o diagnostics/live-core-v30.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v30.js' || true)
-          V30_STATUS=$(curl -L -sS -o diagnostics/live-v30.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v30.js' || true)
-          V30CSS_STATUS=$(curl -L -sS -o diagnostics/live-v30.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v30.css' || true)
-          CORE29_STATUS=$(curl -L -sS -o diagnostics/live-core-v29.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v29.js' || true)
-          V29_STATUS=$(curl -L -sS -o diagnostics/live-v29.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v29.js' || true)
-          CORE28_STATUS=$(curl -L -sS -o diagnostics/live-core-v28.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v28.js' || true)
-          V28_STATUS=$(curl -L -sS -o diagnostics/live-v28.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v28.js' || true)
-          V28CSS_STATUS=$(curl -L -sS -o diagnostics/live-v28.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v28.css' || true)
-          CORE27_STATUS=$(curl -L -sS -o diagnostics/live-core-v27.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v27.js' || true)
-          V27_STATUS=$(curl -L -sS -o diagnostics/live-v27.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v27.js' || true)
-          V27CSS_STATUS=$(curl -L -sS -o diagnostics/live-v27.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v27.css' || true)
-          V26_STATUS=$(curl -L -sS -o diagnostics/live-v26.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v26.js' || true)
-          CORE25_STATUS=$(curl -L -sS -o diagnostics/live-core-v25.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v25.js' || true)
-          V25_STATUS=$(curl -L -sS -o diagnostics/live-v25.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v25.js' || true)
-          V24_STATUS=$(curl -L -sS -o diagnostics/live-v24.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v24.js' || true)
-          CORE23_STATUS=$(curl -L -sS -o diagnostics/live-core-v23.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v23.js' || true)
-          V23_STATUS=$(curl -L -sS -o diagnostics/live-v23.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v23.js' || true)
-          INDEX_HAS_V31=$(grep -q 'core-v31.js' diagnostics/live-project.html && grep -q 'app-v31.js' diagnostics/live-project.html && grep -q 'app-v31.css' diagnostics/live-project.html && echo true || echo false)
-          printf '{"root":"%s","project":"%s","core31":"%s","v31":"%s","v31css":"%s","core30":"%s","v30":"%s","v30css":"%s","core29":"%s","v29":"%s","core28":"%s","v28":"%s","v28css":"%s","core27":"%s","v27":"%s","v27css":"%s","v26":"%s","core25":"%s","v25":"%s","v24":"%s","core23":"%s","v23":"%s","indexHasV31":%s}\n' "$ROOT_STATUS" "$PROJECT_STATUS" "$CORE31_STATUS" "$V31_STATUS" "$V31CSS_STATUS" "$CORE30_STATUS" "$V30_STATUS" "$V30CSS_STATUS" "$CORE29_STATUS" "$V29_STATUS" "$CORE28_STATUS" "$V28_STATUS" "$V28CSS_STATUS" "$CORE27_STATUS" "$V27_STATUS" "$V27CSS_STATUS" "$V26_STATUS" "$CORE25_STATUS" "$V25_STATUS" "$V24_STATUS" "$CORE23_STATUS" "$V23_STATUS" "$INDEX_HAS_V31" > diagnostics/live-http-status.json
-          head -c 1800 diagnostics/live-project.html > diagnostics/live-project-head.txt || true
+
+          ROOT_STATUS=$(curl -L -sS -o /tmp/live-root.html -w '%{http_code}' 'https://puzzlex5.github.io/' || true)
+          PROJECT_STATUS=$(curl -L -sS -o /tmp/live-project.html -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/' || true)
+          CORE31_STATUS=$(curl -L -sS -o /tmp/live-core-v31.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v31.js' || true)
+          V31_STATUS=$(curl -L -sS -o /tmp/live-v31.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v31.js' || true)
+          V31CSS_STATUS=$(curl -L -sS -o /tmp/live-v31.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v31.css' || true)
+          CORE30_STATUS=$(curl -L -sS -o /tmp/live-core-v30.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v30.js' || true)
+          V30_STATUS=$(curl -L -sS -o /tmp/live-v30.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v30.js' || true)
+          V30CSS_STATUS=$(curl -L -sS -o /tmp/live-v30.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v30.css' || true)
+          INDEX_HAS_V31=$(grep -q 'core-v31.js' /tmp/live-project.html && grep -q 'app-v31.js' /tmp/live-project.html && grep -q 'app-v31.css' /tmp/live-project.html && echo true || echo false)
+          printf '{"root":"%s","project":"%s","core31":"%s","v31":"%s","v31css":"%s","core30":"%s","v30":"%s","v30css":"%s","indexHasV31":%s}\n' "$ROOT_STATUS" "$PROJECT_STATUS" "$CORE31_STATUS" "$V31_STATUS" "$V31CSS_STATUS" "$CORE30_STATUS" "$V30_STATUS" "$V30CSS_STATUS" "$INDEX_HAS_V31" > diagnostics/live-http-status.json
           printf '{"checkedAt":"%s","sha":"%s","latestRunId":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GITHUB_SHA" "$RUN_ID" > diagnostics/pages-check.json
 
-      - name: Commit diagnostics
+          # Remove legacy raw diagnostics from the public branch. History is handled separately.
+          rm -f diagnostics/pages-site.json diagnostics/pages-build-latest.json diagnostics/deploy-runs.json diagnostics/deploy-latest-jobs.json diagnostics/live-project-head.txt
+
+      - name: Commit sanitized diagnostics
         run: |
           git config user.name "teacher-os-diagnostics"
           git config user.email "actions@users.noreply.github.com"
-          git add diagnostics/pages-site.json diagnostics/pages-build-latest.json diagnostics/deploy-runs.json diagnostics/deploy-latest-jobs.json diagnostics/live-http-status.json diagnostics/live-project-head.txt diagnostics/pages-check.json
+          git add -A diagnostics
           if git diff --cached --quiet; then
             echo "No diagnostics change"
           else
-            git commit -m "Record Pages diagnostics"
+            git commit -m "Record sanitized Pages diagnostics"
             git push
           fi
