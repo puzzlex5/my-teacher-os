@@ -28,6 +28,8 @@ jobs:
       - name: Verify deploy files
         run: |
           test -f index.html
+          test -f app-v26.js
+          test -f app-v26.css
           test -f core-v25.js
           test -f app-v25.js
           test -f app-v25.css
@@ -59,6 +61,8 @@ jobs:
           grep -q 'core-v25.js' index.html
           grep -q 'app-v25.js' index.html
           grep -q 'app-v25.css' index.html
+          grep -q 'app-v26.js' index.html
+          grep -q 'app-v26.css' index.html
 
       - name: Run regression checks
         run: |
@@ -83,6 +87,7 @@ jobs:
           node tests/v23-tests.js
           node tests/v24-tests.js
           node tests/v25-tests.js
+          node tests/v26-tests.js
           node --check app-v07.js
           node --check app-v08.js
           node --check app-v09.js
@@ -102,6 +107,7 @@ jobs:
           node --check app-v23.js
           node --check app-v24.js
           node --check app-v25.js
+          node --check app-v26.js
           node --check core-v23.js
           node --check core-v25.js
           node --check core-v09.js
