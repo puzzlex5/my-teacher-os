@@ -35,9 +35,8 @@
     const mode=q('#retentionMode31')?.value||'auto',sourceLocation=q('#retentionLocation31')?.value?.trim()||'';
     activeBatch={id:id31(),mode,sourceLocation,files:[...input.files].map(file=>({file,name:file.name,size:Number(file.size)||0,lastModified:Number(file.lastModified)||null})),capturedAt:Date.now(),finalized:false};
   }
-  function latestImport31(name,y=y31()){const a=imports31(y).filter(x=>x.name===name);return a[a.length-1]||null}
   async function hash31(file){const dig=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());return[...new Uint8Array(dig)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-  async function matchImport31(f,y){const same=activeBatch?.files?.filter(x=>x.name===f.name)||[];if(same.length<=1)return latestImport31(f.name,y);try{const h=await hash31(f.file);return imports31(y).find(x=>x.hash===h)||latestImport31(f.name,y)}catch{return latestImport31(f.name,y)}}
+  async function matchImport31(f,y){try{const h=await hash31(f.file);return imports31(y).find(x=>x.hash===h)||null}catch{return null}}
 
   async function storeLocalOriginal31(f,imp,sourceLocation){
     const estimate=await storageEstimate31(),space=R.canStoreOriginal(f.size,estimate);if(!space.ok)throw new Error(`기기 저장공간이 부족합니다. 사용 가능 약 ${R.formatBytes(space.available||0)}`);
@@ -49,9 +48,9 @@
 
   async function finalizeBatch31(){
     if(finalizing||!activeBatch||activeBatch.finalized)return;const status=q('#importStatus'),text=status?.textContent||'';if(!/처리 완료/.test(text))return;
-    finalizing=true;activeBatch.finalized=true;const batch=activeBatch,y=y31();let stored=0,reference=0,transient=0,failed=0;
+    finalizing=true;activeBatch.finalized=true;const batch=activeBatch,y=y31();let stored=0,reference=0,transient=0,failed=0,unmatched=0;
     try{
-      for(const f of batch.files){const imp=await matchImport31(f,y);if(!imp)continue;const level=R.resolveLevel(batch.mode,imp.docClass);const common={sourceLocation:batch.sourceLocation,size:f.size,lastModified:f.lastModified,reason:batch.mode==='auto'?`auto:${imp.docClass||'unknown'}`:`user:${batch.mode}`};
+      for(const f of batch.files){const imp=await matchImport31(f,y);if(!imp){unmatched++;continue}const level=R.resolveLevel(batch.mode,imp.docClass);const common={sourceLocation:batch.sourceLocation,size:f.size,lastModified:f.lastModified,reason:batch.mode==='auto'?`auto:${imp.docClass||'unknown'}`:`user:${batch.mode}`};
         if(level==='local'){
           try{const key=await storeLocalOriginal31(f,imp,batch.sourceLocation);applyRetentionMeta31(imp,'local',{...common,originalStored:true,vaultKey:key});stored++}
           catch(err){applyRetentionMeta31(imp,'reference',{...common,originalStored:false});imp.originalStoreError=String(err?.message||err);failed++}
@@ -59,7 +58,7 @@
         else{applyRetentionMeta31(imp,'transient',common);transient++}
       }
       save31();
-      if(status){const notes=[];if(stored)notes.push(`로컬 원본 ${stored}개`);if(reference)notes.push(`출처·버전 ${reference}개`);if(transient)notes.push(`원본 미보관 ${transient}개`);if(failed)notes.push(`원본 저장 실패 ${failed}개`);if(notes.length)status.insertAdjacentHTML('beforeend',` <span class="v31-retention-note">· 보존정책: ${esc(notes.join(' · '))}</span>`)}
+      if(status){const notes=[];if(stored)notes.push(`로컬 원본 ${stored}개`);if(reference)notes.push(`출처·버전 ${reference}개`);if(transient)notes.push(`원본 미보관 ${transient}개`);if(failed)notes.push(`원본 저장 실패 ${failed}개`);if(unmatched)notes.push(`분석 미완료/일치 실패 ${unmatched}개는 보존 처리 안 함`);if(notes.length)status.insertAdjacentHTML('beforeend',` <span class="v31-retention-note">· 보존정책: ${esc(notes.join(' · '))}</span>`)}
     }finally{activeBatch=null;finalizing=false;renderVault31()}
   }
 
