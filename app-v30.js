@@ -1,7 +1,7 @@
 (function(){
   const V=globalThis.TeacherOSDocumentVersions;if(!V)return;
   const q=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
-  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]));
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const HISTORY_KEY='myTeacherOS.importVersionHistory.v1';
   const pendingMeta=new Map(),overrides=new Map();
   let conflicts=[];
