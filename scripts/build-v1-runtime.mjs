@@ -33,6 +33,7 @@ const storageServiceFile='v1-storage-service.js';
 const storageService=readRequired(storageServiceFile);
 let baseStorageWrites=0;
 let v6StorageWrites=0;
+let v7StorageWrites=0;
 
 // Known baseline correctness fix discovered by the first real Chromium run:
 // app-v05 auto-runs self tests on a brand-new profile, then called renderHealth(null).
@@ -41,8 +42,10 @@ let v6StorageWrites=0;
 // fix explicit and exact until app-v05 itself is safely rewritten during consolidation.
 //
 // Phase 2 routes historical state persistence through one v1 storage boundary in small
-// verified steps. app-v05 owns the primary state read/write path; app-v06 adds a schema
-// migration write. Later layers remain untouched until parity proves each migration safe.
+// verified steps. app-v05 owns the primary state read/write path; app-v06 and app-v07
+// add schema migration writes. Later layers remain untouched until parity proves each
+// migration safe. Non-state local keys such as the Comcigan sync key intentionally stay
+// outside this migration because they have different privacy/lifecycle semantics.
 function runtimeSource(file){
   let source=readRequired(file);
   if(file==='app-v05.js'){
@@ -79,6 +82,17 @@ function runtimeSource(file){
     source=migrated.source;
     v6StorageWrites=migrated.count;
   }
+  if(file==='app-v07.js'){
+    const migrated=replaceAllCounted(
+      source,
+      'localStorage.setItem(KEY,JSON.stringify(state))',
+      'globalThis.TeacherOSStorage.writeJSON(KEY,state)',
+      'app-v07 schema migration write',
+      1
+    );
+    source=migrated.source;
+    v7StorageWrites=migrated.count;
+  }
   return source;
 }
 
@@ -91,6 +105,7 @@ fs.writeFileSync(path.join(outDir,'teacher-os-v1.runtime.js'),js);
 fs.writeFileSync(path.join(outDir,'teacher-os-v1.runtime.css'),css);
 fs.writeFileSync(path.join(outDir,'legacy-app-v05.js'),runtimeSource('app-v05.js'));
 fs.writeFileSync(path.join(outDir,'legacy-app-v06.js'),runtimeSource('app-v06.js'));
+fs.writeFileSync(path.join(outDir,'legacy-app-v07.js'),runtimeSource('app-v07.js'));
 
 const shell=readRequired('app-v05.html');
 
@@ -117,6 +132,7 @@ legacy=replaceExactly(
   manifest.appJs.map(f=>{
     if(f==='app-v05.js')return '<script src="dist-v1/legacy-app-v05.js"></script>';
     if(f==='app-v06.js')return '<script src="dist-v1/legacy-app-v06.js"></script>';
+    if(f==='app-v07.js')return '<script src="dist-v1/legacy-app-v07.js"></script>';
     return `<script src="${f}"></script>`;
   }).join('\n'),
   'legacy app script set'
@@ -149,7 +165,8 @@ fs.writeFileSync(path.join(outDir,'asset-report.json'),JSON.stringify({
     'v1 shared storage service loaded before historical runtime',
     'app-v05 primary state read routed through TeacherOSStorage',
     `app-v05 primary state writes routed through TeacherOSStorage (${baseStorageWrites})`,
-    `app-v06 schema migration writes routed through TeacherOSStorage (${v6StorageWrites})`
+    `app-v06 schema migration writes routed through TeacherOSStorage (${v6StorageWrites})`,
+    `app-v07 schema migration writes routed through TeacherOSStorage (${v7StorageWrites})`
   ],
   jsFiles:jsFiles.length,
   cssFiles:cssFiles.length,
@@ -161,4 +178,4 @@ fs.writeFileSync(path.join(outDir,'asset-report.json'),JSON.stringify({
   order:{js:jsFiles,css:cssFiles}
 },null,2));
 
-console.log(`Teacher OS v1 baseline built: ${jsFiles.length} historical JS + ${cssFiles.length} CSS layers, shared storage boundary active through v0.6 migration, deterministic parity previews generated`);
+console.log(`Teacher OS v1 baseline built: ${jsFiles.length} historical JS + ${cssFiles.length} CSS layers, shared storage boundary active through v0.7 migration, deterministic parity previews generated`);
