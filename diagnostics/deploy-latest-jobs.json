@@ -2,33 +2,33 @@
   "total_count": 1,
   "jobs": [
     {
-      "id": 97126119550,
-      "run_id": 32611873740,
+      "id": 97126289019,
+      "run_id": 32611942156,
       "workflow_name": "Deploy to GitHub Pages",
       "head_branch": "main",
-      "run_url": "https://api.github.com/repos/puzzlex5/my-teacher-os/actions/runs/32611873740",
+      "run_url": "https://api.github.com/repos/puzzlex5/my-teacher-os/actions/runs/32611942156",
       "run_attempt": 1,
-      "node_id": "CR_kwDOT_GBP88AAAAWnSr4fg",
-      "head_sha": "f827a30a6adf9ea9bced3bdd3416325c58a0c6db",
-      "url": "https://api.github.com/repos/puzzlex5/my-teacher-os/actions/jobs/97126119550",
-      "html_url": "https://github.com/puzzlex5/my-teacher-os/actions/runs/32611873740/job/97126119550",
-      "status": "in_progress",
+      "node_id": "CR_kwDOT_GBP88AAAAWnS2Oew",
+      "head_sha": "8854f6e2e3b67fefe1a1af427c9f287c111ae55f",
+      "url": "https://api.github.com/repos/puzzlex5/my-teacher-os/actions/jobs/97126289019",
+      "html_url": "https://github.com/puzzlex5/my-teacher-os/actions/runs/32611942156/job/97126289019",
+      "status": "queued",
       "conclusion": null,
-      "created_at": "2026-08-23T02:03:20Z",
-      "started_at": "2026-08-23T02:03:23Z",
+      "created_at": "2026-08-23T02:05:02Z",
+      "started_at": "2026-08-23T02:05:02Z",
       "completed_at": null,
       "name": "deploy",
       "steps": [
 
       ],
-      "check_run_url": "https://api.github.com/repos/puzzlex5/my-teacher-os/check-runs/97126119550",
+      "check_run_url": "https://api.github.com/repos/puzzlex5/my-teacher-os/check-runs/97126289019",
       "labels": [
         "ubuntu-latest"
       ],
-      "runner_id": 1000001251,
-      "runner_name": "GitHub Actions 1000001251",
+      "runner_id": 0,
+      "runner_name": "",
       "runner_group_id": 0,
-      "runner_group_name": "GitHub Actions"
+      "runner_group_name": ""
     }
   ]
 }
