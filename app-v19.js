@@ -37,7 +37,11 @@
   function removePack(packId){
     const y=cur();if(!y)return;
     y.workPacks=(y.workPacks||[]).filter(x=>x.packId!==packId);
-    (y.projects||[]).forEach(p=>{if(p.workPackId===packId){delete p.workPackId;delete p.libraryLinked}});
+    y.projects=(y.projects||[]).filter(p=>{
+      if(p.workPackId!==packId)return true;
+      if(p.source==='Teacher OS 업무 라이브러리')return false;
+      delete p.workPackId;delete p.libraryLinked;return true;
+    });
     save19();if(typeof render==='function')render();
   }
 
