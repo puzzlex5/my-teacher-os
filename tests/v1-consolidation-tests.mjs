@@ -52,7 +52,9 @@ assert.ok(buildScript.includes('TeacherOSStorage.writeJSON(KEY,state)'),'base st
 assert.ok(buildScript.includes("storageServiceFile='v1-storage-service.js'"),'shared storage service is not part of the v1 build');
 assert.ok(buildScript.includes("if(file==='app-v06.js')"),'v0.6 migration is not explicitly routed through shared storage');
 assert.ok(buildScript.includes("if(file==='app-v07.js')"),'v0.7 migration is not explicitly routed through shared storage');
-assert.ok(buildScript.includes("legacy-app-v07.js"),'legacy parity reference does not use the migrated v0.7 runtime');
-assert.ok(buildScript.includes('shared storage boundary active through v0.7 migration'),'build report no longer states the verified storage migration boundary');
+assert.ok(buildScript.includes("if(file==='app-v09.js')"),'v0.9 state writes are not explicitly routed through shared storage');
+assert.ok(buildScript.includes("legacy-app-v09.js"),'legacy parity reference does not use the migrated v0.9 runtime');
+assert.ok(buildScript.includes('app-v08 has no Teacher OS state writes'),'v0.8 no-state-write boundary is not documented');
+assert.ok(buildScript.includes('shared state storage boundary active through v0.9'),'build report no longer states the verified storage migration boundary');
 
-console.log(`v1 consolidation baseline verified: ${allJs.length} JS + ${allCss.length} CSS historical layers, exact live-loader order preserved, shared state storage boundary active through v0.7 migration`);
+console.log(`v1 consolidation baseline verified: ${allJs.length} JS + ${allCss.length} CSS historical layers, exact live-loader order preserved, shared state storage boundary active through v0.9`);
