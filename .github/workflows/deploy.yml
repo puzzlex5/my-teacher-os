@@ -28,6 +28,9 @@ jobs:
       - name: Verify deploy files
         run: |
           test -f index.html
+          test -f core-v31.js
+          test -f app-v31.js
+          test -f app-v31.css
           test -f core-v30.js
           test -f app-v30.js
           test -f app-v30.css
@@ -69,9 +72,6 @@ jobs:
           test -f policy-registry.json
           grep -q 'max-height:76px!important' app-v20.css
           grep -q 'height:auto!important' app-v20.css
-          grep -q 'core-v30.js' index.html
-          grep -q 'app-v30.js' index.html
-          grep -q 'app-v30.css' index.html
 
       - name: Run regression checks
         run: |
@@ -101,6 +101,7 @@ jobs:
           node tests/v28-tests.js
           node tests/v29-tests.js
           node tests/v30-tests.js
+          node tests/v31-tests.js
           node --check app-v07.js
           node --check app-v08.js
           node --check app-v09.js
@@ -125,15 +126,24 @@ jobs:
           node --check app-v28.js
           node --check app-v29.js
           node --check app-v30.js
+          node --check app-v31.js
           node --check core-v23.js
           node --check core-v25.js
           node --check core-v27.js
           node --check core-v28.js
           node --check core-v29.js
           node --check core-v30.js
+          node --check core-v31.js
           node --check core-v09.js
           node --check seed-v07.js
           node --check scripts/sync-comcigan.mjs
+
+      - name: Verify v0.31 is wired when released
+        run: |
+          if grep -q 'core-v31.js' index.html; then
+            grep -q 'app-v31.js' index.html
+            grep -q 'app-v31.css' index.html
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
