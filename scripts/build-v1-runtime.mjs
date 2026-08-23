@@ -37,6 +37,7 @@ let v7StorageWrites=0;
 let v9StorageWrites=0;
 let v10StorageWrites=0;
 let v14StorageWrites=0;
+let v18StorageWrites=0;
 
 // Known baseline correctness fix discovered by the first real Chromium run:
 // app-v05 auto-runs self tests on a brand-new profile, then called renderHealth(null).
@@ -52,9 +53,12 @@ let v14StorageWrites=0;
 // have no Teacher OS state writes. app-v14 persists Comcigan sync status and accepted
 // live timetable data into the main Teacher OS state; those state writes are migrated,
 // while the per-browser Comcigan identity/config key intentionally remains a separate
-// local setting because it has different privacy/lifecycle semantics. Later layers remain
-// untouched until parity proves each migration safe. Non-state local keys such as
-// lessonAutoMinutes likewise intentionally stay outside this migration.
+// local setting because it has different privacy/lifecycle semantics. app-v15 through
+// app-v17 only adjust/read runtime UI context and do not persist Teacher OS state.
+// app-v18 enriches imported document suggestions and persists the enriched state after
+// applySuggestions; that write is migrated here. Later layers remain untouched until
+// parity proves each migration safe. Non-state local keys such as lessonAutoMinutes
+// likewise intentionally stay outside this migration.
 function runtimeSource(file){
   let source=readRequired(file);
   if(file==='app-v05.js'){
@@ -135,6 +139,17 @@ function runtimeSource(file){
     source=migrated.source;
     v14StorageWrites=migrated.count;
   }
+  if(file==='app-v18.js'){
+    const migrated=replaceAllCounted(
+      source,
+      'localStorage.setItem(KEY,JSON.stringify(state));',
+      'globalThis.TeacherOSStorage.writeJSON(KEY,state);',
+      'app-v18 enriched import state write',
+      1
+    );
+    source=migrated.source;
+    v18StorageWrites=migrated.count;
+  }
   return source;
 }
 
@@ -151,6 +166,7 @@ fs.writeFileSync(path.join(outDir,'legacy-app-v07.js'),runtimeSource('app-v07.js
 fs.writeFileSync(path.join(outDir,'legacy-app-v09.js'),runtimeSource('app-v09.js'));
 fs.writeFileSync(path.join(outDir,'legacy-app-v10.js'),runtimeSource('app-v10.js'));
 fs.writeFileSync(path.join(outDir,'legacy-app-v14.js'),runtimeSource('app-v14.js'));
+fs.writeFileSync(path.join(outDir,'legacy-app-v18.js'),runtimeSource('app-v18.js'));
 
 const shell=readRequired('app-v05.html');
 
@@ -181,6 +197,7 @@ legacy=replaceExactly(
     if(f==='app-v09.js')return '<script src="dist-v1/legacy-app-v09.js"></script>';
     if(f==='app-v10.js')return '<script src="dist-v1/legacy-app-v10.js"></script>';
     if(f==='app-v14.js')return '<script src="dist-v1/legacy-app-v14.js"></script>';
+    if(f==='app-v18.js')return '<script src="dist-v1/legacy-app-v18.js"></script>';
     return `<script src="${f}"></script>`;
   }).join('\n'),
   'legacy app script set'
@@ -219,7 +236,9 @@ fs.writeFileSync(path.join(outDir,'asset-report.json'),JSON.stringify({
     `app-v09 schema and lesson state writes routed through TeacherOSStorage (${v9StorageWrites})`,
     `app-v10 Teacher Skills state writes routed through TeacherOSStorage (${v10StorageWrites})`,
     'app-v11 through app-v13 have no Teacher OS state writes',
-    `app-v14 Comcigan main-state writes routed through TeacherOSStorage (${v14StorageWrites}); per-browser Comcigan config remains a separate local setting`
+    `app-v14 Comcigan main-state writes routed through TeacherOSStorage (${v14StorageWrites}); per-browser Comcigan config remains a separate local setting`,
+    'app-v15 through app-v17 have no Teacher OS state writes',
+    `app-v18 enriched import state write routed through TeacherOSStorage (${v18StorageWrites})`
   ],
   jsFiles:jsFiles.length,
   cssFiles:cssFiles.length,
@@ -231,4 +250,4 @@ fs.writeFileSync(path.join(outDir,'asset-report.json'),JSON.stringify({
   order:{js:jsFiles,css:cssFiles}
 },null,2));
 
-console.log(`Teacher OS v1 baseline built: ${jsFiles.length} historical JS + ${cssFiles.length} CSS layers, shared state storage boundary active through v0.14, deterministic parity previews generated`);
+console.log(`Teacher OS v1 baseline built: ${jsFiles.length} historical JS + ${cssFiles.length} CSS layers, shared state storage boundary active through v0.18, deterministic parity previews generated`);
