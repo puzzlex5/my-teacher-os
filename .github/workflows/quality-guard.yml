@@ -47,13 +47,30 @@ jobs:
           node tests/v27-tests.js
           node tests/v28-tests.js
           node tests/v29-tests.js
+          node tests/v30-tests.js
 
       - name: JavaScript syntax guard
         run: |
           set -euo pipefail
-          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js app-v23.js app-v24.js app-v25.js app-v26.js app-v27.js app-v28.js app-v29.js core-v23.js core-v25.js core-v27.js core-v28.js core-v29.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
+          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js app-v23.js app-v24.js app-v25.js app-v26.js app-v27.js app-v28.js app-v29.js app-v30.js core-v23.js core-v25.js core-v27.js core-v28.js core-v29.js core-v30.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
             node --check "$f"
           done
+
+      - name: Document version lineage guard
+        run: |
+          set -euo pipefail
+          grep -q 'familyKey' core-v30.js
+          grep -q 'explicit-version' core-v30.js
+          grep -q 'revision-marker' core-v30.js
+          grep -q 'same-name-different-content' core-v30.js
+          grep -q '새 파일을 최신본으로 사용' app-v30.js
+          grep -q '기존 파일 유지' app-v30.js
+          grep -q '원본 파일은 Teacher OS에 장기 보관하지 않습니다' app-v30.js
+          grep -q "input.value=''" app-v30.js
+          grep -q 'myTeacherOS.importVersionHistory.v1' app-v30.js
+          grep -q 'core-v30.js' index.html
+          grep -q 'app-v30.js' index.html
+          grep -q 'app-v30.css' index.html
 
       - name: Verified data-state guard
         run: |
@@ -61,8 +78,6 @@ jobs:
           grep -q 'nextLessonTruth' core-v29.js
           grep -q '오늘 수업 여부를 확정할 수 없습니다' app-v29.js
           grep -q '0건으로 처리하지 않습니다' app-v29.js
-          grep -q 'core-v29.js' index.html
-          grep -q 'app-v29.js' index.html
 
       - name: Precision UX guard
         run: |
@@ -124,6 +139,7 @@ jobs:
       - name: Mobile layout guard
         run: |
           set -euo pipefail
+          grep -q '@media(max-width:680px)' app-v30.css
           grep -q '@media(max-width:680px)' app-v28.css
           grep -q '@media(max-width:680px)' app-v27.css
           grep -q '@media(max-width:680px)' app-v26.css
@@ -148,6 +164,9 @@ jobs:
           set -euo pipefail
           base='https://puzzlex5.github.io/my-teacher-os'
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/core-v30.js" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v30.js" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v30.css" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/core-v29.js" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v29.js" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/core-v28.js" >/dev/null
@@ -168,8 +187,9 @@ jobs:
           {
             echo '## Teacher OS Quality Guard'
             echo ''
-            echo '- Regression tests through v0.29: checked'
-            echo '- JavaScript syntax through v0.29: checked'
+            echo '- Regression tests through v0.30: checked'
+            echo '- JavaScript syntax through v0.30: checked'
+            echo '- Document family/version comparison, conservative replacement, source-file release and undo: checked'
             echo '- Unverified timetable vs confirmed zero lessons: checked'
             echo '- Korean initial-consonant search, 2026 NEIS UTF-8 byte guard, calendar undo: checked'
             echo '- Teacher Desk countdown accuracy labels and local-only contacts/text tools: checked'
@@ -179,5 +199,5 @@ jobs:
             echo '- Document Intelligence OCR/classifier safety: checked'
             echo '- Mobile responsive latest layers: checked'
             echo '- Public repository audio privacy: checked'
-            echo '- GitHub Pages live assets through v0.29: checked'
+            echo '- GitHub Pages live assets through v0.30: checked'
           } >> "$GITHUB_STEP_SUMMARY"
