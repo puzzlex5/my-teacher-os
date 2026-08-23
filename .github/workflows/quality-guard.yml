@@ -41,13 +41,26 @@ jobs:
           node tests/v21-tests.js
           node tests/v22-tests.js
           node tests/v23-tests.js
+          node tests/v24-tests.js
 
       - name: JavaScript syntax guard
         run: |
           set -euo pipefail
-          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js app-v23.js core-v23.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
+          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js app-v23.js app-v24.js core-v23.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
             node --check "$f"
           done
+
+      - name: Personal isolation guard
+        run: |
+          set -euo pipefail
+          grep -q "readLocalConfig()||blankConfig()" app-v14.js
+          ! grep -q "fetch('./comcigan-config.json" app-v14.js
+          grep -q "if(!completeConfig(config))" app-v14.js
+          grep -q "myTeacherOS.deviceProfile.v1" app-v24.js
+          grep -q "y.clubs=\[\]" app-v24.js
+          grep -q "y.roleProfile={roles:\[\]" app-v24.js
+          grep -q "app-v24.js" index.html
+          grep -q "app-v24.css" index.html
 
       - name: Document intelligence guard
         run: |
@@ -63,7 +76,7 @@ jobs:
         run: |
           set -euo pipefail
           grep -q '@media(max-width:780px)' app-v23.css
-          grep -q 'app-v22.css' index.html
+          grep -q '@media(max-width:680px)' app-v24.css
           grep -q 'height:auto!important' app-v20.css
           grep -q 'max-height:76px!important' app-v20.css
           grep -q 'safe-area-inset-bottom' app-v20.css
@@ -83,11 +96,11 @@ jobs:
           set -euo pipefail
           base='https://puzzlex5.github.io/my-teacher-os'
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v24.js" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v24.css" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/core-v23.js" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v23.js" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v23.css" >/dev/null
-          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v22.js" >/dev/null
-          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v22.css" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/work-library.json" >/dev/null
 
       - name: Quality summary
@@ -96,12 +109,13 @@ jobs:
           {
             echo '## Teacher OS Quality Guard'
             echo ''
-            echo '- Regression tests through v0.23: checked'
-            echo '- JavaScript syntax through v0.23: checked'
+            echo '- Regression tests through v0.24: checked'
+            echo '- JavaScript syntax through v0.24: checked'
+            echo '- Per-browser personal isolation and Comcigan blocking: checked'
             echo '- Document Intelligence OCR/classifier safety: checked'
-            echo '- Mobile navigation and responsive document report: checked'
+            echo '- Mobile navigation and responsive personal setup: checked'
             echo '- Public repository audio privacy: checked'
-            echo '- GitHub Pages live assets through v0.23: checked'
+            echo '- GitHub Pages live assets through v0.24: checked'
             echo ''
             echo 'This workflow detects faults; the daily Teacher OS improvement automation handles safe corrective work.'
           } >> "$GITHUB_STEP_SUMMARY"
