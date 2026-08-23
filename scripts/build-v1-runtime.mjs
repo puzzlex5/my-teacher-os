@@ -38,6 +38,7 @@ let v9StorageWrites=0;
 let v10StorageWrites=0;
 let v14StorageWrites=0;
 let v18StorageWrites=0;
+let v19StorageWrites=0;
 
 // Known baseline correctness fix discovered by the first real Chromium run:
 // app-v05 auto-runs self tests on a brand-new profile, then called renderHealth(null).
@@ -56,9 +57,12 @@ let v18StorageWrites=0;
 // local setting because it has different privacy/lifecycle semantics. app-v15 through
 // app-v17 only adjust/read runtime UI context and do not persist Teacher OS state.
 // app-v18 enriches imported document suggestions and persists the enriched state after
-// applySuggestions; that write is migrated here. Later layers remain untouched until
-// parity proves each migration safe. Non-state local keys such as lessonAutoMinutes
-// likewise intentionally stay outside this migration.
+// applySuggestions. app-v19 adds work-pack state and originally rewrote the entire state
+// on every render via ensure19; the v1 transform preserves migration semantics while
+// only writing when version/workPacks initialization actually changes state. User-driven
+// work-pack edits still persist immediately through the shared storage boundary. Later
+// layers remain untouched until parity proves each migration safe. Non-state local keys
+// such as lessonAutoMinutes likewise intentionally stay outside this migration.
 function runtimeSource(file){
   let source=readRequired(file);
   if(file==='app-v05.js'){
@@ -150,6 +154,15 @@ function runtimeSource(file){
     source=migrated.source;
     v18StorageWrites=migrated.count;
   }
+  if(file==='app-v19.js'){
+    source=replaceExactly(
+      source,
+      "function ensure19(){\n    state.version=Math.max(Number(state.version)||0,19);\n    Object.values(state.years||{}).forEach(y=>{y.workPacks=Array.isArray(y.workPacks)?y.workPacks:[]});\n    localStorage.setItem(KEY,JSON.stringify(state));\n  }\n  function save19(){localStorage.setItem(KEY,JSON.stringify(state))}",
+      "function ensure19(){\n    let changed=false;\n    const version=Math.max(Number(state.version)||0,19);\n    if(state.version!==version){state.version=version;changed=true}\n    Object.values(state.years||{}).forEach(y=>{if(!Array.isArray(y.workPacks)){y.workPacks=[];changed=true}});\n    if(changed)globalThis.TeacherOSStorage.writeJSON(KEY,state);\n  }\n  function save19(){globalThis.TeacherOSStorage.writeJSON(KEY,state)}",
+      'app-v19 work-pack storage boundary and render-write guard'
+    );
+    v19StorageWrites=2;
+  }
   return source;
 }
 
@@ -167,6 +180,7 @@ fs.writeFileSync(path.join(outDir,'legacy-app-v09.js'),runtimeSource('app-v09.js
 fs.writeFileSync(path.join(outDir,'legacy-app-v10.js'),runtimeSource('app-v10.js'));
 fs.writeFileSync(path.join(outDir,'legacy-app-v14.js'),runtimeSource('app-v14.js'));
 fs.writeFileSync(path.join(outDir,'legacy-app-v18.js'),runtimeSource('app-v18.js'));
+fs.writeFileSync(path.join(outDir,'legacy-app-v19.js'),runtimeSource('app-v19.js'));
 
 const shell=readRequired('app-v05.html');
 
@@ -198,6 +212,7 @@ legacy=replaceExactly(
     if(f==='app-v10.js')return '<script src="dist-v1/legacy-app-v10.js"></script>';
     if(f==='app-v14.js')return '<script src="dist-v1/legacy-app-v14.js"></script>';
     if(f==='app-v18.js')return '<script src="dist-v1/legacy-app-v18.js"></script>';
+    if(f==='app-v19.js')return '<script src="dist-v1/legacy-app-v19.js"></script>';
     return `<script src="${f}"></script>`;
   }).join('\n'),
   'legacy app script set'
@@ -238,7 +253,8 @@ fs.writeFileSync(path.join(outDir,'asset-report.json'),JSON.stringify({
     'app-v11 through app-v13 have no Teacher OS state writes',
     `app-v14 Comcigan main-state writes routed through TeacherOSStorage (${v14StorageWrites}); per-browser Comcigan config remains a separate local setting`,
     'app-v15 through app-v17 have no Teacher OS state writes',
-    `app-v18 enriched import state write routed through TeacherOSStorage (${v18StorageWrites})`
+    `app-v18 enriched import state write routed through TeacherOSStorage (${v18StorageWrites})`,
+    `app-v19 work-pack state writes routed through TeacherOSStorage (${v19StorageWrites}); schema initialization skips redundant writes on unchanged renders`
   ],
   jsFiles:jsFiles.length,
   cssFiles:cssFiles.length,
@@ -250,4 +266,4 @@ fs.writeFileSync(path.join(outDir,'asset-report.json'),JSON.stringify({
   order:{js:jsFiles,css:cssFiles}
 },null,2));
 
-console.log(`Teacher OS v1 baseline built: ${jsFiles.length} historical JS + ${cssFiles.length} CSS layers, shared state storage boundary active through v0.18, deterministic parity previews generated`);
+console.log(`Teacher OS v1 baseline built: ${jsFiles.length} historical JS + ${cssFiles.length} CSS layers, shared state storage boundary active through v0.19, deterministic parity previews generated`);
