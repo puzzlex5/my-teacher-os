@@ -19,5 +19,9 @@ ok(app.includes('원본 파일은 Teacher OS에 장기 보관하지 않습니다
 ok(app.includes("input.value=''"),'file input released after analysis');
 ok(app.includes('myTeacherOS.importVersionHistory.v1'),'replacement undo history exists');
 ok(app.includes("AUTO_CLASSES=new Set(['calendar','timetable','live','assessment','admin','club'])"),'auto replacement limited to structured document classes');
+ok(app.includes('return writeHistory(h)'),'snapshot save result is propagated');
+ok(app.includes('if(!snapshotBeforeReplace(y,newImport,oldImports))'),'replacement fails closed when undo snapshot cannot be saved');
+ok(app.includes("if(!prepareReplace(y,info.newImport,info.oldImports)){ss.filter(s=>s.source===source).forEach(s=>s.checked=false)"),'failed replacement unchecks source instead of applying new data');
+ok(app.includes('문서 교체를 중단했습니다.'),'storage failure is visible instead of silent');
 ok(css.includes('@media(max-width:680px)'),'mobile version review UI');
 console.log(`v0.30 document version tests passed (${n} assertions)`);
