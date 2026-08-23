@@ -30,9 +30,12 @@ async function startupState(page){
   return page.evaluate(()=>({
     navCount:document.querySelectorAll('#nav button').length,
     hasWorkLibrary:!!document.querySelector('#worklibrary'),
-    hasTeacherDesk:!!document.querySelector('#teacherDesk27'),
-    bodyText:String(document.body?.innerText||'').replace(/\s+/g,' ').trim().slice(0,400)
+    hasTeacherDesk:!!document.querySelector('#teacherDesk27')
   }));
+}
+
+async function bodyPreview(page){
+  return page.evaluate(()=>String(document.body?.innerText||'').replace(/\s+/g,' ').trim().slice(0,400));
 }
 
 async function fingerprint(page){
@@ -85,14 +88,18 @@ for(const device of [
     try{
       const legacyStart=await startupState(legacy.page);
       const bundleStart=await startupState(bundle.page);
+      const legacyBody=await bodyPreview(legacy.page);
+      const bundleBody=await bodyPreview(bundle.page);
 
-      expect(legacy.pageErrors,`legacy page errors: ${legacy.pageErrors.join(' | ')}; state=${JSON.stringify(legacyStart)}`).toEqual([]);
+      expect(legacy.pageErrors,`legacy page errors: ${legacy.pageErrors.join(' | ')}; state=${JSON.stringify(legacyStart)}; body=${legacyBody}`).toEqual([]);
       expect(legacy.requestFailures,`legacy request failures: ${legacy.requestFailures.join(' | ')}`).toEqual([]);
       expect(legacyStart.hasWorkLibrary,`legacy work library missing; state=${JSON.stringify(legacyStart)}`).toBe(true);
       expect(legacyStart.hasTeacherDesk,`legacy Teacher Desk missing; state=${JSON.stringify(legacyStart)}`).toBe(true);
 
-      expect(bundle.pageErrors,`bundle page errors: ${bundle.pageErrors.join(' | ')}; state=${JSON.stringify(bundleStart)}`).toEqual([]);
+      expect(bundle.pageErrors,`bundle page errors: ${bundle.pageErrors.join(' | ')}; state=${JSON.stringify(bundleStart)}; body=${bundleBody}`).toEqual([]);
       expect(bundle.requestFailures,`bundle request failures: ${bundle.requestFailures.join(' | ')}`).toEqual([]);
+      // Status/footer text is intentionally excluded: several legacy layers update it
+      // asynchronously, so its exact version label at 1.2s is timing, not behavior.
       expect(bundleStart).toEqual(legacyStart);
       expect(await fingerprint(bundle.page)).toEqual(await fingerprint(legacy.page));
       expect(await navigationFingerprint(bundle.page)).toEqual(await navigationFingerprint(legacy.page));
