@@ -29,20 +29,21 @@ const css=cssFiles.map(f=>banner(f)+readRequired(f)).join('\n');
 fs.writeFileSync(path.join(outDir,'teacher-os-v1.runtime.js'),js);
 fs.writeFileSync(path.join(outDir,'teacher-os-v1.runtime.css'),css);
 
-// Build a local preview from the same HTML shell used by the live loader. Only the
-// historical CSS/JS layer references are replaced; third-party libraries and all
-// DOM markup stay untouched. This gives browser parity tests a real bundled target.
+// Build a local preview from the same HTML shell used by the live loader. The base
+// URL remains the repository root so runtime fetch('./...') calls resolve exactly as
+// they do in the live app. Only historical CSS/JS references are replaced.
 let preview=readRequired('app-v05.html');
+preview=replaceExactly(preview,'<title>MY TEACHER OS</title>','<title>MY TEACHER OS</title>\n<base href="../">','document base');
 preview=replaceExactly(
   preview,
   '<link rel="stylesheet" href="app-v05.css">',
-  '<link rel="stylesheet" href="teacher-os-v1.runtime.css">',
+  '<link rel="stylesheet" href="dist-v1/teacher-os-v1.runtime.css">',
   'base stylesheet'
 );
 preview=replaceExactly(
   preview,
   '<script src="core-v05.js"></script>',
-  '<script src="teacher-os-v1.runtime.js"></script>',
+  '<script src="dist-v1/teacher-os-v1.runtime.js"></script>',
   'base core script'
 );
 preview=replaceExactly(
