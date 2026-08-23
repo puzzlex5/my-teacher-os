@@ -28,11 +28,23 @@ jobs:
       - name: Verify frozen runtime baseline
         run: node tests/v1-consolidation-tests.mjs
 
-      - name: Build exact-order 1.0 baseline bundle
+      - name: Build exact-order 1.0 baseline bundle and preview
         run: node scripts/build-v1-runtime.mjs
 
       - name: Syntax check consolidated runtime
         run: node --check dist-v1/teacher-os-v1.runtime.js
 
+      - name: Install Chromium parity runner
+        run: npx --yes playwright@1.55.0 install --with-deps chromium
+
+      - name: Browser parity — legacy layers vs bundled runtime
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/teacher-os-v1-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          npx --yes playwright@1.55.0 test tests/v1-browser-parity.spec.js --reporter=line --workers=1
+
       - name: Bundle report
+        if: always()
         run: cat dist-v1/asset-report.json
