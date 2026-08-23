@@ -38,6 +38,8 @@ jobs:
           fi
           ROOT_STATUS=$(curl -L -sS -o diagnostics/live-root.html -w '%{http_code}' 'https://puzzlex5.github.io/' || true)
           PROJECT_STATUS=$(curl -L -sS -o diagnostics/live-project.html -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/' || true)
+          V26_STATUS=$(curl -L -sS -o diagnostics/live-v26.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v26.js' || true)
+          V26CSS_STATUS=$(curl -L -sS -o diagnostics/live-v26.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v26.css' || true)
           CORE25_STATUS=$(curl -L -sS -o diagnostics/live-core-v25.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v25.js' || true)
           V25_STATUS=$(curl -L -sS -o diagnostics/live-v25.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v25.js' || true)
           V25CSS_STATUS=$(curl -L -sS -o diagnostics/live-v25.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v25.css' || true)
@@ -47,9 +49,9 @@ jobs:
           CORE23_STATUS=$(curl -L -sS -o diagnostics/live-core-v23.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v23.js' || true)
           V23_STATUS=$(curl -L -sS -o diagnostics/live-v23.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v23.js' || true)
           V23CSS_STATUS=$(curl -L -sS -o diagnostics/live-v23.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v23.css' || true)
-          INDEX_HAS_V25=$(grep -q 'core-v25.js' diagnostics/live-project.html && grep -q 'app-v25.js' diagnostics/live-project.html && grep -q 'app-v25.css' diagnostics/live-project.html && echo true || echo false)
-          printf '{"root":"%s","project":"%s","core25":"%s","v25":"%s","v25css":"%s","recordQualityLibrary":"%s","v24":"%s","v24css":"%s","core23":"%s","v23":"%s","v23css":"%s","indexHasV25":%s}\n' "$ROOT_STATUS" "$PROJECT_STATUS" "$CORE25_STATUS" "$V25_STATUS" "$V25CSS_STATUS" "$QUALITYLIB_STATUS" "$V24_STATUS" "$V24CSS_STATUS" "$CORE23_STATUS" "$V23_STATUS" "$V23CSS_STATUS" "$INDEX_HAS_V25" > diagnostics/live-http-status.json
-          head -c 1300 diagnostics/live-project.html > diagnostics/live-project-head.txt || true
+          INDEX_HAS_V26=$(grep -q 'app-v26.js' diagnostics/live-project.html && grep -q 'app-v26.css' diagnostics/live-project.html && echo true || echo false)
+          printf '{"root":"%s","project":"%s","v26":"%s","v26css":"%s","core25":"%s","v25":"%s","v25css":"%s","recordQualityLibrary":"%s","v24":"%s","v24css":"%s","core23":"%s","v23":"%s","v23css":"%s","indexHasV26":%s}\n' "$ROOT_STATUS" "$PROJECT_STATUS" "$V26_STATUS" "$V26CSS_STATUS" "$CORE25_STATUS" "$V25_STATUS" "$V25CSS_STATUS" "$QUALITYLIB_STATUS" "$V24_STATUS" "$V24CSS_STATUS" "$CORE23_STATUS" "$V23_STATUS" "$V23CSS_STATUS" "$INDEX_HAS_V26" > diagnostics/live-http-status.json
+          head -c 1400 diagnostics/live-project.html > diagnostics/live-project-head.txt || true
           printf '{"checkedAt":"%s","sha":"%s","latestRunId":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GITHUB_SHA" "$RUN_ID" > diagnostics/pages-check.json
 
       - name: Commit diagnostics
