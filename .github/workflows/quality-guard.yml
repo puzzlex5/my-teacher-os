@@ -49,13 +49,30 @@ jobs:
           node tests/v29-tests.js
           node tests/v30-tests.js
           node tests/v31-tests.js
+          node tests/v32-tests.js
 
       - name: JavaScript syntax guard
         run: |
           set -euo pipefail
-          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js app-v23.js app-v24.js app-v25.js app-v26.js app-v27.js app-v28.js app-v29.js app-v30.js app-v31.js core-v23.js core-v25.js core-v27.js core-v28.js core-v29.js core-v30.js core-v31.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
+          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js app-v23.js app-v24.js app-v25.js app-v26.js app-v27.js app-v28.js app-v29.js app-v30.js app-v31.js app-v32.js core-v23.js core-v25.js core-v27.js core-v28.js core-v29.js core-v30.js core-v31.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
             node --check "$f"
           done
+
+      - name: Real-device local vault self-test guard
+        run: |
+          set -euo pipefail
+          grep -q "myTeacherOS.deviceStorageSelfTest.v1" app-v32.js
+          grep -q "myTeacherOS.sourceVault" app-v32.js
+          grep -q "objectStore(STORE).put(record)" app-v32.js
+          grep -q "objectStore(STORE).get(key)" app-v32.js
+          grep -q "objectStore(STORE).delete(key)" app-v32.js
+          grep -q "restored!==payload||restoredDigest!==digest" app-v32.js
+          grep -q "opt.disabled=!passed" app-v32.js
+          grep -q "select.value='reference'" app-v32.js
+          grep -q "IndexedDB 쓰기·읽기·무결성·삭제 통과" app-v32.js
+          ! grep -q "fetch(" app-v32.js
+          grep -q 'app-v32.js' index.html
+          grep -q 'app-v32.css' index.html
 
       - name: Source retention and local vault guard
         run: |
@@ -152,6 +169,7 @@ jobs:
       - name: Mobile layout guard
         run: |
           set -euo pipefail
+          grep -q '@media(max-width:680px)' app-v32.css
           grep -q '@media(max-width:680px)' app-v31.css
           grep -q '@media(max-width:680px)' app-v30.css
           grep -q '@media(max-width:680px)' app-v28.css
@@ -178,6 +196,10 @@ jobs:
           set -euo pipefail
           base='https://puzzlex5.github.io/my-teacher-os'
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/" >/dev/null
+          if curl --fail --silent --show-error "$base/" | grep -q 'app-v32.js'; then
+            curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v32.js" >/dev/null
+            curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v32.css" >/dev/null
+          fi
           if curl --fail --silent --show-error "$base/" | grep -q 'core-v31.js'; then
             curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/core-v31.js" >/dev/null
             curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v31.js" >/dev/null
@@ -206,8 +228,9 @@ jobs:
           {
             echo '## Teacher OS Quality Guard'
             echo ''
-            echo '- Regression tests through v0.31: checked'
-            echo '- JavaScript syntax through v0.31: checked'
+            echo '- Regression tests through v0.32: checked'
+            echo '- JavaScript syntax through v0.32: checked'
+            echo '- Per-device IndexedDB write/read/integrity/delete self-test and fail-safe fallback: checked'
             echo '- Three-tier source retention, local IndexedDB vault, quota guard and raw-file purge: checked'
             echo '- Document family/version comparison, conservative replacement, source-file release and undo: checked'
             echo '- Unverified timetable vs confirmed zero lessons: checked'
