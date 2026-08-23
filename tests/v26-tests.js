@@ -1,0 +1,16 @@
+const fs=require('fs');
+const app=fs.readFileSync('app-v26.js','utf8');
+const css=fs.readFileSync('app-v26.css','utf8');
+const index=fs.readFileSync('index.html','utf8');
+if(!app.includes("myTeacherOS.feedbackReports.v1"))throw new Error('feedback local queue missing');
+if(!app.includes('오류·불편 신고'))throw new Error('feedback UI missing');
+if(!app.includes('학생 이름·상담내용·전화번호'))throw new Error('privacy warning missing');
+if(!app.includes('navigator.share'))throw new Error('native share fallback missing');
+if(!app.includes('navigator.clipboard'))throw new Error('clipboard fallback missing');
+if(!app.includes('github.com/puzzlex5/my-teacher-os/issues/new'))throw new Error('GitHub issue composer missing');
+if(!app.includes('lastRuntimeError26'))throw new Error('runtime error context missing');
+if(!app.includes('activeView26'))throw new Error('current-page metadata missing');
+if(!css.includes('@media(max-width:680px)'))throw new Error('mobile feedback layout missing');
+if(!index.includes('app-v26.js'))throw new Error('index does not load v26 js');
+if(!index.includes('app-v26.css'))throw new Error('index does not load v26 css');
+console.log('v0.26 in-app tester feedback loop tests passed');
