@@ -8,9 +8,13 @@ ok(app.includes('objectStore(STORE).get(key)'),'reads synthetic test file back')
 ok(app.includes('restored!==payload||restoredDigest!==digest'),'verifies byte/content integrity');
 ok(app.includes('objectStore(STORE).delete(key)'),'deletes synthetic test file');
 ok(app.includes("const after=await getRecord(db,key);if(after)"),'verifies deletion');
-ok(app.includes("opt.disabled=!passed"),'local raw retention blocked until real-device test passes');
-ok(app.includes("select.value='reference'"),'failed test falls back to reference retention');
-ok(app.includes("if(!r||!r.ok||age>DAY)"),'auto-tests unverified, failed, or stale device state');
+ok(app.includes("function freshPass(r)"),'fresh pass helper exists');
+ok(app.includes("r?.ok===true&&age>=0&&age<=DAY"),'passed result must also be recent and not future-dated');
+ok(app.includes("const passed=freshPass(r)"),'local retention guard uses fresh pass, not stale success');
+ok(app.includes("opt.disabled=!passed"),'local raw retention blocked until current real-device test passes');
+ok(app.includes("select.value='reference'"),'failed or stale test falls back to reference retention');
+ok(app.includes("if(!freshPass(r))"),'auto-tests unverified, failed, stale, or malformed device state');
+ok(app.includes('24시간 유효기간이 지났습니다'),'stale success is visibly distinguished from current pass');
 ok(app.includes('IndexedDB 쓰기·읽기·무결성·삭제 통과'),'visible successful device result');
 ok(app.includes('안전하게 출처·버전 보관으로 사용합니다'),'visible safe fallback on failure');
 ok(!app.includes('fetch('),'device self-test has no network upload');
