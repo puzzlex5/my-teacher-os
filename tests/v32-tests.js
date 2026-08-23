@@ -1,0 +1,18 @@
+const assert=require('assert'),fs=require('fs'),path=require('path');
+const app=fs.readFileSync(path.join(__dirname,'../app-v32.js'),'utf8'),css=fs.readFileSync(path.join(__dirname,'../app-v32.css'),'utf8');
+let n=0;const ok=(v,m)=>{assert.ok(v,m);n++};
+ok(app.includes("DB_NAME='myTeacherOS.sourceVault'"),'uses same local vault database as retention layer');
+ok(app.includes("RESULT_KEY='myTeacherOS.deviceStorageSelfTest.v1'"),'stores per-device self-test result');
+ok(app.includes('objectStore(STORE).put(record)'),'writes synthetic test file');
+ok(app.includes('objectStore(STORE).get(key)'),'reads synthetic test file back');
+ok(app.includes('restored!==payload||restoredDigest!==digest'),'verifies byte/content integrity');
+ok(app.includes('objectStore(STORE).delete(key)'),'deletes synthetic test file');
+ok(app.includes("const after=await getRecord(db,key);if(after)"),'verifies deletion');
+ok(app.includes("opt.disabled=!passed"),'local raw retention blocked until real-device test passes');
+ok(app.includes("select.value='reference'"),'failed test falls back to reference retention');
+ok(app.includes("if(!r||!r.ok||age>DAY)"),'auto-tests unverified, failed, or stale device state');
+ok(app.includes('IndexedDB 쓰기·읽기·무결성·삭제 통과'),'visible successful device result');
+ok(app.includes('안전하게 출처·버전 보관으로 사용합니다'),'visible safe fallback on failure');
+ok(!app.includes('fetch('),'device self-test has no network upload');
+ok(css.includes('@media(max-width:680px)'),'mobile self-test UI');
+console.log(`v0.32 real-device storage self-test checks passed (${n} assertions)`);
