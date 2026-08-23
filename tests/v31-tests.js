@@ -25,6 +25,8 @@ ok(app.includes('이 기기에 원본도 보관'),'local original option visible
 ok(app.includes('원본 위치 메모'),'source location metadata input');
 ok(app.includes('로컬 원본 전체 삭제'),'local vault purge control');
 ok(app.includes('출처·해시·버전 이력은 유지됩니다'),'single raw deletion preserves lineage');
+ok(app.includes("imports31(y).find(x=>x.hash===h)||null"),'retention matches exact analyzed file hash');
+ok(app.includes('분석 미완료/일치 실패'),'unmatched or failed analysis does not attach raw file to an old import');
 ok(!app.includes('fetch('),'retention layer has no network upload');
 ok(css.includes('@media(max-width:680px)'),'mobile retention UI');
 console.log(`v0.31 source retention tests passed (${n} assertions)`);
