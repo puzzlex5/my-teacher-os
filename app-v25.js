@@ -24,16 +24,33 @@
   }
   const DIM_LABEL={grounding:'근거 연결',specificity:'구체성',growth:'변화·성장',process:'과정·역할',clarity:'문장 안정',safety:'기재 안전'};
   const DIM_MAX={grounding:35,specificity:15,growth:15,process:15,clarity:10,safety:10};
-  function renderResult(res){lastResult=res;const score=q('#v25Score');if(score){score.innerHTML=`<b>${res.score}</b><span>${esc(res.level)}</span>`;score.className='v25-score '+(res.critical?'danger':res.score>=88?'good':res.score>=78?'ok':'warn')}
+  function renderResult(res){
+    lastResult=res;
+    const score=q('#v25Score');if(score){score.innerHTML=`<b>${res.score}</b><span>${esc(res.level)}</span>`;score.className='v25-score '+(res.critical?'danger':res.score>=88?'good':res.score>=78?'ok':'warn')}
     const dims=q('#v25Dimensions');if(dims)dims.innerHTML=Object.entries(res.dimensions).map(([k,v])=>`<div class="v25-dim"><span>${DIM_LABEL[k]}</span><b>${v}/${DIM_MAX[k]}</b><meter min="0" max="${DIM_MAX[k]}" value="${v}"></meter></div>`).join('');
     const issues=q('#v25Issues');if(issues)issues.innerHTML=res.issues.length?res.issues.map(x=>`<div class="v25-item ${x.severity}"><b>${x.severity==='critical'?'필수 확인':x.severity==='warn'?'주의':'보완'}</b><span>${esc(x.message)}</span></div>`).join(''):'<div class="v25-item good"><b>통과</b><span>현재 규칙에서 별도 보완 경고가 없습니다.</span></div>';
     const strengths=q('#v25Strengths');if(strengths)strengths.innerHTML=res.strengths.length?res.strengths.map(x=>`<div class="v25-item good"><b>확인</b><span>${esc(x)}</span></div>`).join(''):'<div class="empty">확인된 강점이 아직 없습니다.</div>';
-    const unsupported=q('#v25Unsupported');if(unsupported){unsupported.hidden=!res.unsupportedSentences?.length;unsupported.innerHTML=res.unsupportedSentences?.length?`<b>근거 연결이 약한 문장</b>${res.unsupportedSentences.map(x=>`<div>${esc(x)}</div>`).join('')}:''}
+    const unsupported=q('#v25Unsupported');if(unsupported){
+      unsupported.hidden=!res.unsupportedSentences?.length;
+      unsupported.innerHTML=res.unsupportedSentences?.length?`<b>근거 연결이 약한 문장</b>${res.unsupportedSentences.map(x=>`<div>${esc(x)}</div>`).join('')}`:'';
+    }
     const at=q('#v25CheckedAt');if(at)at.textContent='마지막 검사 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
   }
   function run(){ensureUI();const text=selectedText(),a=area();if(!text)return alert('A/B/C 초안 중 하나를 먼저 선택하세요.');const rows=evidenceRows();const res=R.analyzeDraft({text,evidence:rows,area:a});renderResult(res);saveSnapshot(res);return res}
   function saveSnapshot(res){const yy=y(),id=sid(),a=area();if(!yy||!id||!a||!yy.studentDrafts?.[id]?.[a])return;yy.studentDrafts[id][a].qualityCheck={score:res.score,level:res.level,critical:res.critical,issueCodes:res.issues.map(x=>x.code),evidenceCount:res.evidenceCount,checkedAt:new Date().toISOString()};localStorage.setItem(KEY,JSON.stringify(state))}
-  async function showSources(){ensureUI();await loadLibrary();const box=q('#v25SourceList');if(box)box.innerHTML=library?.sources?.length?library.sources.map(s=>`<article class="v25-source"><div class="v25-source-top"><span class="pill ${s.authority==='rule'?'blue':''}">${s.authority==='rule'?'공식 기재기준':s.authority==='rule-interpretation'?'공식 해석':'참고 관점'}</span><b>${esc(s.publisher)}</b></div><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a><div class="mini">${(s.criteria||[]).map(esc).join(' · ')}</div></article>`).join(''):'<div class="empty">기준 라이브러리를 불러오지 못했습니다.</div>';q('#v25SourceDlg')?.showModal()}
+  async function showSources(){
+    ensureUI();await loadLibrary();const box=q('#v25SourceList');
+    if(box){
+      if(library?.sources?.length){
+        box.innerHTML=library.sources.map(s=>{
+          const type=s.authority==='rule'?'공식 기재기준':s.authority==='rule-interpretation'?'공식 해석':'참고 관점';
+          const blue=s.authority==='rule'?'blue':'';
+          return `<article class="v25-source"><div class="v25-source-top"><span class="pill ${blue}">${type}</span><b>${esc(s.publisher)}</b></div><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a><div class="mini">${(s.criteria||[]).map(esc).join(' · ')}</div></article>`;
+        }).join('');
+      }else box.innerHTML='<div class="empty">기준 라이브러리를 불러오지 못했습니다.</div>';
+    }
+    q('#v25SourceDlg')?.showModal();
+  }
   function reset(){ensureUI();lastResult=null;const s=q('#v25Score');if(s){s.className='v25-score';s.innerHTML='<b>-</b><span>점검 전</span>'}q('#v25Dimensions')&&(q('#v25Dimensions').innerHTML='');q('#v25Issues')&&(q('#v25Issues').innerHTML='<div class="empty">초안을 선택한 뒤 품질검사를 실행하세요.</div>');q('#v25Strengths')&&(q('#v25Strengths').innerHTML='<div class="empty">검사 후 표시됩니다.</div>');q('#v25Unsupported')&&(q('#v25Unsupported').hidden=true)}
   function bind(){document.body.addEventListener('click',e=>{if(e.target.closest('#v25Run')){run();return}if(e.target.closest('#v25Sources')){showSources();return}if(e.target.closest('#v25SourceClose')){q('#v25SourceDlg')?.close();return}if(e.target.closest('[data-v21-select]'))setTimeout(()=>{reset();run()},0);if(e.target.closest('[data-v21-area]')||e.target.closest('[data-student-id]'))setTimeout(reset,0);if(e.target.closest('#v21SaveDraft'))setTimeout(()=>{if(lastResult)saveSnapshot(lastResult)},0)});document.body.addEventListener('input',e=>{if(e.target.matches('.v21-draft-text')&&e.target.closest('[data-v21-card].selected')){clearTimeout(e.target._v25t);e.target._v25t=setTimeout(run,500)}})}
   function boot(){ensureUI();bind();loadLibrary();const foot=q('.side-foot');if(foot)foot.textContent='v0.25 · grounded school-record quality gate'}
