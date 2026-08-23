@@ -1,0 +1,13 @@
+const assert=require('assert');
+const T=require('../core-v29.js');
+let n=0;const ok=(v,m)=>{assert.ok(v,m);n++};
+ok(T.nextLessonTruth({}, {status:'none',live:false,slot:null}).known===false,'no source is unknown');
+ok(T.nextLessonTruth({comciganSync:{status:'waiting'}},{status:'none',live:false,slot:null}).label==='컴시간 최신표 미확인','waiting label');
+ok(T.nextLessonTruth({comciganSync:{status:'mismatch'}},{status:'none',live:false,slot:null}).label==='컴시간 설정 불일치','mismatch label');
+ok(T.nextLessonTruth({timetable:[{day:'월',period:1}]},{status:'none',live:false,slot:null}).known===true,'basic timetable makes zero-day result interpretable');
+ok(T.nextLessonTruth({}, {status:'none',live:true,slot:null}).known===true,'live week with zero slots is confirmed zero');
+ok(T.nextLessonTruth({}, {status:'done',live:false,slot:null}).known===true,'completed day is known');
+const fs=require('fs'),p=require('path');const app=fs.readFileSync(p.join(__dirname,'../app-v29.js'),'utf8');
+ok(app.includes('오늘 수업 여부를 확정할 수 없습니다.'),'unknown-state copy');
+ok(app.includes('0건으로 처리하지 않습니다.'),'zero-vs-unknown guard copy');
+console.log(`v0.29 data truth tests passed (${n} assertions)`);
