@@ -43,13 +43,25 @@ jobs:
           node tests/v23-tests.js
           node tests/v24-tests.js
           node tests/v25-tests.js
+          node tests/v26-tests.js
 
       - name: JavaScript syntax guard
         run: |
           set -euo pipefail
-          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js app-v23.js app-v24.js app-v25.js core-v23.js core-v25.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
+          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js app-v23.js app-v24.js app-v25.js app-v26.js core-v23.js core-v25.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
             node --check "$f"
           done
+
+      - name: Tester feedback guard
+        run: |
+          set -euo pipefail
+          grep -q 'myTeacherOS.feedbackReports.v1' app-v26.js
+          grep -q '학생 이름·상담내용·전화번호' app-v26.js
+          grep -q 'navigator.share' app-v26.js
+          grep -q 'issues/new' app-v26.js
+          grep -q '@media(max-width:680px)' app-v26.css
+          grep -q 'app-v26.js' index.html
+          grep -q 'app-v26.css' index.html
 
       - name: School-record quality guard
         run: |
@@ -84,6 +96,7 @@ jobs:
       - name: Mobile layout guard
         run: |
           set -euo pipefail
+          grep -q '@media(max-width:680px)' app-v26.css
           grep -q '@media(max-width:780px)' app-v25.css
           grep -q '@media(max-width:680px)' app-v24.css
           grep -q 'height:auto!important' app-v20.css
@@ -105,6 +118,8 @@ jobs:
           set -euo pipefail
           base='https://puzzlex5.github.io/my-teacher-os'
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v26.js" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v26.css" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/core-v25.js" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v25.js" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v25.css" >/dev/null
@@ -118,12 +133,13 @@ jobs:
           {
             echo '## Teacher OS Quality Guard'
             echo ''
-            echo '- Regression tests through v0.25: checked'
-            echo '- JavaScript syntax through v0.25: checked'
+            echo '- Regression tests through v0.26: checked'
+            echo '- JavaScript syntax through v0.26: checked'
+            echo '- Tester feedback loop, privacy warning and share fallback: checked'
             echo '- Grounded school-record quality and prohibited-expression guard: checked'
             echo '- Per-browser personal isolation and Comcigan blocking: checked'
             echo '- Document Intelligence OCR/classifier safety: checked'
-            echo '- Mobile responsive quality studio: checked'
+            echo '- Mobile responsive feedback and quality studio: checked'
             echo '- Public repository audio privacy: checked'
-            echo '- GitHub Pages live assets through v0.25: checked'
+            echo '- GitHub Pages live assets through v0.26: checked'
           } >> "$GITHUB_STEP_SUMMARY"
