@@ -24,21 +24,39 @@ function withRootBase(source){
   return replaceExactly(source,'<title>MY TEACHER OS</title>','<title>MY TEACHER OS</title>\n<base href="../">','document base');
 }
 
+// Known baseline correctness fix discovered by the first real Chromium run:
+// app-v05 auto-runs self tests on a brand-new profile, then called renderHealth(null).
+// Separate script tags reported the exception but continued to later layers; a single
+// bundle correctly exposed that this would abort the rest of the runtime. Keep this
+// fix explicit and exact until app-v05 itself is safely rewritten during consolidation.
+function runtimeSource(file){
+  let source=readRequired(file);
+  if(file==='app-v05.js'){
+    source=replaceExactly(
+      source,
+      "renderHealth(cur())}",
+      "const currentYearState=cur();if(currentYearState)renderHealth(currentYearState)}",
+      'app-v05 null-year self-test health guard'
+    );
+  }
+  return source;
+}
+
 const jsFiles=[...manifest.coreJs,...manifest.appJs];
 const cssFiles=[...manifest.css];
-const js=jsFiles.map(f=>banner(f)+readRequired(f)).join('\n');
+const js=jsFiles.map(f=>banner(f)+runtimeSource(f)).join('\n');
 const css=cssFiles.map(f=>banner(f)+readRequired(f)).join('\n');
 
 fs.writeFileSync(path.join(outDir,'teacher-os-v1.runtime.js'),js);
 fs.writeFileSync(path.join(outDir,'teacher-os-v1.runtime.css'),css);
+fs.writeFileSync(path.join(outDir,'legacy-app-v05.js'),runtimeSource('app-v05.js'));
 
 const shell=readRequired('app-v05.html');
 
-// Deterministic legacy reference: same HTML shell, same 40 JS / 26 CSS files and
-// the same ordering as the live loader, but without index.html's async fetch +
-// document.write bootstrap. This isolates the semantic question we need to prove:
-// do separate historical script/style tags behave the same as the consolidated
-// single JS/CSS runtime?
+// Deterministic separate-layer reference. It uses the same ordered asset set as the
+// live loader, with only the explicit null-year baseline fix above substituted for
+// app-v05.js. This makes script-boundary semantics testable without index.html's
+// async fetch/document.write bootstrap.
 let legacy=withRootBase(shell);
 legacy=replaceExactly(
   legacy,
@@ -55,13 +73,13 @@ legacy=replaceExactly(
 legacy=replaceExactly(
   legacy,
   '<script src="app-v05.js"></script>',
-  manifest.appJs.map(f=>`<script src="${f}"></script>`).join('\n'),
+  manifest.appJs.map(f=>`<script src="${f==='app-v05.js'?'dist-v1/legacy-app-v05.js':f}"></script>`).join('\n'),
   'legacy app script set'
 );
 fs.writeFileSync(path.join(outDir,'legacy.html'),legacy);
 
-// Consolidated preview: identical shell/resources, replacing only the historical
-// asset sets with one ordered CSS bundle and one ordered JS bundle.
+// Consolidated preview: identical shell/resources, replacing historical assets with
+// one ordered CSS bundle and one ordered JS bundle.
 let preview=withRootBase(shell);
 preview=replaceExactly(
   preview,
@@ -81,6 +99,7 @@ fs.writeFileSync(path.join(outDir,'index.html'),preview);
 fs.writeFileSync(path.join(outDir,'asset-report.json'),JSON.stringify({
   baseline:manifest.baseline,
   generatedAt:new Date().toISOString(),
+  baselineFixes:['app-v05 null-year self-test health guard'],
   jsFiles:jsFiles.length,
   cssFiles:cssFiles.length,
   jsBytes:Buffer.byteLength(js),
@@ -90,4 +109,4 @@ fs.writeFileSync(path.join(outDir,'asset-report.json'),JSON.stringify({
   order:{js:jsFiles,css:cssFiles}
 },null,2));
 
-console.log(`Teacher OS v1 baseline built: ${jsFiles.length} JS + ${cssFiles.length} CSS legacy layers, one bundled runtime, deterministic parity previews generated`);
+console.log(`Teacher OS v1 baseline built: ${jsFiles.length} JS + ${cssFiles.length} CSS layers, explicit startup guard applied, deterministic parity previews generated`);
