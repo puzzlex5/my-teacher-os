@@ -4,6 +4,7 @@
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const CAL_HISTORY_KEY='myTeacherOS.calendarEditHistory.v1';
   const CONTACT_KEY='myTeacherOS.staffContacts.v1';
+  const COMCIGAN_KEY='myTeacherOS.comciganConfig';
 
   function y28(){try{return typeof cur==='function'?cur():null}catch{return null}}
   function st28(){try{return state}catch{return null}}
@@ -63,7 +64,7 @@
   }
   async function copy28(v){try{await navigator.clipboard.writeText(v);return true}catch{return false}}
 
-  // ── 학사일정: 공식/가져온 일정 수정 전 로컬 이력 저장 + 한 번 되돌리기 ──
+  // ── 학사일정: 가져온 일정 수정 전 로컬 이력 저장 + 되돌리기 ──
   function readCalHistory28(){try{const x=JSON.parse(localStorage.getItem(CAL_HISTORY_KEY)||'[]');return Array.isArray(x)?x:[]}catch{return[]}}
   function writeCalHistory28(a){localStorage.setItem(CAL_HISTORY_KEY,JSON.stringify((a||[]).slice(-20)))}
   function pushCalendarHistory28(ev){const a=readCalHistory28();a.push(ev);writeCalHistory28(a);renderCalendarUndo28()}
@@ -85,7 +86,27 @@
     y.calendarEvents[pos]={...h.before};all.splice(idx,1);writeCalHistory28(all);localStorage.setItem(KEY,JSON.stringify(state));if(typeof render==='function')render();if(typeof switchView==='function')switchView('calendar');renderCalendarUndo28()
   }
 
-  function refresh28(){setTimeout(()=>{updateByteMeters28();renderCalendarUndo28();const foot=q('.side-foot');if(foot)foot.textContent='v0.28 · precision search + NEIS byte guard + calendar undo'},0)}
+  // ── 정확도 원칙: 데이터가 없다는 것과 불러오지 못했다는 것을 구분 ──
+  function comciganConfig28(){try{const x=JSON.parse(localStorage.getItem(COMCIGAN_KEY)||'null');return x&&typeof x==='object'?x:null}catch{return null}}
+  function completeComcigan28(c){return!!(c&&Number(c.schoolCode)>0&&Number(c.teacherIndex)>0&&String(c.teacherName||'').trim())}
+  function weekStart28(d=new Date()){const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return `${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,'0')}-${String(x.getDate()).padStart(2,'0')}`}
+  function syncTruth28(y){
+    const cfg=comciganConfig28(),configured=completeComcigan28(cfg),sync=y?.comciganSync||{},basic=(y?.timetable||[]).length>0,week=y?.liveTimetableWeeks?.[weekStart28()];
+    if(!configured)return{kind:'warn',title:'컴시간 미설정',detail:basic?'실제 변경표는 확인하지 못했습니다. 현재 카드는 기본 시간표 기준입니다.':'컴시간과 기본 시간표가 모두 없어 오늘 수업 여부를 확정할 수 없습니다.',uncertain:!basic};
+    if(sync.status==='mismatch')return{kind:'danger',title:'컴시간 설정 불일치',detail:basic?'잘못된 실제표 적용을 차단했습니다. 현재 카드는 기본 시간표 기준입니다.':'잘못된 실제표 적용을 차단했습니다. 수업 정보 확인이 필요합니다.',uncertain:!basic};
+    if(sync.status!=='ok')return{kind:'warn',title:'컴시간 최신표 미확인',detail:basic?'최신 변경표를 불러오지 못했거나 아직 준비되지 않았습니다. 현재 카드는 기본 시간표 기준입니다.':'최신 변경표를 확인하지 못했고 기본 시간표도 없습니다. 수업 정보 확인이 필요합니다.',uncertain:!basic};
+    if(!week||!Array.isArray(week.slots))return{kind:'warn',title:'이번 주 실제표 없음',detail:basic?'동기화 상태는 정상이지만 이번 주 실제표가 없어 기본 시간표 기준으로 표시합니다.':'동기화 상태는 정상이지만 이번 주 수업표가 없어 수업 여부를 확정할 수 없습니다.',uncertain:!basic};
+    const updated=week.updatedAt||sync.lastApplied||'',ts=updated?new Date(updated).getTime():NaN,age=Number.isFinite(ts)?Math.max(0,(Date.now()-ts)/3600000):null;
+    if(age!==null&&age>30)return{kind:'warn',title:'컴시간 자료 오래됨',detail:`마지막 실제표 적용이 약 ${Math.floor(age)}시간 전입니다. 변경 수업이 있다면 최신표를 다시 확인하세요.`,uncertain:false};
+    return{kind:'ok',title:'컴시간 실제표 확인됨',detail:updated?`마지막 적용 ${new Date(updated).toLocaleString('ko-KR')}`:'이번 주 실제표를 사용 중입니다.',uncertain:false};
+  }
+  function renderSyncTruth28(){
+    const box=q('#deskNext27'),y=y28();if(!box||!y)return;box.querySelector('.v28-source-truth')?.remove();const t=syncTruth28(y);
+    if(t.uncertain){box.innerHTML=`<div class="v28-source-truth ${t.kind}"><b>${esc(t.title)}</b><span>${esc(t.detail)}</span></div><div class="desk-next-top27"><span class="desk-status27">확인 필요</span><span class="mini">시간표 데이터 미확정</span></div><h3>오늘 수업 여부를 확정할 수 없습니다.</h3><div class="desk-next-foot27"><button type="button" class="btn secondary tiny" data-go27="timetable">시간표 상태 확인</button></div>`;return}
+    const banner=document.createElement('div');banner.className=`v28-source-truth ${t.kind}`;banner.innerHTML=`<b>${esc(t.title)}</b><span>${esc(t.detail)}</span>`;box.prepend(banner)
+  }
+
+  function refresh28(){setTimeout(()=>{updateByteMeters28();renderCalendarUndo28();renderSyncTruth28();const foot=q('.side-foot');if(foot)foot.textContent='v0.28 · precision search + data truth + NEIS byte guard + undo'},0)}
   function bind28(){
     document.addEventListener('click',blockOverLimit28,true);
     document.addEventListener('submit',captureCalendarEdit28,true);
@@ -96,5 +117,5 @@
 
   bind28();refresh28();
   const prevRender=globalThis.render;if(typeof prevRender==='function')globalThis.render=function(){const r=prevRender.apply(this,arguments);refresh28();return r};
-  const prevSwitch=globalThis.switchView;if(typeof prevSwitch==='function')globalThis.switchView=function(id){const r=prevSwitch.apply(this,arguments);if(id==='studentrecords'||id==='calendar')refresh28();return r};
+  const prevSwitch=globalThis.switchView;if(typeof prevSwitch==='function')globalThis.switchView=function(id){const r=prevSwitch.apply(this,arguments);if(id==='studentrecords'||id==='calendar'||id==='dashboard')refresh28();return r};
 })();
