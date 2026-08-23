@@ -35,6 +35,7 @@ let baseStorageWrites=0;
 let v6StorageWrites=0;
 let v7StorageWrites=0;
 let v9StorageWrites=0;
+let v10StorageWrites=0;
 
 // Known baseline correctness fix discovered by the first real Chromium run:
 // app-v05 auto-runs self tests on a brand-new profile, then called renderHealth(null).
@@ -45,10 +46,11 @@ let v9StorageWrites=0;
 // Phase 2 routes historical state persistence through one v1 storage boundary in small
 // verified steps. app-v05 owns the primary state read/write path; app-v06 and app-v07
 // add schema migration writes. app-v08 has no state persistence. app-v09 adds both its
-// schema migration write and lesson-progress/log persistence. Later layers remain
-// untouched until parity proves each migration safe. Non-state local keys such as
-// lessonAutoMinutes and Comcigan sync settings intentionally stay outside this migration
-// because they have different privacy/lifecycle semantics.
+// schema migration write and lesson-progress/log persistence. app-v10 adds its schema
+// migration plus Teacher Skills state/task persistence. Later layers remain untouched
+// until parity proves each migration safe. Non-state local keys such as lessonAutoMinutes
+// and Comcigan sync settings intentionally stay outside this migration because they have
+// different privacy/lifecycle semantics.
 function runtimeSource(file){
   let source=readRequired(file);
   if(file==='app-v05.js'){
@@ -107,6 +109,17 @@ function runtimeSource(file){
     source=migrated.source;
     v9StorageWrites=migrated.count;
   }
+  if(file==='app-v10.js'){
+    const migrated=replaceAllCounted(
+      source,
+      'localStorage.setItem(KEY,JSON.stringify(state))',
+      'globalThis.TeacherOSStorage.writeJSON(KEY,state)',
+      'app-v10 Teacher Skills state writes',
+      4
+    );
+    source=migrated.source;
+    v10StorageWrites=migrated.count;
+  }
   return source;
 }
 
@@ -121,6 +134,7 @@ fs.writeFileSync(path.join(outDir,'legacy-app-v05.js'),runtimeSource('app-v05.js
 fs.writeFileSync(path.join(outDir,'legacy-app-v06.js'),runtimeSource('app-v06.js'));
 fs.writeFileSync(path.join(outDir,'legacy-app-v07.js'),runtimeSource('app-v07.js'));
 fs.writeFileSync(path.join(outDir,'legacy-app-v09.js'),runtimeSource('app-v09.js'));
+fs.writeFileSync(path.join(outDir,'legacy-app-v10.js'),runtimeSource('app-v10.js'));
 
 const shell=readRequired('app-v05.html');
 
@@ -149,6 +163,7 @@ legacy=replaceExactly(
     if(f==='app-v06.js')return '<script src="dist-v1/legacy-app-v06.js"></script>';
     if(f==='app-v07.js')return '<script src="dist-v1/legacy-app-v07.js"></script>';
     if(f==='app-v09.js')return '<script src="dist-v1/legacy-app-v09.js"></script>';
+    if(f==='app-v10.js')return '<script src="dist-v1/legacy-app-v10.js"></script>';
     return `<script src="${f}"></script>`;
   }).join('\n'),
   'legacy app script set'
@@ -184,7 +199,8 @@ fs.writeFileSync(path.join(outDir,'asset-report.json'),JSON.stringify({
     `app-v06 schema migration writes routed through TeacherOSStorage (${v6StorageWrites})`,
     `app-v07 schema migration writes routed through TeacherOSStorage (${v7StorageWrites})`,
     'app-v08 has no Teacher OS state writes',
-    `app-v09 schema and lesson state writes routed through TeacherOSStorage (${v9StorageWrites})`
+    `app-v09 schema and lesson state writes routed through TeacherOSStorage (${v9StorageWrites})`,
+    `app-v10 Teacher Skills state writes routed through TeacherOSStorage (${v10StorageWrites})`
   ],
   jsFiles:jsFiles.length,
   cssFiles:cssFiles.length,
@@ -196,4 +212,4 @@ fs.writeFileSync(path.join(outDir,'asset-report.json'),JSON.stringify({
   order:{js:jsFiles,css:cssFiles}
 },null,2));
 
-console.log(`Teacher OS v1 baseline built: ${jsFiles.length} historical JS + ${cssFiles.length} CSS layers, shared state storage boundary active through v0.9, deterministic parity previews generated`);
+console.log(`Teacher OS v1 baseline built: ${jsFiles.length} historical JS + ${cssFiles.length} CSS layers, shared state storage boundary active through v0.10, deterministic parity previews generated`);
