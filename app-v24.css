@@ -1,0 +1,1 @@
+.v24-subject-field{display:grid;gap:7px;margin-top:12px;font-weight:700}.v24-isolation-card{margin-top:16px}.v24-isolation-card .head{align-items:flex-start}.v24-isolation-card .pill{white-space:nowrap}@media(max-width:680px){.v24-isolation-card .head{display:grid;grid-template-columns:1fr;gap:10px}.v24-isolation-card .pill{justify-self:start}.v24-subject-field{margin-top:10px}}
