@@ -97,7 +97,8 @@ function migrationProjection(state){
     calendarEvents:(y.calendarEvents||[]).map(x=>({id:x.id,date:x.date,title:x.title,type:x.type,scope:x.scope,impact:x.impact})),
     timetableExceptions:y.timetableExceptions,
     classProgress:y.classProgress,
-    paceStrategies:y.paceStrategies
+    paceStrategies:y.paceStrategies,
+    lessonLogs:y.lessonLogs
   };
 }
 
@@ -176,6 +177,7 @@ test('v1 shared storage preserves historical state migration across reload',asyn
     expect(Array.isArray(y.timetableExceptions)).toBe(true);
     expect(y.classProgress&&typeof y.classProgress).toBe('object');
     expect(y.paceStrategies&&typeof y.paceStrategies).toBe('object');
+    expect(Array.isArray(y.lessonLogs)).toBe(true);
     expect(y.calendarEvents[0].scope).toBeTruthy();
     expect(y.calendarEvents[0].impact).toBeTruthy();
     expect(y.timetable[0].target).toBeTruthy();
@@ -191,6 +193,7 @@ test('v1 shared storage preserves historical state migration across reload',asyn
     expect(legacyReloaded).toEqual(legacyProjection);
     expect(bundleReloaded).toEqual(bundleProjection);
     expect(bundleReloaded).toEqual(legacyReloaded);
+    expect(Array.isArray(bundleReloaded.lessonLogs)).toBe(true);
     expect(bundle.pageErrors,`bundle reload errors: ${bundle.pageErrors.join(' | ')}`).toEqual([]);
   } finally {
     await legacy.context.close();
