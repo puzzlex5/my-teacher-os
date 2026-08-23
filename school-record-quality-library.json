@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "updatedAt": "2026-08-23",
+  "principle": "교육부 기재 기준을 최우선으로 적용하고, 대학 공개 평가관점은 문장 품질을 돌아보기 위한 참고 렌즈로만 사용한다. 공개 사례 문장을 복사하거나 학생의 입시 가능성을 점수화하지 않는다.",
+  "sources": [
+    {
+      "id": "moe-2026-record-guide",
+      "authority": "rule",
+      "publisher": "교육부",
+      "title": "2026학년도 학교생활기록부 기재요령",
+      "url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=316&boardSeq=105372&lev=0&m=0302&opType=N&page=1&s=moe&statusYN=W",
+      "appliesTo": ["중학교", "고등학교"],
+      "criteria": ["교사의 직접 관찰·평가 근거", "구체적·종합적 기술", "학생 개인의 성취과정과 성취특성", "단순 활동 나열 지양", "기재 금지사항 준수"]
+    },
+    {
+      "id": "star-2026-subject-qa",
+      "authority": "rule-interpretation",
+      "publisher": "학교생활기록부 종합지원포털",
+      "title": "2026 과목별 세부능력 및 특기사항 기재 문의 답변",
+      "url": "https://star.moe.go.kr/web/contents/m30103.do?id=119329&schM=view",
+      "appliesTo": ["중학교"],
+      "criteria": ["수업 및 평가 과정의 수시·상시 관찰", "성취기준에 따른 성취특성", "학습활동 참여도", "자기주도적 변화와 성장", "단순 지식·활동 나열 지양"]
+    },
+    {
+      "id": "adiga-2026-holistic-lens",
+      "authority": "reference",
+      "publisher": "대입정보포털 어디가",
+      "title": "2026학년도 학생부종합전형 공개 평가요소 사례",
+      "url": "https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2026&unvCd=0002959",
+      "appliesTo": ["고등학교"],
+      "criteria": ["학업태도와 탐구", "자기주도성과 문제해결", "책임감과 협업", "활동의 동기·과정·역할이 확인되는 기록"]
+    },
+    {
+      "id": "adiga-2026-growth-lens",
+      "authority": "reference",
+      "publisher": "대입정보포털 어디가",
+      "title": "2026학년도 공개 서류평가 요소 사례",
+      "url": "https://www.adiga.kr/ucp/uvt/uni/univDetailSelection.do?menuId=PCUVTINF2000&searchSyr=2026&unvCd=0000146",
+      "appliesTo": ["고등학교"],
+      "criteria": ["수업·과제 수행 과정", "도전과 시도", "참여과정과 노력", "결과에 따른 변화와 성장", "공동체 기여와 성실성"]
+    },
+    {
+      "id": "snu-2027-prohibited-crosscheck",
+      "authority": "reference-safety",
+      "publisher": "서울대학교 입학본부",
+      "title": "2027학년도 수시모집 안내의 학교생활기록부 대체서식 유의사항",
+      "url": "https://admission.snu.ac.kr/webdata/admission/files/2027susi.pdf",
+      "appliesTo": ["고등학교"],
+      "criteria": ["학교생활기록부 기재 불가 항목 재확인", "교외 대회·수상·공인시험 등 부적절한 외부실적 표현 경계"]
+    }
+  ]
+}
