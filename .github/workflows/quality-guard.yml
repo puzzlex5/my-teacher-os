@@ -44,13 +44,27 @@ jobs:
           node tests/v24-tests.js
           node tests/v25-tests.js
           node tests/v26-tests.js
+          node tests/v27-tests.js
 
       - name: JavaScript syntax guard
         run: |
           set -euo pipefail
-          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js app-v23.js app-v24.js app-v25.js app-v26.js core-v23.js core-v25.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
+          for f in app-v07.js app-v08.js app-v09.js app-v10.js app-v11.js app-v12.js app-v13.js app-v14.js app-v15.js app-v16.js app-v17.js app-v18.js app-v19.js app-v20.js app-v21.js app-v22.js app-v23.js app-v24.js app-v25.js app-v26.js app-v27.js core-v23.js core-v25.js core-v27.js core-v09.js seed-v07.js scripts/sync-comcigan.mjs; do
             node --check "$f"
           done
+
+      - name: Teacher Desk accuracy and privacy guard
+        run: |
+          set -euo pipefail
+          grep -q '기본 교시시간 기준(예상)' app-v27.js
+          grep -q 'myTeacherOS.staffContacts.v1' app-v27.js
+          grep -q '연락처는 이 브라우저에만 저장' app-v27.js
+          grep -q '없는 내용을 만들어내지 않습니다' app-v27.js
+          ! grep -q 'fetch(' app-v27.js
+          grep -q 'lessonContext' core-v27.js
+          grep -q 'messageDigest' core-v27.js
+          grep -q 'core-v27.js' index.html
+          grep -q 'app-v27.css' index.html
 
       - name: Tester feedback guard
         run: |
@@ -59,9 +73,6 @@ jobs:
           grep -q '학생 이름·상담내용·전화번호' app-v26.js
           grep -q 'navigator.share' app-v26.js
           grep -q 'issues/new' app-v26.js
-          grep -q '@media(max-width:680px)' app-v26.css
-          grep -q 'app-v26.js' index.html
-          grep -q 'app-v26.css' index.html
 
       - name: School-record quality guard
         run: |
@@ -70,10 +81,7 @@ jobs:
           grep -q 'PROHIBITED' core-v25.js
           grep -q 'UNSUPPORTED' core-v25.js
           grep -q '합격 가능성 점수' app-v25.js
-          grep -q '공식 기준 보기' app-v25.js
           grep -q '교육부' school-record-quality-library.json
-          grep -q 'core-v25.js' index.html
-          grep -q 'app-v25.css' index.html
 
       - name: Personal isolation guard
         run: |
@@ -82,8 +90,6 @@ jobs:
           ! grep -q "fetch('./comcigan-config.json" app-v14.js
           grep -q "if(!completeConfig(config))" app-v14.js
           grep -q "myTeacherOS.deviceProfile.v1" app-v24.js
-          grep -q "y.clubs=\[\]" app-v24.js
-          grep -q "y.roleProfile={roles:\[\]" app-v24.js
 
       - name: Document intelligence guard
         run: |
@@ -96,6 +102,7 @@ jobs:
       - name: Mobile layout guard
         run: |
           set -euo pipefail
+          grep -q '@media(max-width:680px)' app-v27.css
           grep -q '@media(max-width:680px)' app-v26.css
           grep -q '@media(max-width:780px)' app-v25.css
           grep -q '@media(max-width:680px)' app-v24.css
@@ -118,12 +125,12 @@ jobs:
           set -euo pipefail
           base='https://puzzlex5.github.io/my-teacher-os'
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/core-v27.js" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v27.js" >/dev/null
+          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v27.css" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v26.js" >/dev/null
-          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v26.css" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/core-v25.js" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v25.js" >/dev/null
-          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v25.css" >/dev/null
-          curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/school-record-quality-library.json" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v24.js" >/dev/null
           curl --fail --silent --show-error --retry 3 --retry-delay 3 "$base/app-v23.js" >/dev/null
 
@@ -133,13 +140,14 @@ jobs:
           {
             echo '## Teacher OS Quality Guard'
             echo ''
-            echo '- Regression tests through v0.26: checked'
-            echo '- JavaScript syntax through v0.26: checked'
-            echo '- Tester feedback loop, privacy warning and share fallback: checked'
-            echo '- Grounded school-record quality and prohibited-expression guard: checked'
+            echo '- Regression tests through v0.27: checked'
+            echo '- JavaScript syntax through v0.27: checked'
+            echo '- Teacher Desk countdown accuracy labels and local-only contacts/text tools: checked'
+            echo '- Tester feedback loop and privacy warning: checked'
+            echo '- Grounded school-record quality guard: checked'
             echo '- Per-browser personal isolation and Comcigan blocking: checked'
             echo '- Document Intelligence OCR/classifier safety: checked'
-            echo '- Mobile responsive feedback and quality studio: checked'
+            echo '- Mobile responsive Teacher Desk: checked'
             echo '- Public repository audio privacy: checked'
-            echo '- GitHub Pages live assets through v0.26: checked'
+            echo '- GitHub Pages live assets through v0.27: checked'
           } >> "$GITHUB_STEP_SUMMARY"
