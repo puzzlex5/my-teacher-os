@@ -28,6 +28,9 @@ jobs:
       - name: Verify frozen runtime baseline
         run: node tests/v1-consolidation-tests.mjs
 
+      - name: Syntax check shared storage service
+        run: node --check v1-storage-service.js
+
       - name: Build separate-layer reference and consolidated preview
         run: node scripts/build-v1-runtime.mjs
 
