@@ -54,9 +54,13 @@ assert.ok(buildScript.includes("if(file==='app-v06.js')"),'v0.6 migration is not
 assert.ok(buildScript.includes("if(file==='app-v07.js')"),'v0.7 migration is not explicitly routed through shared storage');
 assert.ok(buildScript.includes("if(file==='app-v09.js')"),'v0.9 state writes are not explicitly routed through shared storage');
 assert.ok(buildScript.includes("if(file==='app-v10.js')"),'v0.10 state writes are not explicitly routed through shared storage');
+assert.ok(buildScript.includes("if(file==='app-v14.js')"),'v0.14 Comcigan main-state writes are not explicitly routed through shared storage');
 assert.ok(buildScript.includes("legacy-app-v09.js"),'legacy parity reference does not use the migrated v0.9 runtime');
 assert.ok(buildScript.includes("legacy-app-v10.js"),'legacy parity reference does not use the migrated v0.10 runtime');
+assert.ok(buildScript.includes("legacy-app-v14.js"),'legacy parity reference does not use the migrated v0.14 runtime');
 assert.ok(buildScript.includes('app-v08 has no Teacher OS state writes'),'v0.8 no-state-write boundary is not documented');
-assert.ok(buildScript.includes('shared state storage boundary active through v0.10'),'build report no longer states the verified storage migration boundary');
+assert.ok(buildScript.includes('app-v11 through app-v13 have no Teacher OS state writes'),'v0.11-v0.13 no-state-write boundary is not documented');
+assert.ok(buildScript.includes('per-browser Comcigan config remains a separate local setting'),'Comcigan privacy/lifecycle boundary is not documented');
+assert.ok(buildScript.includes('shared state storage boundary active through v0.14'),'build report no longer states the verified storage migration boundary');
 
-console.log(`v1 consolidation baseline verified: ${allJs.length} JS + ${allCss.length} CSS historical layers, exact live-loader order preserved, shared state storage boundary active through v0.10`);
+console.log(`v1 consolidation baseline verified: ${allJs.length} JS + ${allCss.length} CSS historical layers, exact live-loader order preserved, shared state storage boundary active through v0.14`);
