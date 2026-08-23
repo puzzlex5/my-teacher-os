@@ -28,6 +28,9 @@ jobs:
       - name: Verify deploy files
         run: |
           test -f index.html
+          test -f core-v28.js
+          test -f app-v28.js
+          test -f app-v28.css
           test -f core-v27.js
           test -f app-v27.js
           test -f app-v27.css
@@ -61,9 +64,9 @@ jobs:
           test -f policy-registry.json
           grep -q 'max-height:76px!important' app-v20.css
           grep -q 'height:auto!important' app-v20.css
-          grep -q 'core-v27.js' index.html
-          grep -q 'app-v27.js' index.html
-          grep -q 'app-v27.css' index.html
+          grep -q 'core-v28.js' index.html
+          grep -q 'app-v28.js' index.html
+          grep -q 'app-v28.css' index.html
 
       - name: Run regression checks
         run: |
@@ -90,6 +93,7 @@ jobs:
           node tests/v25-tests.js
           node tests/v26-tests.js
           node tests/v27-tests.js
+          node tests/v28-tests.js
           node --check app-v07.js
           node --check app-v08.js
           node --check app-v09.js
@@ -111,9 +115,11 @@ jobs:
           node --check app-v25.js
           node --check app-v26.js
           node --check app-v27.js
+          node --check app-v28.js
           node --check core-v23.js
           node --check core-v25.js
           node --check core-v27.js
+          node --check core-v28.js
           node --check core-v09.js
           node --check seed-v07.js
           node --check scripts/sync-comcigan.mjs
