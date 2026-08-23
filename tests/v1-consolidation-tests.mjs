@@ -50,5 +50,9 @@ assert.ok(storageService.includes('readJSON')&&storageService.includes('writeJSO
 assert.ok(buildScript.includes('TeacherOSStorage.readJSON(KEY,fresh)'),'base state read is not routed through shared storage');
 assert.ok(buildScript.includes('TeacherOSStorage.writeJSON(KEY,state)'),'base state writes are not routed through shared storage');
 assert.ok(buildScript.includes("storageServiceFile='v1-storage-service.js'"),'shared storage service is not part of the v1 build');
+assert.ok(buildScript.includes("if(file==='app-v06.js')"),'v0.6 migration is not explicitly routed through shared storage');
+assert.ok(buildScript.includes("if(file==='app-v07.js')"),'v0.7 migration is not explicitly routed through shared storage');
+assert.ok(buildScript.includes("legacy-app-v07.js"),'legacy parity reference does not use the migrated v0.7 runtime');
+assert.ok(buildScript.includes('shared storage boundary active through v0.7 migration'),'build report no longer states the verified storage migration boundary');
 
-console.log(`v1 consolidation baseline verified: ${allJs.length} JS + ${allCss.length} CSS historical layers, exact live-loader order preserved, shared base-state storage boundary present`);
+console.log(`v1 consolidation baseline verified: ${allJs.length} JS + ${allCss.length} CSS historical layers, exact live-loader order preserved, shared state storage boundary active through v0.7 migration`);
