@@ -38,19 +38,21 @@ jobs:
           fi
           ROOT_STATUS=$(curl -L -sS -o diagnostics/live-root.html -w '%{http_code}' 'https://puzzlex5.github.io/' || true)
           PROJECT_STATUS=$(curl -L -sS -o diagnostics/live-project.html -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/' || true)
+          CORE28_STATUS=$(curl -L -sS -o diagnostics/live-core-v28.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v28.js' || true)
+          V28_STATUS=$(curl -L -sS -o diagnostics/live-v28.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v28.js' || true)
+          V28CSS_STATUS=$(curl -L -sS -o diagnostics/live-v28.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v28.css' || true)
           CORE27_STATUS=$(curl -L -sS -o diagnostics/live-core-v27.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v27.js' || true)
           V27_STATUS=$(curl -L -sS -o diagnostics/live-v27.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v27.js' || true)
           V27CSS_STATUS=$(curl -L -sS -o diagnostics/live-v27.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v27.css' || true)
           V26_STATUS=$(curl -L -sS -o diagnostics/live-v26.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v26.js' || true)
-          V26CSS_STATUS=$(curl -L -sS -o diagnostics/live-v26.css -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v26.css' || true)
           CORE25_STATUS=$(curl -L -sS -o diagnostics/live-core-v25.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v25.js' || true)
           V25_STATUS=$(curl -L -sS -o diagnostics/live-v25.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v25.js' || true)
           V24_STATUS=$(curl -L -sS -o diagnostics/live-v24.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v24.js' || true)
           CORE23_STATUS=$(curl -L -sS -o diagnostics/live-core-v23.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/core-v23.js' || true)
           V23_STATUS=$(curl -L -sS -o diagnostics/live-v23.js -w '%{http_code}' 'https://puzzlex5.github.io/my-teacher-os/app-v23.js' || true)
-          INDEX_HAS_V27=$(grep -q 'core-v27.js' diagnostics/live-project.html && grep -q 'app-v27.js' diagnostics/live-project.html && grep -q 'app-v27.css' diagnostics/live-project.html && echo true || echo false)
-          printf '{"root":"%s","project":"%s","core27":"%s","v27":"%s","v27css":"%s","v26":"%s","v26css":"%s","core25":"%s","v25":"%s","v24":"%s","core23":"%s","v23":"%s","indexHasV27":%s}\n' "$ROOT_STATUS" "$PROJECT_STATUS" "$CORE27_STATUS" "$V27_STATUS" "$V27CSS_STATUS" "$V26_STATUS" "$V26CSS_STATUS" "$CORE25_STATUS" "$V25_STATUS" "$V24_STATUS" "$CORE23_STATUS" "$V23_STATUS" "$INDEX_HAS_V27" > diagnostics/live-http-status.json
-          head -c 1500 diagnostics/live-project.html > diagnostics/live-project-head.txt || true
+          INDEX_HAS_V28=$(grep -q 'core-v28.js' diagnostics/live-project.html && grep -q 'app-v28.js' diagnostics/live-project.html && grep -q 'app-v28.css' diagnostics/live-project.html && echo true || echo false)
+          printf '{"root":"%s","project":"%s","core28":"%s","v28":"%s","v28css":"%s","core27":"%s","v27":"%s","v27css":"%s","v26":"%s","core25":"%s","v25":"%s","v24":"%s","core23":"%s","v23":"%s","indexHasV28":%s}\n' "$ROOT_STATUS" "$PROJECT_STATUS" "$CORE28_STATUS" "$V28_STATUS" "$V28CSS_STATUS" "$CORE27_STATUS" "$V27_STATUS" "$V27CSS_STATUS" "$V26_STATUS" "$CORE25_STATUS" "$V25_STATUS" "$V24_STATUS" "$CORE23_STATUS" "$V23_STATUS" "$INDEX_HAS_V28" > diagnostics/live-http-status.json
+          head -c 1600 diagnostics/live-project.html > diagnostics/live-project-head.txt || true
           printf '{"checkedAt":"%s","sha":"%s","latestRunId":"%s"}\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GITHUB_SHA" "$RUN_ID" > diagnostics/pages-check.json
 
       - name: Commit diagnostics
