@@ -5,17 +5,23 @@ const TARGETS={
   legacy:`${ORIGIN}/dist-v1/legacy.html`,
   bundle:`${ORIGIN}/dist-v1/index.html`
 };
+const STATE_KEY='myTeacherOS.v01';
 
-async function openApp(browser,url,viewport){
+async function openApp(browser,url,viewport,seedState=null){
   const context=await browser.newContext({viewport,locale:'ko-KR',timezoneId:'Asia/Seoul'});
-  // Runtime parity must not depend on a third-party CDN being fast or reachable.
-  // Parser APIs are not exercised by this startup/navigation check, so harmless
-  // placeholders are enough to let the identical HTML shell parse deterministically.
   await context.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({
     status:200,
     contentType:'application/javascript',
     body:'globalThis.XLSX=globalThis.XLSX||{};globalThis.mammoth=globalThis.mammoth||{};globalThis.JSZip=globalThis.JSZip||function JSZip(){};'
   }));
+  if(seedState){
+    await context.addInitScript(({key,value})=>{
+      if(!sessionStorage.getItem('__teacherOsSeeded')){
+        localStorage.setItem(key,JSON.stringify(value));
+        sessionStorage.setItem('__teacherOsSeeded','1');
+      }
+    },{key:STATE_KEY,value:seedState});
+  }
   const page=await context.newPage();
   const pageErrors=[];
   const requestFailures=[];
@@ -78,6 +84,36 @@ async function navigationFingerprint(page){
   return result;
 }
 
+async function storedState(page){
+  return page.evaluate(key=>JSON.parse(localStorage.getItem(key)||'null'),STATE_KEY);
+}
+
+function oldSchemaSeed(){
+  return {
+    version:5,
+    currentYear:'2026',
+    profile:{major:'음악',minutes:45},
+    years:{
+      '2026':{
+        year:2026,
+        schoolLevel:'중학교',
+        schoolName:'합성 테스트 학교',
+        educationOffice:'경기도교육청',
+        subjects:['음악'],
+        projects:[],
+        clubs:[],
+        assessments:[],
+        memories:[],
+        tasks:[],
+        calendarEvents:[{id:'e1',date:'2026-08-24',title:'합성 행사',type:'학교'}],
+        timetable:[{id:'t1',day:'월',period:1,label:'2-1 음악'}],
+        imports:[],
+        lastBackupAt:null
+      }
+    }
+  };
+}
+
 for(const device of [
   {name:'desktop',viewport:{width:1280,height:900}},
   {name:'mobile',viewport:{width:390,height:844}}
@@ -98,8 +134,6 @@ for(const device of [
 
       expect(bundle.pageErrors,`bundle page errors: ${bundle.pageErrors.join(' | ')}; state=${JSON.stringify(bundleStart)}; body=${bundleBody}`).toEqual([]);
       expect(bundle.requestFailures,`bundle request failures: ${bundle.requestFailures.join(' | ')}`).toEqual([]);
-      // Status/footer text is intentionally excluded: several legacy layers update it
-      // asynchronously, so its exact version label at 1.2s is timing, not behavior.
       expect(bundleStart).toEqual(legacyStart);
       expect(await fingerprint(bundle.page)).toEqual(await fingerprint(legacy.page));
       expect(await navigationFingerprint(bundle.page)).toEqual(await navigationFingerprint(legacy.page));
@@ -109,3 +143,41 @@ for(const device of [
     }
   });
 }
+
+test('v1 shared storage preserves historical state migration across reload',async({browser})=>{
+  const viewport={width:1280,height:900};
+  const seed=oldSchemaSeed();
+  const legacy=await openApp(browser,TARGETS.legacy,viewport,seed);
+  const bundle=await openApp(browser,TARGETS.bundle,viewport,seed);
+  try{
+    expect(legacy.pageErrors,`legacy migration errors: ${legacy.pageErrors.join(' | ')}`).toEqual([]);
+    expect(bundle.pageErrors,`bundle migration errors: ${bundle.pageErrors.join(' | ')}`).toEqual([]);
+
+    const legacyMigrated=await storedState(legacy.page);
+    const bundleMigrated=await storedState(bundle.page);
+    expect(bundleMigrated).toEqual(legacyMigrated);
+
+    const y=bundleMigrated.years['2026'];
+    expect(bundleMigrated.version).toBeGreaterThanOrEqual(6);
+    expect(Array.isArray(y.timetableExceptions)).toBe(true);
+    expect(y.classProgress&&typeof y.classProgress).toBe('object');
+    expect(y.paceStrategies&&typeof y.paceStrategies).toBe('object');
+    expect(y.calendarEvents[0].scope).toBeTruthy();
+    expect(y.calendarEvents[0].impact).toBeTruthy();
+    expect(y.timetable[0].target).toBeTruthy();
+    expect(y.timetable[0].subject).toBeTruthy();
+
+    await legacy.page.reload({waitUntil:'domcontentloaded'});
+    await bundle.page.reload({waitUntil:'domcontentloaded'});
+    await legacy.page.waitForTimeout(900);
+    await bundle.page.waitForTimeout(900);
+
+    expect(await storedState(legacy.page)).toEqual(legacyMigrated);
+    expect(await storedState(bundle.page)).toEqual(bundleMigrated);
+    expect(await storedState(bundle.page)).toEqual(await storedState(legacy.page));
+    expect(bundle.pageErrors,`bundle reload errors: ${bundle.pageErrors.join(' | ')}`).toEqual([]);
+  } finally {
+    await legacy.context.close();
+    await bundle.context.close();
+  }
+});
