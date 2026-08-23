@@ -56,14 +56,18 @@ assert.ok(buildScript.includes("if(file==='app-v09.js')"),'v0.9 state writes are
 assert.ok(buildScript.includes("if(file==='app-v10.js')"),'v0.10 state writes are not explicitly routed through shared storage');
 assert.ok(buildScript.includes("if(file==='app-v14.js')"),'v0.14 Comcigan main-state writes are not explicitly routed through shared storage');
 assert.ok(buildScript.includes("if(file==='app-v18.js')"),'v0.18 enriched import state write is not explicitly routed through shared storage');
+assert.ok(buildScript.includes("if(file==='app-v19.js')"),'v0.19 work-pack state writes are not explicitly routed through shared storage');
+assert.ok(buildScript.includes("if(changed)globalThis.TeacherOSStorage.writeJSON(KEY,state)"),'v0.19 schema guard still performs redundant state writes on unchanged renders');
+assert.ok(buildScript.includes("function save19(){globalThis.TeacherOSStorage.writeJSON(KEY,state)}"),'v0.19 user-driven work-pack writes are not routed through shared storage');
 assert.ok(buildScript.includes("legacy-app-v09.js"),'legacy parity reference does not use the migrated v0.9 runtime');
 assert.ok(buildScript.includes("legacy-app-v10.js"),'legacy parity reference does not use the migrated v0.10 runtime');
 assert.ok(buildScript.includes("legacy-app-v14.js"),'legacy parity reference does not use the migrated v0.14 runtime');
 assert.ok(buildScript.includes("legacy-app-v18.js"),'legacy parity reference does not use the migrated v0.18 runtime');
+assert.ok(buildScript.includes("legacy-app-v19.js"),'legacy parity reference does not use the migrated v0.19 runtime');
 assert.ok(buildScript.includes('app-v08 has no Teacher OS state writes'),'v0.8 no-state-write boundary is not documented');
 assert.ok(buildScript.includes('app-v11 through app-v13 have no Teacher OS state writes'),'v0.11-v0.13 no-state-write boundary is not documented');
 assert.ok(buildScript.includes('app-v15 through app-v17 have no Teacher OS state writes'),'v0.15-v0.17 no-state-write boundary is not documented');
 assert.ok(buildScript.includes('per-browser Comcigan config remains a separate local setting'),'Comcigan privacy/lifecycle boundary is not documented');
-assert.ok(buildScript.includes('shared state storage boundary active through v0.18'),'build report no longer states the verified storage migration boundary');
+assert.ok(buildScript.includes('shared state storage boundary active through v0.19'),'build report no longer states the verified storage migration boundary');
 
-console.log(`v1 consolidation baseline verified: ${allJs.length} JS + ${allCss.length} CSS historical layers, exact live-loader order preserved, shared state storage boundary active through v0.18`);
+console.log(`v1 consolidation baseline verified: ${allJs.length} JS + ${allCss.length} CSS historical layers, exact live-loader order preserved, shared state storage boundary active through v0.19 with redundant work-pack render writes removed`);
