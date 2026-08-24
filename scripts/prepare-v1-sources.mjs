@@ -102,3 +102,16 @@ for(const token of ['HISTORY_KEY','writeHistory','snapshotBeforeReplace','global
 }
 fs.writeFileSync(path30,src30,'utf8');
 console.log('Prepared v1 app-v30 document-version state through shared storage while preserving local Undo history.');
+
+const path31='app-v31.js';
+let src31=fs.readFileSync(path31,'utf8');
+const directSave31="function save31(){try{localStorage.setItem(KEY,JSON.stringify(state));return true}catch(e){console.error('v31 state save',e);return false}}";
+const sharedSave31="function save31(){try{globalThis.TeacherOSStorage.writeJSON(KEY,state);return true}catch(e){console.error('v31 state save',e);return false}}";
+if(src31.includes(directSave31))src31=src31.replace(directSave31,sharedSave31);
+else if(!src31.includes(sharedSave31))throw new Error('v1 source preparation failed (v31 retention state storage): expected source pattern not found');
+if(src31.includes('localStorage.setItem(KEY,JSON.stringify(state))')||src31.includes('localStorage.getItem(KEY)'))throw new Error('v1 prepared v31 bypasses shared state storage');
+for(const token of ['DB_NAME','PERSIST_KEY','indexedDB.open(DB_NAME,1)','globalThis.TeacherOSStorage.writeJSON(KEY,state)']){
+  if(!src31.includes(token))throw new Error(`v1 prepared v31 missing: ${token}`);
+}
+fs.writeFileSync(path31,src31,'utf8');
+console.log('Prepared v1 app-v31 retention metadata through shared storage while preserving IndexedDB original vault and device-local persistence state.');
