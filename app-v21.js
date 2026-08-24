@@ -1,6 +1,6 @@
 (function(){
   const q21=s=>document.querySelector(s),qa21=s=>[...document.querySelectorAll(s)];
-  const esc21=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]));
+  const esc21=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const EVIDENCE_KINDS21=new Set(['담임관찰','교과관찰','자율자치활동','진로활동','동아리·창체','수업·평가관찰']);
   const SENSITIVE_RE21=/(질병|진단|약물|정신|우울|자해|가정폭력|이혼|경제사정|기초생활|성폭력|성적지향|종교|장애|주민등록|전화번호)/;
   const AREA_LABEL21={behavior:'행동특성 및 종합의견',autonomy:'자율·자치활동',career:'진로활동',subject:'과목별 세부능력 및 특기사항'};
