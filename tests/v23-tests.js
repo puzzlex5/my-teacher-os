@@ -19,7 +19,9 @@ const student=D.fuseSuggestion({baseConfidence:.98,docClass:'student',docConfide
 assert.equal(student.auto,false);
 assert.ok(D.extractionQuality({text:'학교교육계획 학사일정 평가계획 업무분장'.repeat(20),method:'hwp-native'})>=.9);
 const app=fs.readFileSync('app-v23.js','utf8'),css=fs.readFileSync('app-v23.css','utf8'),index=fs.readFileSync('index.html','utf8');
-['PaddleOCR','PP-OCRv5','pdf-hybrid-layout+ocr','feedbackSignature','v23DocReport','고정밀 다시 분석','학생자료는 자동 적용 차단'].forEach(t=>{if(!app.includes(t))throw new Error('v0.23 app missing: '+t)});
+['PaddleOCR','PP-OCRv5','pdf-hybrid-layout+ocr','feedbackSignature','v23DocReport','고정밀 다시 분석','학생자료는 자동 적용 차단','derivedSourceCount23','duplicateImport23','appliedCount','자동 반영','자동 보류','항목 미검출'].forEach(t=>{if(!app.includes(t))throw new Error('v0.23 app missing: '+t)});
+if(!app.includes("return derivedSourceCount23(y,prev.name)>0||Number(prev.appliedCount||0)>0"))throw new Error('same-hash retry must only block already-applied documents');
+if(!app.includes("review=(suggestions||[]).filter(s=>s.v23BatchId===batchId).length"))throw new Error('batch review count must come from remaining batch suggestions');
 if(!css.includes('.v23-file-row')||!css.includes('@media(max-width:780px)'))throw new Error('v0.23 responsive report CSS missing');
 if(!index.includes('core-v23.js')||!index.includes('app-v23.js')||!index.includes('app-v23.css'))throw new Error('v0.23 loader missing');
 console.log('v0.23 document intelligence tests passed');
