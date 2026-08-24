@@ -36,20 +36,34 @@ jobs:
         run: npm install --no-save --ignore-scripts comcigan@3.0.4
 
       - name: Fetch teacher timetable
+        id: fetch
+        continue-on-error: true
         run: node scripts/sync-comcigan.mjs
 
-      - name: Commit timetable only when changed
+      - name: Record sanitized collector health
+        env:
+          FETCH_OUTCOME: ${{ steps.fetch.outcome }}
         run: |
-          if [ ! -f live/comcigan.json ]; then
-            echo "No timetable output; nothing to commit."
-            exit 0
+          mkdir -p live
+          if [ "$FETCH_OUTCOME" = "success" ] && [ -f live/comcigan.json ]; then
+            printf '%s\n' '{"status":"ok"}' > live/comcigan-status.json
+          else
+            printf '%s\n' '{"status":"error"}' > live/comcigan-status.json
           fi
+
+      - name: Commit live state only when changed
+        run: |
           git config user.name "teacher-os-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add live/comcigan.json
+          git add live/comcigan-status.json
+          if [ -f live/comcigan.json ]; then git add live/comcigan.json; fi
           if git diff --cached --quiet; then
-            echo "No timetable change."
+            echo "No Comcigan state change."
           else
-            git commit -m "Update live Comcigan timetable"
+            git commit -m "Update live Comcigan state"
             git push
           fi
+
+      - name: Fail workflow when collection failed
+        if: steps.fetch.outcome != 'success'
+        run: exit 1
