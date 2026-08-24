@@ -9,6 +9,15 @@ function mondayKST(){const d=kstNow(),day=d.getUTCDay();d.setUTCDate(d.getUTCDat
 function addDays(date,n){const d=new Date(date+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return isoUTC(d)}
 function targetFromCls(cls){const n=Number(cls);if(!Number.isFinite(n)||n<101)return'';return `${Math.floor(n/100)}-${n%100}`}
 function fail(code){console.error(`TEACHER_OS_CODE=${code}`);process.exit(1)}
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function retryCollector(code,fn){
+  const delays=[0,1500,4000];
+  for(let attempt=0;attempt<delays.length;attempt++){
+    if(delays[attempt])await sleep(delays[attempt]);
+    try{return await fn(attempt)}catch{}
+  }
+  fail(code);
+}
 function normalizeTeacherData(raw,weekStart){
   const days=['월','화','수','목','금'],slots=[];
   for(const [dayKey,periods] of Object.entries(raw||{})){
@@ -34,10 +43,12 @@ let mod;
 try{mod=await import('comcigan')}catch{fail('parser-import')}
 const ComciganTeacher=mod.ComciganTeacher||mod.default?.ComciganTeacher;
 if(!ComciganTeacher)fail('parser-export');
-const client=new ComciganTeacher(SCHOOL_CODE);
-try{await client.init()}catch{fail('collector-init')}
-let result;
-try{result=await client.getTimetable()}catch{fail('collector-fetch')}
+let client;
+await retryCollector('collector-init',async()=>{client=new ComciganTeacher(SCHOOL_CODE);await client.init();return true});
+const result=await retryCollector('collector-fetch',async attempt=>{
+  if(attempt>0){client=new ComciganTeacher(SCHOOL_CODE);await client.init()}
+  return client.getTimetable();
+});
 const indexList=Array.isArray(result?.teacherIndex)?result.teacherIndex:[];
 let selectedIndex=0;
 if(PREFERRED_INDEX&&result?.data?.[PREFERRED_INDEX])selectedIndex=PREFERRED_INDEX;
