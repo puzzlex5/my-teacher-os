@@ -17,6 +17,10 @@ ok(app.includes("if(!freshPass(r))"),'auto-tests unverified, failed, stale, or m
 ok(app.includes('24시간 유효기간이 지났습니다'),'stale success is visibly distinguished from current pass');
 ok(app.includes('IndexedDB 쓰기·읽기·무결성·삭제 통과'),'visible successful device result');
 ok(app.includes('안전하게 출처·버전 보관으로 사용합니다'),'visible safe fallback on failure');
+ok(app.includes("input.accept='.hwpx,.pdf,.xlsx,.xls,.csv,.txt,.docx,.pptx,.ics,.jpg,.jpeg,.png,.webp,.bmp'"),'legacy HWP is not advertised as directly supported');
+ok(app.includes("/\\.hwp$/i"),'legacy HWP selection is explicitly detected');
+ok(app.includes('구형 HWP는 아직 직접 분석하지 않습니다'),'legacy HWP failure is truthful and actionable');
+ok(app.includes('HWPX 또는 PDF로 저장한 뒤 다시 올려 주세요'),'legacy HWP tells user the safe conversion path');
 ok(!app.includes('fetch('),'device self-test has no network upload');
 ok(css.includes('@media(max-width:680px)'),'mobile self-test UI');
 console.log(`v0.32 real-device storage self-test checks passed (${n} assertions)`);
