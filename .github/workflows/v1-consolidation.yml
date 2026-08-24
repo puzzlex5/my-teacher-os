@@ -18,12 +18,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Prepare v1 legacy sources
+        run: node scripts/prepare-v1-sources.mjs
+
       - name: Existing regression baseline
         run: |
           set -euo pipefail
           for f in tests/core-tests.js tests/v06-tests.js tests/v07-tests.js tests/v08-tests.js tests/v09-tests.js tests/v10-tests.js tests/v11-tests.js tests/v12-tests.js tests/v13-tests.js tests/v14-tests.js tests/v15-tests.js tests/v16-tests.js tests/v17-tests.js tests/v18-tests.js tests/v19-tests.js tests/v20-tests.js tests/v21-tests.js tests/v22-tests.js tests/v23-tests.js tests/v24-tests.js tests/v25-tests.js tests/v26-tests.js tests/v27-tests.js tests/v28-tests.js tests/v29-tests.js tests/v30-tests.js tests/v31-tests.js tests/v32-tests.js; do
             test -f "$f" && node "$f"
           done
+
+      - name: Verify v1 intake accuracy sync
+        run: node tests/v1-v23-accuracy-tests.mjs
 
       - name: Verify frozen runtime baseline
         run: node tests/v1-consolidation-tests.mjs
