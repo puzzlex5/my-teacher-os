@@ -56,7 +56,8 @@ for(const version of ['06','07','09','10','14','18','19','20']){
 assert.ok(buildScript.includes("if(changed)globalThis.TeacherOSStorage.writeJSON(KEY,state)"),'schema guards still lack change-sensitive persistence');
 assert.ok(buildScript.includes("function save19(){globalThis.TeacherOSStorage.writeJSON(KEY,state)}"),'v0.19 user-driven work-pack writes are not routed through shared storage');
 assert.ok(buildScript.includes("function save20(renderNow=true){globalThis.TeacherOSStorage.writeJSON(KEY,state)"),'v0.20 user-driven student/role writes are not routed through shared storage');
-assert.ok(buildScript.includes("legacy-app-v20.js"),'legacy parity reference does not use the migrated v0.20 runtime');
+assert.ok(buildScript.includes("'app-v20.js'"),'migrated v0.20 runtime is not included in the parity substitution set');
+assert.ok(buildScript.includes('`legacy-${file}`'),'legacy parity runtime files are not generated from the migrated source transforms');
 assert.ok(buildScript.includes('app-v08 has no Teacher OS state writes'),'v0.8 no-state-write boundary is not documented');
 assert.ok(buildScript.includes('app-v11 through app-v13 have no Teacher OS state writes'),'v0.11-v0.13 no-state-write boundary is not documented');
 assert.ok(buildScript.includes('app-v15 through app-v17 have no Teacher OS state writes'),'v0.15-v0.17 no-state-write boundary is not documented');
