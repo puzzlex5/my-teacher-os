@@ -44,30 +44,50 @@ jobs:
           node scripts/sync-comcigan.mjs > /tmp/comcigan-fetch.log 2>&1
           code=$?
           category=runtime
+          detail=runtime
           if [ "$code" -eq 0 ] && [ -f live/comcigan.json ]; then
             category=ok
+            detail=ok
           elif grep -Eqi 'ECONN|ETIMEDOUT|ENOTFOUND|socket|network|fetch failed|connect' /tmp/comcigan-fetch.log; then
             category=network
-          elif grep -Eqi 'could not be resolved|matched multiple|does not match index|teacher' /tmp/comcigan-fetch.log; then
+            detail=network
+          elif grep -Eqi 'matched multiple' /tmp/comcigan-fetch.log; then
             category=teacher-resolution
+            detail=teacher-name-multiple
+          elif grep -Eqi 'does not match index' /tmp/comcigan-fetch.log; then
+            category=teacher-resolution
+            detail=teacher-index-name-mismatch
+          elif grep -Eqi 'could not be resolved' /tmp/comcigan-fetch.log; then
+            category=teacher-resolution
+            detail=teacher-not-resolved
+          elif grep -Eqi 'Resolved teacher timetable was not found' /tmp/comcigan-fetch.log; then
+            category=teacher-resolution
+            detail=teacher-data-missing
+          elif grep -Eqi 'teacher' /tmp/comcigan-fetch.log; then
+            category=teacher-resolution
+            detail=teacher-resolution-other
           elif grep -Eqi 'no timetable slots|no timetable|empty' /tmp/comcigan-fetch.log; then
             category=empty
+            detail=empty
           elif grep -Eqi 'export not found|module|parser' /tmp/comcigan-fetch.log; then
             category=parser
+            detail=parser
           fi
           echo "category=$category" >> "$GITHUB_OUTPUT"
+          echo "detail=$detail" >> "$GITHUB_OUTPUT"
           exit "$code"
 
       - name: Record sanitized collector health
         env:
           FETCH_OUTCOME: ${{ steps.fetch.outcome }}
           FETCH_CATEGORY: ${{ steps.fetch.outputs.category }}
+          FETCH_DETAIL: ${{ steps.fetch.outputs.detail }}
         run: |
           mkdir -p live
           if [ "$FETCH_OUTCOME" = "success" ] && [ -f live/comcigan.json ]; then
-            printf '%s\n' '{"status":"ok","category":"ok"}' > live/comcigan-status.json
+            printf '%s\n' '{"status":"ok","category":"ok","detail":"ok"}' > live/comcigan-status.json
           else
-            printf '%s\n' "{\"status\":\"error\",\"category\":\"${FETCH_CATEGORY:-runtime}\"}" > live/comcigan-status.json
+            printf '%s\n' "{\"status\":\"error\",\"category\":\"${FETCH_CATEGORY:-runtime}\",\"detail\":\"${FETCH_DETAIL:-runtime}\"}" > live/comcigan-status.json
           fi
 
       - name: Commit live state only when changed
