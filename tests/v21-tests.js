@@ -11,8 +11,12 @@ if(!app.includes('evidenceIds'))throw new Error('draft-to-evidence linkage missi
 if(!app.includes('history'))throw new Error('draft history missing');
 if(!app.includes("box.dataset.evidenceIds=Array.isArray(stored?.evidenceIds)?stored.evidenceIds.join(','):''"))throw new Error('stored draft evidence IDs are not restored into the editor');
 if(!app.includes('evidenceIds=gridIds.length?gridIds:(Array.isArray(prev.evidenceIds)?prev.evidenceIds:[])'))throw new Error('resaving a stored draft can erase evidence linkage');
+if(!app.includes('function save21(){globalThis.TeacherOSStorage.writeJSON(KEY,state)}'))throw new Error('v0.21 draft writes bypass shared storage');
+if(app.includes('localStorage.setItem(KEY,JSON.stringify(state))'))throw new Error('v0.21 still writes Teacher OS state directly to localStorage');
+if(!app.includes('if(changed)save21()'))throw new Error('v0.21 schema initialization still writes unchanged state');
+if(!app.includes('if(state.version!==version){state.version=version;changed=true}'))throw new Error('v0.21 version migration is not change-sensitive');
 if(!css.includes('.v21-draft-grid'))throw new Error('draft grid CSS missing');
 if(!css.includes('@media(max-width:680px)'))throw new Error('mobile draft CSS missing');
 if(!index.includes('app-v21.js'))throw new Error('index does not load v21 JS');
 if(!index.includes('app-v21.css'))throw new Error('index does not load v21 CSS');
-console.log('v0.21 evidence-based three-draft studio tests passed');
+console.log('v0.21 evidence-based three-draft studio tests passed with shared-storage guard');
