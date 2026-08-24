@@ -34,6 +34,9 @@ jobs:
       - name: Verify v1 calendar Undo storage boundary
         run: node tests/v1-v28-storage-tests.mjs
 
+      - name: Verify v1 document-version storage boundary
+        run: node tests/v1-v30-storage-tests.mjs
+
       - name: Verify frozen runtime baseline
         run: node tests/v1-consolidation-tests.mjs
 
