@@ -21,6 +21,9 @@ jobs:
       - name: Prepare v1 legacy sources
         run: node scripts/prepare-v1-sources.mjs
 
+      - name: Guard critical stable-main accuracy parity
+        run: node tests/v1-main-critical-parity-tests.mjs
+
       - name: Existing regression baseline
         run: |
           set -euo pipefail
