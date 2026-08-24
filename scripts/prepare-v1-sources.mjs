@@ -71,3 +71,21 @@ if(src.includes('localStorage.setItem(KEY')||src.includes('localStorage.getItem(
 
 fs.writeFileSync(path,src,'utf8');
 console.log('Prepared v1 app-v23 with main accuracy fixes while preserving shared storage.');
+
+const path28='app-v28.js';
+let src28=fs.readFileSync(path28,'utf8');
+const directStateWrite28='localStorage.setItem(KEY,JSON.stringify(state))';
+const sharedStateWrite28='globalThis.TeacherOSStorage.writeJSON(KEY,state)';
+if(src28.includes(directStateWrite28)){
+  const count=src28.split(directStateWrite28).length-1;
+  if(count!==1)throw new Error(`v1 source preparation failed (v28 calendar Undo storage): expected 1 direct state write, found ${count}`);
+  src28=src28.replace(directStateWrite28,sharedStateWrite28);
+}else if(!src28.includes(sharedStateWrite28)){
+  throw new Error('v1 source preparation failed (v28 calendar Undo storage): expected source pattern not found');
+}
+if(src28.includes('localStorage.setItem(KEY,JSON.stringify(state))'))throw new Error('v1 prepared v28 bypasses shared storage');
+for(const token of ['CAL_HISTORY_KEY','CONTACT_KEY','COMCIGAN_KEY','globalThis.TeacherOSStorage.writeJSON(KEY,state)']){
+  if(!src28.includes(token))throw new Error(`v1 prepared v28 missing: ${token}`);
+}
+fs.writeFileSync(path28,src28,'utf8');
+console.log('Prepared v1 app-v28 calendar Undo restore through shared storage while preserving local-only keys.');
