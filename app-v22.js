@@ -34,7 +34,7 @@
       req.onerror=()=>reject(req.error||new Error('복구지점을 읽지 못했습니다.'));
     });
   }
-  function currentStateJSON(){const raw=localStorage.getItem(DATA_KEY);if(!raw)throw new Error('저장된 Teacher OS 데이터가 없습니다.');const obj=JSON.parse(raw);if(!obj||typeof obj!=='object'||!obj.years||typeof obj.years!=='object')throw new Error('현재 Teacher OS 데이터 형식이 올바르지 않습니다.');return JSON.stringify(obj)}
+  function currentStateJSON(){const obj=globalThis.TeacherOSStorage.readJSON(DATA_KEY,()=>null);if(!obj||typeof obj!=='object'||!obj.years||typeof obj.years!=='object')throw new Error('현재 Teacher OS 데이터 형식이 올바르지 않습니다.');return JSON.stringify(obj)}
   async function pruneSnapshots(){
     const all=await listSnapshots();if(all.length<=MAX_SNAPSHOTS)return;
     const db=await openDB(),tx=db.transaction(STORE,'readwrite'),store=tx.objectStore(STORE);
@@ -70,7 +70,7 @@
     const obj=JSON.parse(snap.stateJson);if(!obj||typeof obj!=='object'||!obj.years||typeof obj.years!=='object')throw new Error('복구지점 형식이 올바르지 않습니다.');
     if(!confirm(`${new Date(snap.createdAt).toLocaleString('ko-KR')} 상태로 되돌릴까요? 현재 상태는 먼저 별도 복구지점으로 보관합니다.`))return;
     await createSnapshot('preRestore');
-    localStorage.setItem(DATA_KEY,JSON.stringify(obj));
+    globalThis.TeacherOSStorage.writeJSON(DATA_KEY,obj);
     location.reload();
   }
   async function maybeDailySnapshot(){

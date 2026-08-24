@@ -6,6 +6,7 @@
 
   function readDevice(){try{const x=JSON.parse(localStorage.getItem(DEVICE_KEY)||'null');return x&&typeof x==='object'?x:{}}catch{return{}}}
   function saveDevice(x){localStorage.setItem(DEVICE_KEY,JSON.stringify({...readDevice(),...x,updatedAt:new Date().toISOString()}))}
+  function saveMain24(){globalThis.TeacherOSStorage.writeJSON(KEY,state)}
   function currentSubject(){const y=typeof cur==='function'?cur():null;return String(y?.subjects?.[0]||state?.profile?.major||readDevice().subject||'').trim()}
 
   function ensureSubjectField(){
@@ -26,7 +27,7 @@
       if(y){
         y.subjects=[subject];state.profile=state.profile&&typeof state.profile==='object'?state.profile:{};state.profile.major=subject;
         if(wasFirst){y.clubs=[];y.roleProfile={roles:[],homeroomGrade:'',homeroomClass:'',department:'',other:''};firstYearPending=false}
-        saveDevice({subject});localStorage.setItem(KEY,JSON.stringify(state));if(typeof render==='function')render();
+        saveDevice({subject});saveMain24();if(typeof render==='function')render();
       }
       return ret;
     };
@@ -43,7 +44,7 @@
     const html='<article class="card v24-isolation-card" id="v24IsolationCard"><div class="head"><div><span class="kicker">PERSONAL BROWSER</span><h3>이 기기만의 Teacher OS</h3><p class="muted">학교·교과·역할·업로드 결과·학생기록·컴시간 설정은 이 브라우저 저장공간에 유지됩니다. 같은 주소를 다른 선생님에게 보내도 서로의 로컬 데이터는 바뀌지 않습니다.</p></div><span class="pill">개인 분리</span></div><div class="mini spaced">다른 기기에서는 자동으로 따라오지 않습니다. 시크릿 모드나 사이트 데이터 삭제 시 로컬 데이터가 사라질 수 있으므로 백업 기능을 사용하세요.</div></article>';
     if(anchor)anchor.insertAdjacentHTML('afterend',html);else settings.insertAdjacentHTML('beforeend',html);
   }
-  function neutralizeFreshDefaults(){if(!blankAtBoot)return;state.profile=state.profile&&typeof state.profile==='object'?state.profile:{};state.profile.major='';localStorage.setItem(KEY,JSON.stringify(state))}
+  function neutralizeFreshDefaults(){if(!blankAtBoot)return;state.profile=state.profile&&typeof state.profile==='object'?state.profile:{};state.profile.major='';saveMain24()}
   function boot(){neutralizeFreshDefaults();ensureSubjectField();wrapYearForm();wrapYearButtons();personalizeCopy();ensureIsolationCard();const foot=q('.side-foot');if(foot)foot.textContent='v0.24 · personal browser isolation'}
   const prevRender=globalThis.render;if(typeof prevRender==='function')globalThis.render=function(){const r=prevRender.apply(this,arguments);setTimeout(()=>{ensureSubjectField();wrapYearForm();wrapYearButtons();personalizeCopy();ensureIsolationCard()},0);return r};
   boot();

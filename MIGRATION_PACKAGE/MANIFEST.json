@@ -1,0 +1,41 @@
+{
+  "package": "MY TEACHER OS Migration Package",
+  "schemaVersion": 1,
+  "createdAt": "2026-08-23T23:57:00+09:00",
+  "repository": "puzzlex5/my-teacher-os",
+  "publicBranch": "main",
+  "consolidationBranch": "v1-consolidation",
+  "publicRuntime": "v0.32-era layered runtime",
+  "target": "Teacher OS 1.0",
+  "priorityOrder": ["correctness", "speed-at-equal-correctness", "automation-and-features"],
+  "files": [
+    "README.md",
+    "00_PROJECT_MASTER.md",
+    "01_PRODUCT_PRINCIPLES.md",
+    "02_ARCHITECTURE_AND_RUNTIME.md",
+    "03_DATA_AND_STORAGE.md",
+    "04_PRIVACY_SECURITY.md",
+    "05_FEATURE_MAP.md",
+    "06_DOCUMENT_INTELLIGENCE.md",
+    "07_TEACHING_AND_STUDENT_WORKFLOWS.md",
+    "08_TESTING_AND_QUALITY.md",
+    "09_VERSION_AND_DECISIONS.md",
+    "10_KNOWN_ISSUES.md",
+    "11_ROADMAP_TO_1_0.md",
+    "12_AUTOMATION_AND_OPERATIONS.md",
+    "13_AI_HANDOFF_PROMPT.md",
+    "14_PRIVATE_CONTEXT_GUIDE.md"
+  ],
+  "sourceOfTruthOrder": [
+    "current repository code and tests",
+    "latest official education/school sources",
+    "latest migration package documents",
+    "historical conversation summaries",
+    "AI inference or memory"
+  ],
+  "privacy": {
+    "publicPackageContainsPII": false,
+    "rawSchoolDocumentsAllowedInPublicRepo": false,
+    "privateConversationExportStoredHere": false
+  }
+}

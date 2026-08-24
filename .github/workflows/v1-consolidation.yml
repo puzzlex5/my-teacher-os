@@ -1,0 +1,55 @@
+name: Teacher OS 1.0 Consolidation
+
+on:
+  push:
+    branches:
+      - v1-consolidation
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Existing regression baseline
+        run: |
+          set -euo pipefail
+          for f in tests/core-tests.js tests/v06-tests.js tests/v07-tests.js tests/v08-tests.js tests/v09-tests.js tests/v10-tests.js tests/v11-tests.js tests/v12-tests.js tests/v13-tests.js tests/v14-tests.js tests/v15-tests.js tests/v16-tests.js tests/v17-tests.js tests/v18-tests.js tests/v19-tests.js tests/v20-tests.js tests/v21-tests.js tests/v22-tests.js tests/v23-tests.js tests/v24-tests.js tests/v25-tests.js tests/v26-tests.js tests/v27-tests.js tests/v28-tests.js tests/v29-tests.js tests/v30-tests.js tests/v31-tests.js tests/v32-tests.js; do
+            test -f "$f" && node "$f"
+          done
+
+      - name: Verify frozen runtime baseline
+        run: node tests/v1-consolidation-tests.mjs
+
+      - name: Syntax check shared storage service
+        run: node --check v1-storage-service.js
+
+      - name: Build separate-layer reference and consolidated preview
+        run: node scripts/build-v1-runtime.mjs
+
+      - name: Syntax check consolidated runtime
+        run: node --check dist-v1/teacher-os-v1.runtime.js
+
+      - name: Install Chromium parity runner
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Browser parity — separate historical layers vs bundled runtime
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/teacher-os-v1-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          npx playwright test tests/v1-browser-bundle-parity.spec.js --reporter=line --workers=1
+
+      - name: Bundle report
+        if: always()
+        run: cat dist-v1/asset-report.json
