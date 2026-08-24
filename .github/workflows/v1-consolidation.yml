@@ -19,10 +19,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Prepare v1 legacy sources
-        run: node scripts/prepare-v1-sources.mjs
+        run: |
+          node scripts/prepare-v1-sources.mjs
+          node scripts/prepare-v1-comcigan-status.mjs
 
       - name: Guard critical stable-main accuracy parity
         run: node tests/v1-main-critical-parity-tests.mjs
+
+      - name: Verify v1 Comcigan collector truth state
+        run: node tests/v1-v14-collector-truth-tests.mjs
 
       - name: Existing regression baseline
         run: |
