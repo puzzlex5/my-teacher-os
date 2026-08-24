@@ -31,6 +31,9 @@ jobs:
       - name: Verify v1 intake accuracy sync
         run: node tests/v1-v23-accuracy-tests.mjs
 
+      - name: Verify v1 calendar Undo storage boundary
+        run: node tests/v1-v28-storage-tests.mjs
+
       - name: Verify frozen runtime baseline
         run: node tests/v1-consolidation-tests.mjs
 
