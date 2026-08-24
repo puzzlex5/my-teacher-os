@@ -1,0 +1,73 @@
+import fs from 'node:fs';
+
+const path='app-v23.js';
+let src=fs.readFileSync(path,'utf8');
+
+function replaceOnce(label,from,to){
+  if(!src.includes(from)){
+    if(src.includes(to))return;
+    throw new Error(`v1 source preparation failed (${label}): expected source pattern not found`);
+  }
+  src=src.replace(from,to);
+}
+
+replaceOnce(
+  'retry only after applied data',
+  "  function isDuplicate23(hash,y){return !!hash&&(y?.imports||[]).some(x=>x.hash===hash)}",
+  "  function derivedSourceCount23(y,source){if(!y||!source)return 0;return['calendarEvents','timetable','assessments','projects'].reduce((n,k)=>n+(Array.isArray(y[k])?y[k].filter(x=>x?.source===source).length:0),0)}\n  function duplicateImport23(hash,y){return !!hash?(y?.imports||[]).find(x=>x.hash===hash&&x.status!=='ignored'&&x.status!=='superseded')||null:null}\n  function isDuplicate23(hash,y){const prev=duplicateImport23(hash,y);if(!prev)return false;return derivedSourceCount23(y,prev.name)>0||Number(prev.appliedCount||0)>0}"
+);
+
+replaceOnce(
+  'duplicate status wording',
+  '이미 같은 내용의 파일을 분석했습니다.',
+  '이미 반영된 같은 내용의 파일입니다.'
+);
+replaceOnce(
+  'empty extraction warning',
+  "const conf=Math.round((r.doc?.confidence||0)*100),quality=Math.round((r.quality||0)*100),warn=r.doc?.classId==='student'?' · 학생자료는 자동 적용 차단':'';",
+  "const conf=Math.round((r.doc?.confidence||0)*100),quality=Math.round((r.quality||0)*100),warn=r.doc?.classId==='student'?' · 학생자료는 자동 적용 차단':!r.count?' · 자동세팅 항목 미검출':'';"
+);
+replaceOnce(
+  'empty extraction badge',
+  "<span class=\"pill ${conf<82?'warn':''}\">",
+  "<span class=\"pill ${conf<82||!r.count?'warn':''}\">"
+);
+
+replaceOnce(
+  'analysis metadata',
+  "if(!y.imports.some(x=>x.hash===hash))y.imports.push({id:id23(),name:file.name,hash,kind:'지능형 자동분류',docClass:doc.classId,docLabel:doc.label,confidence:doc.confidence,extractMethod:extracted.method,when:new Date().toLocaleString('ko-KR')});return report",
+  "let imp=(y.imports||[]).find(x=>x.hash===hash);if(!imp){imp={id:id23(),name:file.name,hash,kind:'지능형 자동분류',when:new Date().toLocaleString('ko-KR')};y.imports.push(imp)}Object.assign(imp,{name:file.name,docClass:doc.classId,docLabel:doc.label,confidence:doc.confidence,extractMethod:extracted.method,analysisStatus:got.length?'candidates':'no-candidates',candidateCount:got.length,autoCandidateCount:report.autoCount,extractionQuality:quality,lastAnalyzedAt:new Date().toISOString(),lastBatchId:batchId});return report"
+);
+
+replaceOnce(
+  'truthful auto apply accounting',
+  "  function applyCurrentAuto23(batchId){const preserve=new Map();let auto=0;(suggestions||[]).forEach(s=>{if(s.v23BatchId===batchId){s.checked=!!s.v23Auto;if(s.checked)auto++}else{preserve.set(s.id,!!s.checked);s.checked=false}});if(auto)applySuggestions();(suggestions||[]).forEach(s=>{if(preserve.has(s.id))s.checked=preserve.get(s.id)});renderSuggestions();return auto}",
+  "  function applyCurrentAuto23(batchId){const preserve=new Map(),attempted=[];(suggestions||[]).forEach(s=>{if(s.v23BatchId===batchId){s.checked=!!s.v23Auto;if(s.checked)attempted.push(s)}else{preserve.set(s.id,!!s.checked);s.checked=false}});if(attempted.length)applySuggestions();const remainingIds=new Set((suggestions||[]).map(s=>s.id)),applied=attempted.filter(s=>!remainingIds.has(s.id)),blocked=attempted.length-applied.length,y=cur();const bySource=new Map();applied.forEach(s=>bySource.set(s.source,(bySource.get(s.source)||0)+1));for(const [source,n] of bySource){const imp=[...(y?.imports||[])].reverse().find(x=>x.name===source&&x.lastBatchId===batchId);if(imp){imp.appliedCount=Number(imp.appliedCount||0)+n;imp.lastAppliedAt=new Date().toISOString();imp.analysisStatus='applied'}}(suggestions||[]).forEach(s=>{if(preserve.has(s.id))s.checked=preserve.get(s.id)});renderSuggestions();return{attempted:attempted.length,applied:applied.length,blocked}}"
+);
+
+const batchStart="const auto=applyCurrentAuto23(batchId),review=(suggestions||[]).filter(s=>s.v23BatchId===batchId).length;";
+if(src.includes(batchStart)){
+  const start=src.indexOf(batchStart);
+  const end=src.indexOf("const pn=q('#privacyNotice');",start);
+  if(end<0)throw new Error('v1 source preparation failed (batch status): privacy notice marker missing');
+  const replacement="const auto=applyCurrentAuto23(batchId),review=(suggestions||[]).filter(s=>s.v23BatchId===batchId).length;const fails=batch.filter(r=>r.error).length,dups=batch.filter(r=>r.duplicate).length,empty=batch.filter(r=>!r.error&&!r.duplicate&&!r.count).length;globalThis.TeacherOSStorage.writeJSON(KEY,state);setStatus23(`<b>${files.length}개 파일 처리 완료</b> · ${auto.applied}개 자동 반영 · ${review}개 확인 필요${auto.blocked?` · 자동 보류 ${auto.blocked}개`:''}${empty?` · 항목 미검출 ${empty}개`:''}${dups?` · 이미 반영된 중복 ${dups}개`:''}${fails?` · 실패 ${fails}개`:''}`);";
+  src=src.slice(0,start)+replacement+src.slice(end);
+}else if(!src.includes('${auto.applied}개 자동 반영')){
+  throw new Error('v1 source preparation failed (batch status): expected source pattern not found');
+}
+
+const required=[
+  'derivedSourceCount23',
+  'duplicateImport23',
+  'Number(prev.appliedCount||0)>0',
+  "analysisStatus:got.length?'candidates':'no-candidates'",
+  'auto.applied}개 자동 반영',
+  'auto.blocked',
+  '항목 미검출',
+  'TeacherOSStorage.writeJSON(KEY,state)'
+];
+for(const token of required)if(!src.includes(token))throw new Error(`v1 prepared v23 missing: ${token}`);
+if(src.includes('localStorage.setItem(KEY')||src.includes('localStorage.getItem(KEY'))throw new Error('v1 prepared v23 bypasses shared storage');
+
+fs.writeFileSync(path,src,'utf8');
+console.log('Prepared v1 app-v23 with main accuracy fixes while preserving shared storage.');
