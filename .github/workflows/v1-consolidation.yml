@@ -17,6 +17,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch stable main for drift audit
+        run: git fetch origin main --no-tags
+
+      - name: Guard critical raw-source drift from stable main
+        run: node tests/v1-main-drift-audit.mjs
 
       - name: Guard raw v23 stable accuracy baseline
         run: node tests/v1-v23-source-baseline-tests.mjs
