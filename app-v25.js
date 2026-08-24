@@ -9,6 +9,7 @@
   function selectedText(){const k=q('[data-v21-card].selected')?.dataset?.v21Card;return k?q(`[data-v21-text="${k}"]`)?.value.trim()||'':''}
   function evidenceIds(){return (q('#v21DraftGrid')?.dataset?.evidenceIds||'').split(',').filter(Boolean)}
   function evidenceRows(){const yy=y(),id=sid(),ids=new Set(evidenceIds());return (yy?.studentRecords||[]).filter(r=>r.studentId===id&&ids.has(r.id))}
+  function saveMain25(){globalThis.TeacherOSStorage.writeJSON(KEY,state)}
   async function loadLibrary(){if(library)return library;try{const r=await fetch('./school-record-quality-library.json?v='+Date.now(),{cache:'no-store'});if(r.ok)library=await r.json()}catch{}return library}
   function ensureUI(){
     const studio=q('#srDraftStudio');if(!studio||q('#v25QualityPanel'))return;
@@ -37,7 +38,7 @@
     const at=q('#v25CheckedAt');if(at)at.textContent='마지막 검사 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
   }
   function run(){ensureUI();const text=selectedText(),a=area();if(!text)return alert('A/B/C 초안 중 하나를 먼저 선택하세요.');const rows=evidenceRows();const res=R.analyzeDraft({text,evidence:rows,area:a});renderResult(res);saveSnapshot(res);return res}
-  function saveSnapshot(res){const yy=y(),id=sid(),a=area();if(!yy||!id||!a||!yy.studentDrafts?.[id]?.[a])return;yy.studentDrafts[id][a].qualityCheck={score:res.score,level:res.level,critical:res.critical,issueCodes:res.issues.map(x=>x.code),evidenceCount:res.evidenceCount,checkedAt:new Date().toISOString()};localStorage.setItem(KEY,JSON.stringify(state))}
+  function saveSnapshot(res){const yy=y(),id=sid(),a=area();if(!yy||!id||!a||!yy.studentDrafts?.[id]?.[a])return;yy.studentDrafts[id][a].qualityCheck={score:res.score,level:res.level,critical:res.critical,issueCodes:res.issues.map(x=>x.code),evidenceCount:res.evidenceCount,checkedAt:new Date().toISOString()};saveMain25()}
   async function showSources(){
     ensureUI();await loadLibrary();const box=q('#v25SourceList');
     if(box){
