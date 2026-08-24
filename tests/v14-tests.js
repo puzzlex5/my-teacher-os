@@ -2,7 +2,7 @@ const fs=require('fs');
 const cfg=JSON.parse(fs.readFileSync('comcigan-config.json','utf8'));
 if(!cfg.enabled)throw new Error('Comcigan collector config must be enabled');
 const wf=fs.readFileSync('.github/workflows/sync-comcigan.yml','utf8');
-if(!wf.includes("cron: '0 0 * * *'"))throw new Error('09:00 KST daily cron missing');
+if(!wf.includes("cron: '*/30 * * * *'"))throw new Error('30-minute Comcigan refresh cron missing');
 const app=fs.readFileSync('app-v14.js','utf8');
 if(!app.includes("./live/comcigan.json"))throw new Error('Plain live Comcigan feed missing');
 if(!app.includes('lockTimetableReadOnly'))throw new Error('Read-only timetable guard missing');
