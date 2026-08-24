@@ -10,4 +10,6 @@ ok(T.nextLessonTruth({}, {status:'done',live:false,slot:null}).known===true,'com
 const fs=require('fs'),p=require('path');const app=fs.readFileSync(p.join(__dirname,'../app-v29.js'),'utf8');
 ok(app.includes('오늘 수업 여부를 확정할 수 없습니다.'),'unknown-state copy');
 ok(app.includes('0건으로 처리하지 않습니다.'),'zero-vs-unknown guard copy');
+ok(app.includes('correctTodayTimetableTruth'),'legacy today timetable is truth-guarded');
+ok(app.includes('수업 없음으로 처리하지 않습니다.'),'today timetable does not claim zero before verification');
 console.log(`v0.29 data truth tests passed (${n} assertions)`);
