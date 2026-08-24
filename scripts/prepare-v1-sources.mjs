@@ -32,6 +32,21 @@ replaceOnce(
   "<span class=\"pill ${conf<82?'warn':''}\">",
   "<span class=\"pill ${conf<82||!r.count?'warn':''}\">"
 );
+replaceOnce(
+  'legacy HWP extraction guard',
+  "    const ext=ext23(file);if(['jpg','jpeg','png','webp','bmp'].includes(ext)){",
+  "    const ext=ext23(file);if(ext==='hwp')throw new Error('구형 HWP는 아직 직접 분석하지 않습니다. 한글에서 HWPX 또는 PDF로 저장한 뒤 다시 올려 주세요.');if(['jpg','jpeg','png','webp','bmp'].includes(ext)){"
+);
+replaceOnce(
+  'legacy HWP accept list',
+  "if(input)input.accept='.hwp,.hwpx,.pdf,.xlsx,.xls,.csv,.txt,.docx,.pptx,.ics,.jpg,.jpeg,.png,.webp,.bmp';",
+  "if(input)input.accept='.hwpx,.pdf,.xlsx,.xls,.csv,.txt,.docx,.pptx,.ics,.jpg,.jpeg,.png,.webp,.bmp';"
+);
+replaceOnce(
+  'legacy HWP support wording',
+  "if(small)small.textContent='HWP · HWPX · PDF(스캔 포함) · Excel · DOCX · PPTX · ICS · 이미지';",
+  "if(small)small.textContent='HWPX · PDF(스캔 포함) · Excel · DOCX · PPTX · ICS · 이미지 · 구형 HWP는 HWPX/PDF로 변환';"
+);
 
 replaceOnce(
   'analysis metadata',
@@ -64,13 +79,17 @@ const required=[
   'auto.applied}개 자동 반영',
   'auto.blocked',
   '항목 미검출',
-  'TeacherOSStorage.writeJSON(KEY,state)'
+  'TeacherOSStorage.writeJSON(KEY,state)',
+  "if(ext==='hwp')throw new Error('구형 HWP는 아직 직접 분석하지 않습니다.",
+  "input.accept='.hwpx,.pdf,.xlsx,.xls,.csv,.txt,.docx,.pptx,.ics,.jpg,.jpeg,.png,.webp,.bmp'",
+  '구형 HWP는 HWPX/PDF로 변환'
 ];
 for(const token of required)if(!src.includes(token))throw new Error(`v1 prepared v23 missing: ${token}`);
+if(src.includes("input.accept='.hwp,"))throw new Error('v1 prepared v23 still advertises unsupported legacy HWP');
 if(src.includes('localStorage.setItem(KEY')||src.includes('localStorage.getItem(KEY'))throw new Error('v1 prepared v23 bypasses shared storage');
 
 fs.writeFileSync(path,src,'utf8');
-console.log('Prepared v1 app-v23 with main accuracy fixes while preserving shared storage.');
+console.log('Prepared v1 app-v23 with main accuracy fixes, truthful HWP intake, and shared storage.');
 
 const path28='app-v28.js';
 let src28=fs.readFileSync(path28,'utf8');
