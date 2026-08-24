@@ -1,6 +1,6 @@
 (function(){
   const q21=s=>document.querySelector(s),qa21=s=>[...document.querySelectorAll(s)];
-  const esc21=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const esc21=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]));
   const EVIDENCE_KINDS21=new Set(['담임관찰','교과관찰','자율자치활동','진로활동','동아리·창체','수업·평가관찰']);
   const SENSITIVE_RE21=/(질병|진단|약물|정신|우울|자해|가정폭력|이혼|경제사정|기초생활|성폭력|성적지향|종교|장애|주민등록|전화번호)/;
   const AREA_LABEL21={behavior:'행동특성 및 종합의견',autonomy:'자율·자치활동',career:'진로활동',subject:'과목별 세부능력 및 특기사항'};
@@ -8,7 +8,7 @@
   let area21='',selectedVariant21='';
 
   function y21(){return typeof cur==='function'?cur():null}
-  function save21(){localStorage.setItem(KEY,JSON.stringify(state))}
+  function save21(){globalThis.TeacherOSStorage.writeJSON(KEY,state)}
   function selectedStudentId21(){return q21('#srStudentList .sr-student.active')?.dataset?.studentId||''}
   function roles21(y=y21()){return new Set(y?.roleProfile?.roles||[])}
   function availableAreas21(y=y21()){
@@ -18,9 +18,11 @@
     return out;
   }
   function ensureState21(){
-    state.version=Math.max(Number(state.version)||0,21);
-    Object.values(state.years||{}).forEach(y=>{y.studentDrafts=y.studentDrafts&&typeof y.studentDrafts==='object'?y.studentDrafts:{}});
-    save21();
+    let changed=false;
+    const version=Math.max(Number(state.version)||0,21);
+    if(state.version!==version){state.version=version;changed=true}
+    Object.values(state.years||{}).forEach(y=>{if(!(y.studentDrafts&&typeof y.studentDrafts==='object')){y.studentDrafts={};changed=true}});
+    if(changed)save21();
   }
   function evidence21(studentId,area,y=y21()){
     return (y?.studentRecords||[])
