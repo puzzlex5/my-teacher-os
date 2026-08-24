@@ -45,33 +45,33 @@ jobs:
           code=$?
           category=runtime
           detail=runtime
+          machine_code=$(sed -n 's/^TEACHER_OS_CODE=\([a-z0-9-]*\)$/\1/p' /tmp/comcigan-fetch.log | tail -n 1)
           if [ "$code" -eq 0 ] && [ -f live/comcigan.json ]; then
             category=ok
             detail=ok
-          elif grep -Eqi 'ECONN|ETIMEDOUT|ENOTFOUND|socket|network|fetch failed|connect' /tmp/comcigan-fetch.log; then
-            category=network
-            detail=network
-          elif grep -Eqi 'matched multiple' /tmp/comcigan-fetch.log; then
-            category=teacher-resolution
-            detail=teacher-name-multiple
-          elif grep -Eqi 'does not match index' /tmp/comcigan-fetch.log; then
-            category=teacher-resolution
-            detail=teacher-index-name-mismatch
-          elif grep -Eqi 'could not be resolved' /tmp/comcigan-fetch.log; then
-            category=teacher-resolution
-            detail=teacher-not-resolved
-          elif grep -Eqi 'Resolved teacher timetable was not found' /tmp/comcigan-fetch.log; then
-            category=teacher-resolution
-            detail=teacher-data-missing
-          elif grep -Eqi 'teacher' /tmp/comcigan-fetch.log; then
-            category=teacher-resolution
-            detail=teacher-resolution-other
-          elif grep -Eqi 'no timetable slots|no timetable|empty' /tmp/comcigan-fetch.log; then
-            category=empty
-            detail=empty
-          elif grep -Eqi 'export not found|module|parser' /tmp/comcigan-fetch.log; then
-            category=parser
-            detail=parser
+          else
+            case "$machine_code" in
+              teacher-name-multiple|teacher-index-name-mismatch|teacher-not-resolved|teacher-data-missing)
+                category=teacher-resolution
+                detail="$machine_code"
+                ;;
+              collector-init|collector-fetch)
+                category=network
+                detail="$machine_code"
+                ;;
+              parser-import|parser-export)
+                category=parser
+                detail="$machine_code"
+                ;;
+              timetable-empty)
+                category=empty
+                detail="$machine_code"
+                ;;
+              config-invalid)
+                category=config
+                detail="$machine_code"
+                ;;
+            esac
           fi
           echo "category=$category" >> "$GITHUB_OUTPUT"
           echo "detail=$detail" >> "$GITHUB_OUTPUT"
