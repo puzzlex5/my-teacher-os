@@ -1,7 +1,7 @@
 (function(){
   const T=globalThis.TeacherOSDataTruth,D=globalThis.TeacherOSDeskCore;if(!T||!D)return;
   const q=s=>document.querySelector(s);
-  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]));
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   function y29(){try{return typeof cur==='function'?cur():null}catch{return null}}
   function truth29(){const y=y29();if(!y)return null;const d=D.lessonContext(y,new Date());return{y,d,truth:T.nextLessonTruth(y,d)}}
   function correctNextLessonTruth(){
