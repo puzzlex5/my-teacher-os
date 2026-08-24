@@ -21,6 +21,7 @@ jobs:
       - name: Prepare v1 legacy sources
         run: |
           node scripts/prepare-v1-sources.mjs
+          node scripts/prepare-v1-v23-multisheet.mjs
           node scripts/prepare-v1-comcigan-status.mjs
 
       - name: Guard critical stable-main accuracy parity
@@ -38,6 +39,9 @@ jobs:
 
       - name: Verify v1 intake accuracy sync
         run: node tests/v1-v23-accuracy-tests.mjs
+
+      - name: Verify v1 multi-sheet spreadsheet intake
+        run: node tests/v1-v23-multisheet-tests.mjs
 
       - name: Verify v1 calendar Undo storage boundary
         run: node tests/v1-v28-storage-tests.mjs
