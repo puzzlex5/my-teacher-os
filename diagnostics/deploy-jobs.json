@@ -2,7 +2,7 @@
   "jobs": [
     {
       "name": "deploy",
-      "status": "in_progress",
+      "status": "queued",
       "conclusion": null,
       "steps": []
     }
