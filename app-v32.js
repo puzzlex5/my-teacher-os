@@ -39,6 +39,15 @@
     const passed=freshPass(r);opt.disabled=!passed;opt.textContent=passed?'이 기기에 원본도 보관 · 실기기 검사 통과':'이 기기에 원본도 보관 · 최신 실기기 검사 필요';
     if(!passed&&select.value==='local'){select.value='reference';select.dispatchEvent(new Event('change',{bubbles:true}))}
   }
+  function applyLegacyHwpGuard(){
+    const input=q('#importFiles');if(input)input.accept='.hwpx,.pdf,.xlsx,.xls,.csv,.txt,.docx,.pptx,.ics,.jpg,.jpeg,.png,.webp,.bmp';
+    const small=q('#importer .upload small');if(small)small.textContent='HWPX · PDF(스캔 포함) · Excel · DOCX · PPTX · ICS · 이미지 · 구형 HWP는 HWPX/PDF로 변환';
+  }
+  function rejectLegacyHwpUpload(e){
+    const input=e.target;if(input?.id!=='importFiles'||!input.files?.length)return false;
+    const hwp=[...input.files].find(f=>/\.hwp$/i.test(String(f?.name||'')));if(!hwp)return false;
+    e.preventDefault();e.stopImmediatePropagation();input.value='';const status=q('#importStatus');if(status)status.innerHTML='<b>구형 HWP는 아직 직접 분석하지 않습니다.</b> 한글에서 HWPX 또는 PDF로 저장한 뒤 다시 올려 주세요. 변환 전 파일을 지원된 것처럼 처리하지 않습니다.';return true
+  }
   function ensureUI(){
     const vault=q('#retentionVault31');if(!vault||q('#deviceStorageTest32'))return;
     const warning=vault.querySelector('.notice.warning');const html=`<div id="deviceStorageTest32" class="device-test32"><div class="device-test-main32"><span class="kicker">DEVICE STORAGE TEST</span><b>이 기기 로컬 원본 보관 검사</b><span id="deviceStorageStatus32" class="mini">검사 준비 중</span></div><button type="button" class="btn secondary tiny" id="runDeviceStorageTest32">지금 다시 검사</button></div>`;
@@ -46,7 +55,7 @@
     q('#runDeviceStorageTest32')?.addEventListener('click',()=>runSelfTest(true));
   }
   function render(){
-    ensureUI();applyLocalModeGuard();const box=q('#deviceStorageStatus32'),btn=q('#runDeviceStorageTest32');if(!box)return;if(btn)btn.disabled=running;
+    ensureUI();applyLocalModeGuard();applyLegacyHwpGuard();const box=q('#deviceStorageStatus32'),btn=q('#runDeviceStorageTest32');if(!box)return;if(btn)btn.disabled=running;
     if(running){box.className='mini testing';box.textContent='IndexedDB에 시험 파일을 쓰고 다시 읽는 중…';return}
     const r=readResult();if(!r){box.className='mini pending';box.textContent='아직 이 기기에서 검증하지 않았습니다. 로컬 원본 보관은 검사 통과 후 활성화됩니다.';return}
     const when=new Date(r.checkedAt).toLocaleString('ko-KR');if(freshPass(r)){box.className='mini pass';box.textContent=`통과 · ${r.browser} · ${r.device} · 쓰기→읽기→무결성→삭제 ${r.durationMs}ms · ${when}`}
@@ -54,9 +63,9 @@
     else{box.className='mini fail';box.textContent=`실패(${r.stage||'unknown'}) · ${r.message} · 안전하게 출처·버전 보관으로 사용합니다. · ${when}`}
   }
   function maybeAutoTest(){const r=readResult();if(!freshPass(r))setTimeout(()=>runSelfTest(false),700)}
-  function refresh(){ensureUI();render();const foot=q('.side-foot');if(foot)foot.textContent='v0.32.1 · fresh real-device vault guard'}
+  function refresh(){ensureUI();render();applyLegacyHwpGuard();const foot=q('.side-foot');if(foot)foot.textContent='v0.32.1 · fresh real-device vault guard'}
 
-  document.addEventListener('change',e=>{if(e.target?.id==='retentionMode31')applyLocalModeGuard()},true);
+  document.addEventListener('change',e=>{if(rejectLegacyHwpUpload(e))return;if(e.target?.id==='retentionMode31')applyLocalModeGuard()},true);
   setTimeout(()=>{refresh();maybeAutoTest()},0);
   const prevRender=globalThis.render;if(typeof prevRender==='function')globalThis.render=function(){const r=prevRender.apply(this,arguments);setTimeout(refresh,0);return r};
   const prevSwitch=globalThis.switchView;if(typeof prevSwitch==='function')globalThis.switchView=function(id){const r=prevSwitch.apply(this,arguments);if(id==='documents'||id==='settings'||id==='importer')setTimeout(refresh,0);return r};
