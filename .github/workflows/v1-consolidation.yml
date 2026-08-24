@@ -52,6 +52,9 @@ jobs:
       - name: Build separate-layer reference and consolidated preview
         run: node scripts/build-v1-runtime.mjs
 
+      - name: Audit consolidated storage boundary through v0.32
+        run: node tests/v1-storage-boundary-audit-tests.mjs
+
       - name: Syntax check consolidated runtime
         run: node --check dist-v1/teacher-os-v1.runtime.js
 
