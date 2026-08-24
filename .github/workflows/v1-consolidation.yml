@@ -20,6 +20,7 @@ jobs:
 
       - name: Prepare v1 legacy sources
         run: |
+          node scripts/prepare-v1-v23-storage.mjs
           node scripts/prepare-v1-sources.mjs
           node scripts/prepare-v1-v23-multisheet.mjs
           node scripts/prepare-v1-comcigan-status.mjs
