@@ -2,7 +2,7 @@ name: Sync Comcigan timetable
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 09:00 KST every day
+    - cron: '*/30 * * * *' # every 30 minutes; GitHub may delay scheduled runs
   workflow_dispatch:
   push:
     branches:
@@ -22,6 +22,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v6
