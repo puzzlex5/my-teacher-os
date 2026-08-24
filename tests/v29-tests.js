@@ -17,4 +17,7 @@ ok(app.includes('수업 없음으로 처리하지 않습니다.'),'today timetab
 ok(app.includes('./live/comcigan-status.json'),'sanitized collector status is checked');
 ok(app.includes("status='collector-error'"),'collector failure is persisted as an explicit truth state');
 ok(app.includes('이전 표를 현재표로 간주하지 않습니다.'),'stale live data is not presented as current after collector failure');
+ok(app.includes('TeacherOSStorage'),'v1 collector truth state uses shared storage service');
+ok(app.includes('S?.writeJSON(KEY,state)'),'v1 collector truth state writes through shared storage boundary');
+ok(!app.includes('localStorage.setItem(KEY'),'v1 collector truth state must not bypass storage service');
 console.log(`v0.29 data truth tests passed (${n} assertions)`);
