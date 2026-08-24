@@ -38,17 +38,36 @@ jobs:
       - name: Fetch teacher timetable
         id: fetch
         continue-on-error: true
-        run: node scripts/sync-comcigan.mjs
+        shell: bash
+        run: |
+          set +e
+          node scripts/sync-comcigan.mjs > /tmp/comcigan-fetch.log 2>&1
+          code=$?
+          category=runtime
+          if [ "$code" -eq 0 ] && [ -f live/comcigan.json ]; then
+            category=ok
+          elif grep -Eqi 'ECONN|ETIMEDOUT|ENOTFOUND|socket|network|fetch failed|connect' /tmp/comcigan-fetch.log; then
+            category=network
+          elif grep -Eqi 'could not be resolved|matched multiple|does not match index|teacher' /tmp/comcigan-fetch.log; then
+            category=teacher-resolution
+          elif grep -Eqi 'no timetable slots|no timetable|empty' /tmp/comcigan-fetch.log; then
+            category=empty
+          elif grep -Eqi 'export not found|module|parser' /tmp/comcigan-fetch.log; then
+            category=parser
+          fi
+          echo "category=$category" >> "$GITHUB_OUTPUT"
+          exit "$code"
 
       - name: Record sanitized collector health
         env:
           FETCH_OUTCOME: ${{ steps.fetch.outcome }}
+          FETCH_CATEGORY: ${{ steps.fetch.outputs.category }}
         run: |
           mkdir -p live
           if [ "$FETCH_OUTCOME" = "success" ] && [ -f live/comcigan.json ]; then
-            printf '%s\n' '{"status":"ok"}' > live/comcigan-status.json
+            printf '%s\n' '{"status":"ok","category":"ok"}' > live/comcigan-status.json
           else
-            printf '%s\n' '{"status":"error"}' > live/comcigan-status.json
+            printf '%s\n' "{\"status\":\"error\",\"category\":\"${FETCH_CATEGORY:-runtime}\"}" > live/comcigan-status.json
           fi
 
       - name: Commit live state only when changed
