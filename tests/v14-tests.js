@@ -11,6 +11,11 @@ if(!sync.includes('TEACHER_OS_CODE='))throw new Error('Collector must emit sanit
 if(sync.includes('matches.map(x=>`${x.i}:${x.name}`)')||sync.includes('index ${selectedIndex} (${indexList[selectedIndex]})'))throw new Error('Collector failure output must not include teacher identities');
 if(wf.includes('cat /tmp/comcigan-fetch.log')||wf.includes('tee /tmp/comcigan-fetch.log'))throw new Error('Raw Comcigan collector log must not be printed');
 if(!wf.includes("machine_code=$(sed -n 's/^TEACHER_OS_CODE="))throw new Error('Workflow must classify explicit collector machine codes');
+if(!sync.includes('async function retryCollector(code,fn)'))throw new Error('Transient collector retry guard missing');
+if(!sync.includes('const delays=[0,1500,4000]'))throw new Error('Collector retry must be bounded to three attempts');
+if(!sync.includes("await retryCollector('collector-init'"))throw new Error('Collector init must use bounded retry');
+if(!sync.includes("retryCollector('collector-fetch'"))throw new Error('Timetable fetch must use bounded retry');
+if(sync.includes('console.error(err')||sync.includes('console.error(error'))throw new Error('Collector retry must not print raw upstream errors');
 const app=fs.readFileSync('app-v14.js','utf8');
 if(!app.includes("./live/comcigan.json"))throw new Error('Plain live Comcigan feed missing');
 if(!app.includes('lockTimetableReadOnly'))throw new Error('Read-only timetable guard missing');
@@ -23,4 +28,4 @@ if(!app.includes('if(!completeConfig(config))'))throw new Error('Unconfigured br
 if(!app.includes('sameConfig'))throw new Error('Comcigan payload/config mismatch guard missing');
 if(!app.includes('개인 설정 필요'))throw new Error('Personal config onboarding copy missing');
 if(app.includes("c.teacherName||p?.teacherName"))throw new Error('Shared payload teacher name must not leak into unconfigured UI');
-console.log('v0.14 per-browser Comcigan isolation and explicit sanitized collector diagnostics tests passed');
+console.log('v0.14 per-browser Comcigan isolation, bounded retry and sanitized collector diagnostics tests passed');
