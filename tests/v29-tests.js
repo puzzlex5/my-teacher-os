@@ -4,6 +4,8 @@ let n=0;const ok=(v,m)=>{assert.ok(v,m);n++};
 ok(T.nextLessonTruth({}, {status:'none',live:false,slot:null}).known===false,'no source is unknown');
 ok(T.nextLessonTruth({comciganSync:{status:'waiting'}},{status:'none',live:false,slot:null}).label==='컴시간 최신표 미확인','waiting label');
 ok(T.nextLessonTruth({comciganSync:{status:'mismatch'}},{status:'none',live:false,slot:null}).label==='컴시간 설정 불일치','mismatch label');
+ok(T.nextLessonTruth({comciganSync:{status:'collector-error'}},{status:'none',live:false,slot:null}).label==='컴시간 수집 오류','collector error label');
+ok(T.nextLessonTruth({comciganSync:{status:'collector-error'}},{status:'none',live:true,slot:null}).known===false,'collector error overrides stale live-week certainty');
 ok(T.nextLessonTruth({timetable:[{day:'월',period:1}]},{status:'none',live:false,slot:null}).known===true,'basic timetable makes zero-day result interpretable');
 ok(T.nextLessonTruth({}, {status:'none',live:true,slot:null}).known===true,'live week with zero slots is confirmed zero');
 ok(T.nextLessonTruth({}, {status:'done',live:false,slot:null}).known===true,'completed day is known');
@@ -12,4 +14,7 @@ ok(app.includes('오늘 수업 여부를 확정할 수 없습니다.'),'unknown-
 ok(app.includes('0건으로 처리하지 않습니다.'),'zero-vs-unknown guard copy');
 ok(app.includes('correctTodayTimetableTruth'),'legacy today timetable is truth-guarded');
 ok(app.includes('수업 없음으로 처리하지 않습니다.'),'today timetable does not claim zero before verification');
+ok(app.includes('./live/comcigan-status.json'),'sanitized collector status is checked');
+ok(app.includes("status='collector-error'"),'collector failure is persisted as an explicit truth state');
+ok(app.includes('이전 표를 현재표로 간주하지 않습니다.'),'stale live data is not presented as current after collector failure');
 console.log(`v0.29 data truth tests passed (${n} assertions)`);
