@@ -14,7 +14,7 @@ function replaceOnce(label,from,to){
 replaceOnce(
   'collector status helpers',
   "  function sameConfig(p,c){if(!p||!completeConfig(c))return false;return Number(p.schoolCode)===Number(c.schoolCode)&&Number(p.teacherIndex)===Number(c.teacherIndex)}",
-  "  function sameConfig(p,c){if(!p||!completeConfig(c))return false;return Number(p.schoolCode)===Number(c.schoolCode)&&Number(p.teacherIndex)===Number(c.teacherIndex)}\n  async function collectorStatus14(){try{const r=await fetch('./live/comcigan-status.json?v='+Date.now(),{cache:'no-store'});if(!r.ok)return null;const s=await r.json();return s&&typeof s==='object'?s:null}catch{return null}}\n  function collectorMessage14(s){const d=String(s?.detail||''),c=String(s?.category||'');if(d==='teacher-name-multiple')return'컴시간에서 같은 이름의 교사가 여러 명 확인되어 자동 적용을 중단했습니다.';if(d==='teacher-index-name-mismatch')return'저장한 교사번호와 교사명이 현재 컴시간 정보와 일치하지 않아 자동 적용을 중단했습니다.';if(d==='teacher-not-resolved'||d==='teacher-data-missing'||c==='teacher-resolution')return'저장한 교사를 현재 컴시간 정보에서 확인하지 못했습니다.';if(c==='network')return'컴시간 수집 네트워크 오류로 최신표를 확인하지 못했습니다.';if(c==='empty')return'컴시간에서 적용 가능한 시간표 항목을 확인하지 못했습니다.';if(c==='parser')return'컴시간 데이터 해석에 실패해 최신표를 적용하지 않았습니다.';return'컴시간 자동수집이 실패해 최신표를 확인하지 못했습니다.'}"
+  "  function sameConfig(p,c){if(!p||!completeConfig(c))return false;return Number(p.schoolCode)===Number(c.schoolCode)&&Number(p.teacherIndex)===Number(c.teacherIndex)}\n  async function collectorStatus14(){try{const r=await fetch('./live/comcigan-status.json?v='+Date.now(),{cache:'no-store'});if(!r.ok)return null;const s=await r.json();return s&&typeof s==='object'?s:null}catch{return null}}\n  function collectorMessage14(s){const d=String(s?.detail||''),c=String(s?.category||'');if(d==='teacher-name-multiple')return'컴시간에서 같은 이름의 교사가 여러 명 확인되어 자동 적용을 중단했습니다.';if(d==='teacher-index-name-mismatch')return'저장한 교사번호와 교사명이 현재 컴시간 정보와 일치하지 않아 자동 적용을 중단했습니다.';if(d==='teacher-not-resolved'||d==='teacher-data-missing'||c==='teacher-resolution')return'저장한 교사를 현재 컴시간 정보에서 확인하지 못했습니다.';if(d==='collector-init'||d==='collector-fetch'||c==='network')return'컴시간 수집 연결 단계에서 최신표를 확인하지 못했습니다.';if(d==='timetable-empty'||c==='empty')return'컴시간에서 적용 가능한 시간표 항목을 확인하지 못했습니다.';if(d==='parser-import'||d==='parser-export'||c==='parser')return'컴시간 데이터 해석 모듈을 준비하지 못해 최신표를 적용하지 않았습니다.';if(d==='config-invalid'||c==='config')return'자동수집 설정이 완전하지 않아 최신표를 가져오지 못했습니다.';return'컴시간 자동수집이 실패해 최신표를 확인하지 못했습니다.'}"
 );
 
 replaceOnce(
@@ -41,8 +41,8 @@ replaceOnce(
   "${ok?'자동 적용 중':mismatch?'설정 불일치':collectorError?'수집 오류':configured?'수집 결과 확인 중':'개인 설정 필요'}</span><span class=\"live-source\">${!configured?'처음 사용하는 브라우저입니다. 내 학교·교사 설정을 먼저 저장하세요.':mismatch?'현재 수집 결과가 내 설정과 달라 적용하지 않았습니다.':collectorError?esc(collectorInfo):'설정과 수집 결과가 일치할 때만 시간표를 적용합니다.'}"
 );
 
-for(const token of ['./live/comcigan-status.json','COLLECTOR_ERROR','collector-error','수집 오류','collectorMessage14']){
+for(const token of ['./live/comcigan-status.json','COLLECTOR_ERROR','collector-error','수집 오류','collectorMessage14','collector-fetch','parser-export','timetable-empty','config-invalid']){
   if(!src.includes(token))throw new Error(`prepared v1 Comcigan truth state missing: ${token}`);
 }
 fs.writeFileSync(path,src,'utf8');
-console.log('Prepared v1 Comcigan UI to distinguish collector failure from pending synchronization.');
+console.log('Prepared v1 Comcigan UI to distinguish pending synchronization from explicit sanitized collector failure states.');
