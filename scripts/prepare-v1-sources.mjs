@@ -89,3 +89,16 @@ for(const token of ['CAL_HISTORY_KEY','CONTACT_KEY','COMCIGAN_KEY','globalThis.T
 }
 fs.writeFileSync(path28,src28,'utf8');
 console.log('Prepared v1 app-v28 calendar Undo restore through shared storage while preserving local-only keys.');
+
+const path30='app-v30.js';
+let src30=fs.readFileSync(path30,'utf8');
+const directSave30="function saveState30(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch{}}";
+const sharedSave30="function saveState30(){try{globalThis.TeacherOSStorage.writeJSON(KEY,state);return true}catch(e){console.error('Teacher OS v30 state save failed',e);return false}}";
+if(src30.includes(directSave30))src30=src30.replace(directSave30,sharedSave30);
+else if(!src30.includes(sharedSave30))throw new Error('v1 source preparation failed (v30 document state storage): expected source pattern not found');
+if(src30.includes('localStorage.setItem(KEY,JSON.stringify(state))')||src30.includes('localStorage.getItem(KEY)'))throw new Error('v1 prepared v30 bypasses shared state storage');
+for(const token of ['HISTORY_KEY','writeHistory','snapshotBeforeReplace','globalThis.TeacherOSStorage.writeJSON(KEY,state)']){
+  if(!src30.includes(token))throw new Error(`v1 prepared v30 missing: ${token}`);
+}
+fs.writeFileSync(path30,src30,'utf8');
+console.log('Prepared v1 app-v30 document-version state through shared storage while preserving local Undo history.');
