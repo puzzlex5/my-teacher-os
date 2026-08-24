@@ -18,6 +18,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Guard raw v23 stable accuracy baseline
+        run: node tests/v1-v23-source-baseline-tests.mjs
+
       - name: Prepare v1 legacy sources
         run: |
           node scripts/prepare-v1-v23-storage.mjs
