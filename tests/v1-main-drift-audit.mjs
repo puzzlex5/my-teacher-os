@@ -4,7 +4,11 @@ import {execFileSync} from 'node:child_process';
 
 const EXACT_PARITY_FILES=[
   'app-v19.js',
+  'core-v23.js',
   'app-v23.js',
+  'core-v29.js',
+  'core-v30.js',
+  'core-v31.js',
   'app-v32.js',
   'scripts/sync-comcigan.mjs',
   '.github/workflows/sync-comcigan.yml'
