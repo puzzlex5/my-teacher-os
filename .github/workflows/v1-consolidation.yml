@@ -69,6 +69,9 @@ jobs:
       - name: Verify v1 intake accuracy sync
         run: node tests/v1-v23-accuracy-tests.mjs
 
+      - name: Verify v1 applied/equivalent/blocked intake outcomes
+        run: node tests/v1-v23-apply-outcome-tests.mjs
+
       - name: Verify v1 multi-sheet spreadsheet intake
         run: node tests/v1-v23-multisheet-tests.mjs
 
