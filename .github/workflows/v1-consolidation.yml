@@ -43,6 +43,7 @@ jobs:
           node scripts/prepare-v1-v23-multisheet.mjs
           node scripts/prepare-v1-v23-pdf-layout.mjs
           node scripts/prepare-v1-v23-materialized-count.mjs
+          node scripts/prepare-v1-v23-memory-hygiene.mjs
           node scripts/prepare-v1-lazy-doc-deps.mjs
           node scripts/prepare-v1-lazy-doc-shell.mjs
           node scripts/prepare-v1-comcigan-status.mjs
@@ -71,6 +72,9 @@ jobs:
 
       - name: Verify v1 applied/equivalent/blocked intake outcomes
         run: node tests/v1-v23-apply-outcome-tests.mjs
+
+      - name: Verify v1 transient document-memory hygiene
+        run: node tests/v1-v23-memory-hygiene-tests.mjs
 
       - name: Verify v1 multi-sheet spreadsheet intake
         run: node tests/v1-v23-multisheet-tests.mjs
