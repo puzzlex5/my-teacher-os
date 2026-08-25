@@ -12,7 +12,10 @@ const required=[
   '${auto.blocked?` · 자동 보류 ${auto.blocked}개`',
   '${empty?` · 항목 미검출 ${empty}개`',
   'function suggestionMaterialized23(y,s)',
-  'const existedBefore=new Map',
+  'function suggestionEquivalent23(y,s)',
+  'const sourceBefore=new Map',
+  '!suggestionMaterialized23(y,s)&&suggestionEquivalent23(y,s)',
+  '!suggestionMaterialized23(y,s)&&!suggestionEquivalent23(y,s)',
   'sourceStats=new Map()',
   'lastAutoAttemptedCount=st.attempted',
   'lastAppliedCount=st.applied',
@@ -41,4 +44,4 @@ if(app.includes('const remainingIds=new Set((suggestions||[]).map(s=>s.id))')){
 if(app.includes('localStorage.setItem(KEY')||app.includes('localStorage.getItem(KEY')){
   throw new Error('v1 v23 accuracy fix must preserve shared-storage boundary');
 }
-console.log('v1 v23 retry, materialized apply count, truthful per-file outcome metadata, source provenance, empty-result, legacy-HWP and shared-storage guards passed');
+console.log('v1 v23 retry, materialized/equivalent apply classification, truthful per-file outcome metadata, source provenance, empty-result, legacy-HWP and shared-storage guards passed');
