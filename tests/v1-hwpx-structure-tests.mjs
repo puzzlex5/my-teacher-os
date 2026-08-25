@@ -29,6 +29,6 @@ assert.equal(lines.length,4,'synthetic HWPX should not create duplicate table te
 const prep=fs.readFileSync('scripts/prepare-v1-hwpx-structure.mjs','utf8');
 assert.ok(prep.includes('v1-hwpx-structure-core.mjs'));
 assert.ok(prep.includes("if(ext==='hwpx')"));
-assert.ok(prep.includes('section(\\d+)'));
+assert.ok(prep.includes('.sort((a,b)=>Number((a.match('),'HWPX sections must be processed in numeric section order');
 assert.ok(prep.includes('still flattens XML structure'));
 console.log('v1 structured HWPX extraction tests passed');
