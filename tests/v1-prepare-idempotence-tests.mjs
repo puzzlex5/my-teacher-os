@@ -9,6 +9,7 @@ const PREPARE_SCRIPTS=[
   'scripts/prepare-v1-hwpx-structure.mjs',
   'scripts/prepare-v1-v23-multisheet.mjs',
   'scripts/prepare-v1-v23-pdf-layout.mjs',
+  'scripts/prepare-v1-v23-materialized-count.mjs',
   'scripts/prepare-v1-lazy-doc-deps.mjs',
   'scripts/prepare-v1-lazy-doc-shell.mjs',
   'scripts/prepare-v1-comcigan-status.mjs'
