@@ -24,6 +24,24 @@ const accuracy=correct/rows.length;
 assert.equal(accuracy,1,`synthetic document classification accuracy regressed: ${correct}/${rows.length}\n${JSON.stringify(rows,null,2)}`);
 rows.forEach(r=>assert.ok(r.confidence>=.70,`${r.id} confidence unexpectedly low: ${r.confidence}`));
 
+// Adversarial no-PII cases: ambiguity, weak evidence, degraded extraction and
+// sensitive/mismatched suggestions must never become broader automatic actions.
+const vague=D.classifyDocument({name:'교내 안내 자료.pdf',ext:'pdf',text:'안내 참고 교육 활동 자료'});
+assert.equal(vague.classId,'unknown','weak generic evidence must stay unclassified');
+const ambiguous=D.classifyDocument({name:'종합 업무 평가 자료.pdf',ext:'pdf',text:'업무 분장 담당 업무 담당자 담당 부서 공문 기안 결재 수행 평가 지필 평가 평가 계획 반영 비율 평가 방법 성취 기준'});
+assert.equal(ambiguous.mixed,true,'balanced admin/assessment evidence should be marked mixed');
+assert.ok(ambiguous.confidence<=.84,'mixed classification confidence must stay capped');
+const mixedMismatch=D.fuseSuggestion({baseConfidence:.99,docClass:ambiguous.classId,docConfidence:ambiguous.confidence,extractionQuality:.99,kind:ambiguous.classId==='admin'?'assessment':'admin',mixed:true});
+assert.equal(mixedMismatch.auto,false,'ambiguous mixed documents must never broaden auto-apply to another domain');
+const degraded=D.extractionQuality({text:'수행평가 □□□□ 30% ※※※ 9월 3일',method:'docx-native'});
+assert.ok(degraded<.72,'degraded native extraction must remain below auto-apply quality threshold');
+const degradedAuto=D.fuseSuggestion({baseConfidence:.99,docClass:'assessment',docConfidence:.99,extractionQuality:degraded,kind:'assessment'});
+assert.equal(degradedAuto.auto,false,'degraded extraction must require review despite strong document classification');
+const sensitive=D.fuseSuggestion({baseConfidence:.99,docClass:'student',docConfidence:.99,extractionQuality:.99,kind:'admin',sensitive:true});
+assert.equal(sensitive.auto,false,'student/sensitive material must never auto-apply');
+const schoolplanMixed=D.fuseSuggestion({baseConfidence:.96,docClass:'schoolplan',docConfidence:.84,extractionQuality:.95,kind:'assessment',mixed:true});
+assert.equal(schoolplanMixed.auto,true,'explicit school-plan multi-domain intake may retain bounded auto-apply');
+
 // Measure only deterministic classification cost; file parsing/OCR have separate tests.
 // The generous ceiling catches accidental algorithmic blow-ups while avoiding CI noise.
 const iterations=4000;
@@ -34,4 +52,4 @@ const classifications=iterations*fixtures.length;
 const perDocMs=elapsedMs/classifications;
 assert.ok(elapsedMs<3500,`document classifier latency regression: ${elapsedMs.toFixed(1)}ms for ${classifications} classifications`);
 
-console.log(JSON.stringify({fixtureCount:fixtures.length,accuracy,elapsedMs:Number(elapsedMs.toFixed(1)),classifications,perDocMs:Number(perDocMs.toFixed(4))}));
+console.log(JSON.stringify({fixtureCount:fixtures.length,challengeCount:7,accuracy,elapsedMs:Number(elapsedMs.toFixed(1)),classifications,perDocMs:Number(perDocMs.toFixed(4))}));
