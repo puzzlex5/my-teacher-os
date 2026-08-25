@@ -1,6 +1,9 @@
 const fs=require('fs');
-const cfg=JSON.parse(fs.readFileSync('comcigan-config.json','utf8'));
-if(!cfg.enabled)throw new Error('Comcigan collector config must be enabled');
+const configPath='comcigan-config.json';
+if(fs.existsSync(configPath)){
+  const cfg=JSON.parse(fs.readFileSync(configPath,'utf8'));
+  if(cfg.enabled||Number(cfg.schoolCode)>0||Number(cfg.teacherIndex)>0||String(cfg.teacherName||'').trim())throw new Error('Public v1 branch must not contain active or identifying Comcigan collector config');
+}
 const wf=fs.readFileSync('.github/workflows/sync-comcigan.yml','utf8');
 const sync=fs.readFileSync('scripts/sync-comcigan.mjs','utf8');
 if(!wf.includes("cron: '*/30 * * * *'"))throw new Error('30-minute Comcigan refresh cron missing');
@@ -28,4 +31,4 @@ if(!app.includes('if(!completeConfig(config))'))throw new Error('Unconfigured br
 if(!app.includes('sameConfig'))throw new Error('Comcigan payload/config mismatch guard missing');
 if(!app.includes('개인 설정 필요'))throw new Error('Personal config onboarding copy missing');
 if(app.includes("c.teacherName||p?.teacherName"))throw new Error('Shared payload teacher name must not leak into unconfigured UI');
-console.log('v0.14 per-browser Comcigan isolation, bounded retry and sanitized collector diagnostics tests passed');
+console.log('v0.14 per-browser Comcigan isolation, public-branch privacy, bounded retry and sanitized collector diagnostics tests passed');
