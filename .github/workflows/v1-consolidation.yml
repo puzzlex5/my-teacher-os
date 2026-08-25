@@ -92,6 +92,9 @@ jobs:
       - name: Build separate-layer reference and consolidated preview
         run: node scripts/build-v1-runtime.mjs
 
+      - name: Audit public v1 artifacts for sensitive data
+        run: node tests/v1-public-artifact-privacy-audit.mjs
+
       - name: Verify v1 lazy document dependencies
         run: node tests/v1-lazy-doc-deps-tests.mjs
 
