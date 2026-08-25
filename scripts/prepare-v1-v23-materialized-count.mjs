@@ -29,7 +29,7 @@ for(const token of [
   "x.source===s.source&&x.day===s.day",
   "x.source===s.source&&x.name===s.title&&x.due===(s.date||'')",
   'const existedBefore=new Map',
-  'const appliedIds=new Set',
+  'appliedIds=new Set',
   'sourceStats=new Map()',
   'lastAutoAttemptedCount=st.attempted',
   'lastAppliedCount=st.applied',
