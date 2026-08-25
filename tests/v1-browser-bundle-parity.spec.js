@@ -9,11 +9,13 @@ const STATE_KEY='myTeacherOS.v01';
 
 async function openApp(browser,url,viewport,seedState=null){
   const context=await browser.newContext({viewport,locale:'ko-KR',timezoneId:'Asia/Seoul'});
-  await context.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({
-    status:200,
-    contentType:'application/javascript',
-    body:'globalThis.XLSX=globalThis.XLSX||{};globalThis.mammoth=globalThis.mammoth||{};globalThis.JSZip=globalThis.JSZip||function JSZip(){};'
-  }));
+  const cdnRequests=[];
+  await context.route('https://cdn.jsdelivr.net/**',route=>{
+    cdnRequests.push(route.request().url());
+    const url=route.request().url();
+    const body=url.includes('/xlsx@')?'globalThis.XLSX=globalThis.XLSX||{};':url.includes('/mammoth@')?'globalThis.mammoth=globalThis.mammoth||{};':url.includes('/jszip@')?'globalThis.JSZip=globalThis.JSZip||function JSZip(){};':'';
+    return route.fulfill({status:200,contentType:'application/javascript',body});
+  });
   if(seedState){
     await context.addInitScript(({key,value})=>{
       if(!sessionStorage.getItem('__teacherOsSeeded')){
@@ -29,7 +31,7 @@ async function openApp(browser,url,viewport,seedState=null){
   page.on('requestfailed',req=>requestFailures.push(`${req.method()} ${req.url()} :: ${req.failure()?.errorText||'failed'}`));
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.waitForTimeout(1200);
-  return {context,page,pageErrors,requestFailures};
+  return {context,page,pageErrors,requestFailures,cdnRequests};
 }
 
 async function startupState(page){
@@ -143,11 +145,13 @@ for(const device of [
 
       expect(legacy.pageErrors,`legacy page errors: ${legacy.pageErrors.join(' | ')}; state=${JSON.stringify(legacyStart)}; body=${legacyBody}`).toEqual([]);
       expect(legacy.requestFailures,`legacy request failures: ${legacy.requestFailures.join(' | ')}`).toEqual([]);
+      expect(legacy.cdnRequests,'legacy startup must not fetch document-analysis CDN libraries').toEqual([]);
       expect(legacyStart.hasWorkLibrary,`legacy work library missing; state=${JSON.stringify(legacyStart)}`).toBe(true);
       expect(legacyStart.hasTeacherDesk,`legacy Teacher Desk missing; state=${JSON.stringify(legacyStart)}`).toBe(true);
 
       expect(bundle.pageErrors,`bundle page errors: ${bundle.pageErrors.join(' | ')}; state=${JSON.stringify(bundleStart)}; body=${bundleBody}`).toEqual([]);
       expect(bundle.requestFailures,`bundle request failures: ${bundle.requestFailures.join(' | ')}`).toEqual([]);
+      expect(bundle.cdnRequests,'bundle startup must not fetch document-analysis CDN libraries').toEqual([]);
       expect(bundleStart).toEqual(legacyStart);
       expect(await fingerprint(bundle.page)).toEqual(await fingerprint(legacy.page));
       expect(await navigationFingerprint(bundle.page)).toEqual(await navigationFingerprint(legacy.page));
@@ -157,6 +161,26 @@ for(const device of [
     }
   });
 }
+
+test('v1 document dependencies load only when a matching file type needs them',async({browser})=>{
+  const app=await openApp(browser,TARGETS.bundle,{width:1280,height:900});
+  try{
+    expect(app.cdnRequests).toEqual([]);
+    await app.page.evaluate(()=>globalThis.TeacherOSDeps.ensureForFiles([
+      {name:'synthetic.xlsx'},
+      {name:'synthetic.docx'},
+      {name:'synthetic.hwpx'}
+    ]));
+    expect(app.cdnRequests).toHaveLength(3);
+    expect(app.cdnRequests.some(x=>x.includes('/xlsx@0.18.5/'))).toBe(true);
+    expect(app.cdnRequests.some(x=>x.includes('/mammoth@1.8.0/'))).toBe(true);
+    expect(app.cdnRequests.some(x=>x.includes('/jszip@3.10.1/'))).toBe(true);
+    expect(app.pageErrors).toEqual([]);
+    expect(app.requestFailures).toEqual([]);
+  } finally {
+    await app.context.close();
+  }
+});
 
 test('v1 shared storage preserves historical state migration across reload',async({browser})=>{
   const viewport={width:1280,height:900};
