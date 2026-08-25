@@ -33,17 +33,23 @@ if(!src.includes(sourceAwareKey))throw new Error('v1 v23 preparation found no so
 // privacy signal must make auto-apply fail closed. Analysis/review still remain available.
 const oldSensitive="sensitive=privacy.length>0&&doc.classId==='student'";
 const privacySensitive='sensitive=privacy.length>0';
-if(src.includes(oldSensitive))src=src.replace(oldSensitive,privacySensitive);
-else if(!src.includes(privacySensitive))throw new Error('v1 v23 privacy guard found no expected analysis sensitivity source');
+if(!src.includes(privacySensitive)){
+  if(src.includes(oldSensitive))src=src.replace(oldSensitive,privacySensitive);
+  else throw new Error('v1 v23 privacy guard found no expected analysis sensitivity source');
+}
 const oldCorrected="sensitive:classId==='student'";
 const correctedSensitive="sensitive:classId==='student'||(report.privacy||[]).length>0";
-if(src.includes(oldCorrected))src=src.replace(oldCorrected,correctedSensitive);
-else if(!src.includes(correctedSensitive))throw new Error('v1 v23 privacy guard found no corrected-class sensitivity source');
+if(!src.includes(correctedSensitive)){
+  if(src.includes(oldCorrected))src=src.replace(oldCorrected,correctedSensitive);
+  else throw new Error('v1 v23 privacy guard found no corrected-class sensitivity source');
+}
 const oldPrivacyNotice='학생자료로 판정된 파일은 자동 적용을 막았습니다.';
 const privacyNotice='개인정보 형태가 감지된 파일은 문서 분류와 관계없이 자동 적용을 막았습니다.';
-if(src.includes(oldPrivacyNotice))src=src.replace(oldPrivacyNotice,privacyNotice);
-if(!src.includes(privacyNotice))throw new Error('v1 v23 privacy guard notice is missing');
-for(const token of [privacySensitive,correctedSensitive])if(!src.includes(token))throw new Error(`v1 v23 privacy guard missing: ${token}`);
+if(!src.includes(privacyNotice)){
+  if(src.includes(oldPrivacyNotice))src=src.replace(oldPrivacyNotice,privacyNotice);
+  else throw new Error('v1 v23 privacy guard notice source is missing');
+}
+for(const token of [privacySensitive,correctedSensitive,privacyNotice])if(!src.includes(token))throw new Error(`v1 v23 privacy guard missing: ${token}`);
 
 fs.writeFileSync(path,src,'utf8');
 
