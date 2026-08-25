@@ -1,5 +1,5 @@
 (function(){
-  const V6=globalThis.TeacherOSCoreV6;
+  const V6=globalThis.TeacherOSCoreV6,Truth=globalThis.TeacherOSDataTruth;
   if(!V6)return;
   const q=s=>document.querySelector(s);
   const pad=n=>String(n).padStart(2,'0');
@@ -11,25 +11,30 @@
   const DEFAULT_HIGH={1:['09:00','09:50'],2:['10:00','10:50'],3:['11:00','11:50'],4:['12:00','12:50'],5:['13:50','14:40'],6:['14:50','15:40'],7:['15:50','16:40']};
   let timer=null;
 
+  function truth16(y,context){try{return Truth?.nextLessonTruth?Truth.nextLessonTruth(y,context):{known:true,reason:'legacy-fallback'}}catch{return{known:false,reason:'truth-error',label:'시간표 상태 확인 실패'}}}
   function todaySlots(y){
     const date=localISO(new Date()),ws=weekStart(new Date()),live=y.liveTimetableWeeks?.[ws];
     if(live){
-      return {source:'컴시간 실제표',live:true,slots:(live.slots||[]).filter(s=>s.date===date).map(s=>({...s,target:V6.normalizeScope(s.target||V6.targetFromLabel(s.label))})).filter(s=>/^\d+-\d+$/.test(s.target)).sort((a,b)=>Number(a.period)-Number(b.period))};
+      const truth=truth16(y,{live:true});if(!truth.known)return{source:truth.label||'컴시간 상태 미확인',live:false,known:false,reason:truth.reason,slots:[]};
+      return {source:'컴시간 실제표',live:true,known:true,slots:(live.slots||[]).filter(s=>s.date===date).map(s=>({...s,target:V6.normalizeScope(s.target||V6.targetFromLabel(s.label))})).filter(s=>/^\d+-\d+$/.test(s.target)).sort((a,b)=>Number(a.period)-Number(b.period))};
     }
-    return {source:'기본 시간표',live:false,slots:(y.timetable||[]).filter(s=>s.day===dayKo()).map(s=>({...s,target:V6.normalizeScope(s.target||V6.targetFromLabel(s.label))})).filter(s=>/^\d+-\d+$/.test(s.target)).sort((a,b)=>Number(a.period)-Number(b.period))};
+    const truth=truth16(y,{live:false});if(!truth.known)return{source:truth.label||'시간표 자료 미확인',live:false,known:false,reason:truth.reason,slots:[]};
+    return {source:'기본 시간표',live:false,known:true,slots:(y.timetable||[]).filter(s=>s.day===dayKo()).map(s=>({...s,target:V6.normalizeScope(s.target||V6.targetFromLabel(s.label))})).filter(s=>/^\d+-\d+$/.test(s.target)).sort((a,b)=>Number(a.period)-Number(b.period))};
   }
-  function rangeForPeriod(y,p){
-    const configured=(y.timetable||[]).map(s=>({p:Number(s.period),time:String(s.time||'')})).find(x=>x.p===Number(p)&&/\d{1,2}:\d{2}\s*[~\-]\s*\d{1,2}:\d{2}/.test(x.time));
-    if(configured){const ms=configured.time.match(/(\d{1,2}:\d{2})\s*[~\-]\s*(\d{1,2}:\d{2})/);return {start:minutes(ms[1]),end:minutes(ms[2]),exact:true,label:configured.time}}
+  function periodRangeMap16(y){
+    const out=new Map();for(const s of y.timetable||[]){const p=Number(s.period),time=String(s.time||'');if(!p||out.has(p)||!/\d{1,2}:\d{2}\s*[~\-]\s*\d{1,2}:\d{2}/.test(time))continue;const ms=time.match(/(\d{1,2}:\d{2})\s*[~\-]\s*(\d{1,2}:\d{2})/);out.set(p,{start:minutes(ms[1]),end:minutes(ms[2]),exact:true,label:time})}return out
+  }
+  function rangeForPeriod(y,p,configuredRanges){
+    const configured=configuredRanges?.get(Number(p));if(configured)return configured;
     const table=y.schoolLevel==='고등학교'?DEFAULT_HIGH:DEFAULT_MIDDLE,raw=table[Number(p)];
     return raw?{start:minutes(raw[0]),end:minutes(raw[1]),exact:false,label:`${raw[0]}~${raw[1]}`} : null;
   }
   function loggedToday(y,slot){return (y.lessonLogs||[]).some(l=>l.date===localISO(new Date())&&Number(l.period)===Number(slot.period)&&V6.normalizeScope(l.target)===V6.normalizeScope(slot.target)&&!l.undone)}
   function detect(y){
-    const info=todaySlots(y),slots=info.slots;
+    const info=todaySlots(y),slots=info.slots;if(info.known===false)return{status:'unknown',source:info.source,live:false,slot:null,message:'오늘 수업을 자동 확정하지 않습니다.'};
     if(!slots.length)return {status:'none',source:info.source,live:info.live,slot:null,message:'오늘 등록된 수업이 없습니다.'};
-    const now=new Date(),nowMin=now.getHours()*60+now.getMinutes();
-    const enriched=slots.map(s=>({...s,range:rangeForPeriod(y,s.period)}));
+    const now=new Date(),nowMin=now.getHours()*60+now.getMinutes(),configuredRanges=periodRangeMap16(y);
+    const enriched=slots.map(s=>({...s,range:rangeForPeriod(y,s.period,configuredRanges)}));
     const current=enriched.find(s=>s.range&&nowMin>=s.range.start-5&&nowMin<=s.range.end+5);
     if(current)return {status:'current',source:info.source,live:info.live,slot:current,message:`현재 ${current.period}교시 수업으로 자동 설정`};
     const next=enriched.filter(s=>s.range&&s.range.start>=nowMin-5).sort((a,b)=>a.range.start-b.range.start)[0];
@@ -65,9 +70,9 @@
       badge.className='lesson-auto-badge '+(d.status==='current'?'is-current':d.status==='next'?'is-next':'');
       if(start){start.disabled=false;start.title=''}
     }else{
-      title.textContent=d.status==='done'?'오늘 수업 기록 완료':'오늘 수업 없음';
+      title.textContent=d.status==='done'?'오늘 수업 기록 완료':d.status==='unknown'?'수업 정보 미확정':'오늘 수업 없음';
       sub.textContent=`${d.source} · ${d.message}`;
-      badge.textContent='대기';badge.className='lesson-auto-badge is-idle';
+      badge.textContent=d.status==='unknown'?'확인 필요':'대기';badge.className='lesson-auto-badge is-idle';
       if(start){start.disabled=true;start.title=d.message}
     }
   }
