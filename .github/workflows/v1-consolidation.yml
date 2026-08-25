@@ -38,6 +38,7 @@ jobs:
           node scripts/prepare-v1-sources.mjs
           node scripts/prepare-v1-hwpx-structure.mjs
           node scripts/prepare-v1-v23-multisheet.mjs
+          node scripts/prepare-v1-v23-pdf-layout.mjs
           node scripts/prepare-v1-comcigan-status.mjs
 
       - name: Guard critical stable-main accuracy parity
@@ -58,6 +59,9 @@ jobs:
 
       - name: Verify v1 multi-sheet spreadsheet intake
         run: node tests/v1-v23-multisheet-tests.mjs
+
+      - name: Verify v1 native PDF positional intake
+        run: node tests/v1-v23-pdf-layout-tests.mjs
 
       - name: Verify v1 calendar Undo storage boundary
         run: node tests/v1-v28-storage-tests.mjs
