@@ -17,6 +17,9 @@ const tt=C.parseTimetableGrid([
 assert.equal(tt.length,4);
 assert.ok(tt.some(x=>x.day==='월'&&x.period===1&&x.target==='2-1'));
 assert.ok(C.privacySignals('010-1234-5678').includes('휴대전화번호 형태'));
+assert.equal(C.privacySignals('UID:event-20260903@example.invalid\nSUMMARY:학교축제').includes('이메일 주소'),false);
+assert.ok(C.privacySignals('ATTENDEE:MAILTO:teacher@example.com').includes('이메일 주소'));
+assert.ok(C.privacySignals('DESCRIPTION:문의 teacher@example.com').includes('이메일 주소'));
 const slots=C.countTeachingSlots([{day:'월',period:1,label:'2-1',target:'2-1'}],[{date:'2026-08-24',title:'재량휴업일'}],'2-1','2026-08-21','2026-09-07');
 assert.equal(slots,2);
-console.log('Teacher OS core tests: PASS (11 assertions)');
+console.log('Teacher OS core tests: PASS (16 assertions)');
