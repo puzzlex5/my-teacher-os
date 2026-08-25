@@ -83,6 +83,9 @@ jobs:
       - name: Syntax check shared storage service
         run: node --check v1-storage-service.js
 
+      - name: Verify corrupted state is never overwritten
+        run: node tests/v1-storage-corruption-guard-tests.mjs
+
       - name: Build separate-layer reference and consolidated preview
         run: node scripts/build-v1-runtime.mjs
 
