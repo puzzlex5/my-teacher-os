@@ -13,7 +13,15 @@ const required=[
   '${empty?` · 항목 미검출 ${empty}개`',
   'function suggestionMaterialized23(y,s)',
   'const existedBefore=new Map',
+  'sourceStats=new Map()',
+  'lastAutoAttemptedCount=st.attempted',
+  'lastAppliedCount=st.applied',
+  'lastUnchangedCount=st.unchanged',
+  'lastBlockedCount=st.blocked',
+  "st.blocked?'applied-partial':'applied'",
+  "st.blocked?'blocked':st.unchanged?'already-present'",
   'unchanged:unchanged.length',
+  'blocked:blocked.length',
   'TeacherOSStorage.writeJSON(KEY,state)',
   "x=>`${x.source||''}|${x.kind}|${x.date||''}|${x.day||''}|${x.period||''}|${x.title||x.label||''}|${x.profileType||''}|${x.target||''}`",
   "if(ext==='hwp')throw new Error('구형 HWP는 아직 직접 분석하지 않습니다.",
@@ -33,4 +41,4 @@ if(app.includes('const remainingIds=new Set((suggestions||[]).map(s=>s.id))')){
 if(app.includes('localStorage.setItem(KEY')||app.includes('localStorage.getItem(KEY')){
   throw new Error('v1 v23 accuracy fix must preserve shared-storage boundary');
 }
-console.log('v1 v23 retry, materialized apply count, unchanged/blocked split, source provenance, empty-result, legacy-HWP and shared-storage guards passed');
+console.log('v1 v23 retry, materialized apply count, truthful per-file outcome metadata, source provenance, empty-result, legacy-HWP and shared-storage guards passed');
