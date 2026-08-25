@@ -26,7 +26,7 @@
     if(Number(layout.classCodes||0)>=4)scores.timetable+=2.5;
     if(Number(layout.periodMarkers||0)>=3)scores.timetable+=2;
     if(ext==='ics')scores.calendar+=12;
-    if(/업무분장/.test(stem))scores.admin+=8;if(/평가계획/.test(stem))scores.assessment+=8;if(/컴시간|변경시간표/.test(stem))scores.live+=9;
+    if(/업무분장/.test(stem))scores.admin+=8;if(/평가계획/.test(stem))scores.assessment+=8;if(/컴시간|변경\s*시간표|대체\s*시간표/.test(stem))scores.live+=9;
     if(feedbackClass&&scores[feedbackClass]!==undefined)scores[feedbackClass]+=18;
     const ranked=Object.entries(scores).sort((a,b)=>b[1]-a[1]);const [top,second]=[ranked[0]||['unknown',0],ranked[1]||['unknown',0]];
     let primary=top[0],topScore=top[1],secondScore=second[1],margin=topScore-secondScore;
