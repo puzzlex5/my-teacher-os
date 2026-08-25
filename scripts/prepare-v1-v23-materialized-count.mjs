@@ -7,8 +7,16 @@ const oldFn="  function applyCurrentAuto23(batchId){const preserve=new Map(),att
 
 const newFn="  function suggestionMaterialized23(y,s){if(!y||!s)return false;if(s.kind==='profile'){if(s.profileType==='office')return y.educationOffice===s.title;if(s.profileType==='school')return y.schoolName===s.title;return false}if(s.kind==='calendar')return !!s.date&&(y.calendarEvents||[]).some(x=>x.source===s.source&&x.date===s.date&&x.title===s.title);if(s.kind==='timetable')return(y.timetable||[]).some(x=>x.source===s.source&&x.day===s.day&&Number(x.period)===Number(s.period)&&x.label===(s.title||s.label));if(s.kind==='assessment')return(y.assessments||[]).some(x=>x.source===s.source&&x.name===s.title&&x.due===(s.date||''));if(s.kind==='admin')return(y.projects||[]).some(x=>x.source===s.source&&x.name===s.title&&x.due===(s.date||''));return false}\n  function applyCurrentAuto23(batchId){const preserve=new Map(),attempted=[],y=cur();(suggestions||[]).forEach(s=>{if(s.v23BatchId===batchId){s.checked=!!s.v23Auto;if(s.checked)attempted.push(s)}else{preserve.set(s.id,!!s.checked);s.checked=false}});const existedBefore=new Map(attempted.map(s=>[s.id,suggestionMaterialized23(y,s)]));if(attempted.length)applySuggestions();const applied=attempted.filter(s=>!existedBefore.get(s.id)&&suggestionMaterialized23(y,s)),unchanged=attempted.filter(s=>existedBefore.get(s.id)),blocked=attempted.filter(s=>!existedBefore.get(s.id)&&!suggestionMaterialized23(y,s)),appliedIds=new Set(applied.map(s=>s.id)),unchangedIds=new Set(unchanged.map(s=>s.id)),sourceStats=new Map();attempted.forEach(s=>{const k=s.source||'',st=sourceStats.get(k)||{attempted:0,applied:0,unchanged:0,blocked:0};st.attempted++;if(appliedIds.has(s.id))st.applied++;else if(unchangedIds.has(s.id))st.unchanged++;else st.blocked++;sourceStats.set(k,st)});for(const [source,st] of sourceStats){const imp=[...(y?.imports||[])].reverse().find(x=>x.name===source&&x.lastBatchId===batchId);if(!imp)continue;imp.lastAutoAttemptedCount=st.attempted;imp.lastAppliedCount=st.applied;imp.lastUnchangedCount=st.unchanged;imp.lastBlockedCount=st.blocked;if(st.applied){imp.appliedCount=Number(imp.appliedCount||0)+st.applied;imp.lastAppliedAt=new Date().toISOString()}imp.analysisStatus=st.applied?(st.blocked?'applied-partial':'applied'):st.blocked?'blocked':st.unchanged?'already-present':imp.analysisStatus}(suggestions||[]).forEach(s=>{if(preserve.has(s.id))s.checked=preserve.get(s.id)});renderSuggestions();return{attempted:attempted.length,applied:applied.length,unchanged:unchanged.length,blocked:blocked.length}}";
 
-if(src.includes(oldFn))src=src.replace(oldFn,newFn);
-else if(!src.includes('function suggestionMaterialized23(y,s)'))throw new Error('v1 v23 materialized-count preparation failed: expected applyCurrentAuto23 source not found');
+if(src.includes(oldFn)){
+  src=src.replace(oldFn,newFn);
+}else if(src.includes('function suggestionMaterialized23(y,s)')&&!src.includes('lastAutoAttemptedCount=st.attempted')){
+  const start=src.indexOf('  function suggestionMaterialized23(y,s)');
+  const end=src.indexOf('  async function analyzeBatch23(){',start);
+  if(start<0||end<0)throw new Error('v1 v23 materialized-count preparation failed: prepared function boundaries not found');
+  src=src.slice(0,start)+newFn+'\n'+src.slice(end);
+}else if(!src.includes('function suggestionMaterialized23(y,s)')){
+  throw new Error('v1 v23 materialized-count preparation failed: expected applyCurrentAuto23 source not found');
+}
 
 const oldStatus="${auto.applied}개 자동 반영 · ${review}개 확인 필요${auto.blocked?` · 자동 보류 ${auto.blocked}개`:''}";
 const newStatus="${auto.applied}개 자동 반영 · ${review}개 확인 필요${auto.unchanged?` · 이미 존재 ${auto.unchanged}개`:''}${auto.blocked?` · 자동 보류 ${auto.blocked}개`:''}";
