@@ -46,6 +46,9 @@ jobs:
           node scripts/prepare-v1-lazy-doc-shell.mjs
           node scripts/prepare-v1-comcigan-status.mjs
 
+      - name: Verify v1 source preparation is deterministic
+        run: node tests/v1-prepare-idempotence-tests.mjs
+
       - name: Guard critical stable-main accuracy parity
         run: node tests/v1-main-critical-parity-tests.mjs
 
