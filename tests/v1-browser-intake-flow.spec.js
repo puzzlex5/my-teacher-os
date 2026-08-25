@@ -43,7 +43,7 @@ async function uploadSyntheticCalendar(page){
     'VERSION:2.0',
     'PRODID:-//Teacher OS Synthetic Test//KO',
     'BEGIN:VEVENT',
-    'UID:synthetic-school-festival@example.invalid',
+    'UID:synthetic-school-festival-20260903',
     'DTSTART;VALUE=DATE:20260903',
     'SUMMARY:합성 학교축제',
     'END:VEVENT',
