@@ -29,6 +29,9 @@ jobs:
       - name: Guard raw v23 stable accuracy baseline
         run: node tests/v1-v23-source-baseline-tests.mjs
 
+      - name: Measure synthetic document accuracy and classifier latency
+        run: node tests/v1-document-quality-benchmark.mjs
+
       - name: Verify structured HWPX extraction core
         run: node tests/v1-hwpx-structure-tests.mjs
 
