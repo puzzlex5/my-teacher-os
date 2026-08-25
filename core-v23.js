@@ -39,7 +39,7 @@
   function textQuality(text){const s=String(text||'').trim();if(!s)return 0;const useful=(s.match(/[가-힣A-Za-z0-9]/g)||[]).length,odd=(s.match(/[�□■◆◇※]{1}/g)||[]).length,ratio=useful/Math.max(1,s.length),lengthScore=clamp(Math.log10(s.length+10)/4,.2,1);return clamp(ratio*.7+lengthScore*.3-odd/Math.max(20,s.length),0,1)}
   function extractionQuality(input={}){const tq=textQuality(input.text),ocr=Number.isFinite(Number(input.ocrConfidence))?clamp(Number(input.ocrConfidence),0,1):null,method=String(input.method||'');let q=tq;if(/spreadsheet|native|docx|hwp|pptx|ics/i.test(method)&&tq>=.45)q=Math.max(q,.9);if(/hybrid/i.test(method))q=Math.max(q,.82);if(/ocr/i.test(method)&&ocr!==null)q=q*.45+ocr*.55;return clamp(q,.05,.99)}
   function compatibility(docClass,kind,mixed=false){
-    if(kind==='profile')return 1;if(mixed||docClass==='schoolplan')return .9;
+    if(kind==='profile')return 1;if(docClass==='schoolplan')return .9;
     if(docClass==='calendar')return kind==='calendar'?1:.28;
     if(docClass==='timetable')return kind==='timetable'?1:(kind==='live' ? .65 : .25);
     if(docClass==='live')return kind==='live'?1:(kind==='timetable' ? .75 : .25);
@@ -48,7 +48,7 @@
     if(docClass==='club')return kind==='calendar' ? .9 : (kind==='admin' ? .45 : .25);
     if(docClass==='student')return .08;return .55
   }
-  function fuseSuggestion(input={}){const base=clamp(Number(input.baseConfidence)||.5),doc=clamp(Number(input.docConfidence)||.5),extract=clamp(Number(input.extractionQuality)||.5),compat=compatibility(input.docClass,input.kind,!!input.mixed);let confidence=base*.52+extract*.25+(doc*compat)*.23;if(doc>=.9&&compat<.4)confidence-=.1;if(input.sensitive)confidence=Math.min(confidence,.58);confidence=clamp(confidence,.05,.99);const auto=confidence>=.9&&extract>=.72&&!input.sensitive&&(doc>=.82||input.mixed||input.docClass==='schoolplan');return{confidence,auto,compatibility:compat,needsReview:!auto}}
+  function fuseSuggestion(input={}){const base=clamp(Number(input.baseConfidence)||.5),doc=clamp(Number(input.docConfidence)||.5),extract=clamp(Number(input.extractionQuality)||.5),compat=compatibility(input.docClass,input.kind,!!input.mixed),ambiguous=!!input.mixed&&input.docClass!=='schoolplan';let confidence=base*.52+extract*.25+(doc*compat)*.23;if(doc>=.9&&compat<.4)confidence-=.1;if(input.sensitive)confidence=Math.min(confidence,.58);confidence=clamp(confidence,.05,.99);const auto=confidence>=.9&&extract>=.72&&!input.sensitive&&!ambiguous&&(doc>=.82||input.docClass==='schoolplan');return{confidence,auto,compatibility:compat,needsReview:!auto}}
   function classOptions(){return Object.entries(LABELS).filter(([id])=>id!=='unknown').map(([id,label])=>({id,label}))}
   return{LABELS,RULES,fileStem,feedbackSignature,classifyDocument,textQuality,extractionQuality,fuseSuggestion,classOptions,clamp};
 });
