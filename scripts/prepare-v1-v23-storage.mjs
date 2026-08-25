@@ -28,6 +28,23 @@ if(src.includes(oldSuggestionKey))src=src.split(oldSuggestionKey).join(sourceAwa
 if(src.includes(oldSuggestionKey))throw new Error('v1 v23 preparation left source-blind suggestion dedupe');
 if(!src.includes(sourceAwareKey))throw new Error('v1 v23 preparation found no source-aware suggestion dedupe');
 
+// Privacy detection is independent evidence from document classification. A roster or
+// counseling export can be misclassified after OCR/table extraction, so any detected
+// privacy signal must make auto-apply fail closed. Analysis/review still remain available.
+const oldSensitive="sensitive=privacy.length>0&&doc.classId==='student'";
+const privacySensitive='sensitive=privacy.length>0';
+if(src.includes(oldSensitive))src=src.replace(oldSensitive,privacySensitive);
+else if(!src.includes(privacySensitive))throw new Error('v1 v23 privacy guard found no expected analysis sensitivity source');
+const oldCorrected="sensitive:classId==='student'";
+const correctedSensitive="sensitive:classId==='student'||(report.privacy||[]).length>0";
+if(src.includes(oldCorrected))src=src.replace(oldCorrected,correctedSensitive);
+else if(!src.includes(correctedSensitive))throw new Error('v1 v23 privacy guard found no corrected-class sensitivity source');
+const oldPrivacyNotice='학생자료로 판정된 파일은 자동 적용을 막았습니다.';
+const privacyNotice='개인정보 형태가 감지된 파일은 문서 분류와 관계없이 자동 적용을 막았습니다.';
+if(src.includes(oldPrivacyNotice))src=src.replace(oldPrivacyNotice,privacyNotice);
+if(!src.includes(privacyNotice))throw new Error('v1 v23 privacy guard notice is missing');
+for(const token of [privacySensitive,correctedSensitive])if(!src.includes(token))throw new Error(`v1 v23 privacy guard missing: ${token}`);
+
 fs.writeFileSync(path,src,'utf8');
 
 const path31='app-v31.js';
@@ -39,4 +56,4 @@ else if(!src31.includes('FILE_HASH_CACHE31'))throw new Error('v1 v31 hash cache 
 for(const token of ['TeacherOSFileHashCache','FILE_HASH_CACHE31.has(file)','FILE_HASH_CACHE31.delete(file)','imports31(y).find(x=>x.hash===h)||null'])if(!src31.includes(token))throw new Error(`v1 v31 hash cache preparation missing: ${token}`);
 fs.writeFileSync(path31,src31,'utf8');
 
-console.log(`Prepared v1 shared storage, source-aware provenance, and exact SHA-256 upload hash reuse (${before} direct state write${before===1?'':'s'} converted).`);
+console.log(`Prepared v1 shared storage, source-aware provenance, privacy fail-closed auto-apply, and exact SHA-256 upload hash reuse (${before} direct state write${before===1?'':'s'} converted).`);
