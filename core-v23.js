@@ -37,7 +37,7 @@
     return{classId:primary,label:LABELS[primary]||LABELS.unknown,confidence,margin,score:topScore,secondClass:second[0],secondLabel:LABELS[second[0]]||LABELS.unknown,secondScore,mixed,scores};
   }
   function textQuality(text){const s=String(text||'').trim();if(!s)return 0;const useful=(s.match(/[가-힣A-Za-z0-9]/g)||[]).length,odd=(s.match(/[�□■◆◇※]{1}/g)||[]).length,ratio=useful/Math.max(1,s.length),lengthScore=clamp(Math.log10(s.length+10)/4,.2,1);return clamp(ratio*.7+lengthScore*.3-odd/Math.max(20,s.length),0,1)}
-  function extractionQuality(input={}){const tq=textQuality(input.text),ocr=Number.isFinite(Number(input.ocrConfidence))?clamp(Number(input.ocrConfidence),0,1):null,method=String(input.method||'');let q=tq;if(/spreadsheet|native|docx|hwp|pptx|ics/i.test(method))q=Math.max(q,.9);if(/hybrid/i.test(method))q=Math.max(q,.82);if(/ocr/i.test(method)&&ocr!==null)q=q*.45+ocr*.55;return clamp(q,.05,.99)}
+  function extractionQuality(input={}){const tq=textQuality(input.text),ocr=Number.isFinite(Number(input.ocrConfidence))?clamp(Number(input.ocrConfidence),0,1):null,method=String(input.method||'');let q=tq;if(/spreadsheet|native|docx|hwp|pptx|ics/i.test(method)&&tq>=.45)q=Math.max(q,.9);if(/hybrid/i.test(method))q=Math.max(q,.82);if(/ocr/i.test(method)&&ocr!==null)q=q*.45+ocr*.55;return clamp(q,.05,.99)}
   function compatibility(docClass,kind,mixed=false){
     if(kind==='profile')return 1;if(mixed||docClass==='schoolplan')return .9;
     if(docClass==='calendar')return kind==='calendar'?1:.28;
