@@ -15,6 +15,11 @@ const good=D.fuseSuggestion({baseConfidence:.96,docClass:'assessment',docConfide
 assert.ok(good.auto);assert.ok(good.confidence>.9);
 const wrong=D.fuseSuggestion({baseConfidence:.9,docClass:'admin',docConfidence:.96,extractionQuality:.95,kind:'assessment'});
 assert.equal(wrong.auto,false);
+const ambiguousWrong=D.fuseSuggestion({baseConfidence:.99,docClass:'admin',docConfidence:.84,extractionQuality:.99,kind:'assessment',mixed:true});
+assert.equal(ambiguousWrong.auto,false,'ambiguous mixed documents must not broaden auto-apply to mismatched suggestion kinds');
+assert.ok(ambiguousWrong.compatibility<.9,'mixed classification must retain primary-class compatibility instead of granting blanket compatibility');
+const mixedSchoolplan=D.fuseSuggestion({baseConfidence:.96,docClass:'schoolplan',docConfidence:.84,extractionQuality:.95,kind:'assessment',mixed:true});
+assert.equal(mixedSchoolplan.auto,true,'explicit school-plan documents may retain multi-domain auto-apply after confidence checks');
 const student=D.fuseSuggestion({baseConfidence:.98,docClass:'student',docConfidence:.98,extractionQuality:.95,kind:'admin',sensitive:true});
 assert.equal(student.auto,false);
 assert.ok(D.extractionQuality({text:'학교교육계획 학사일정 평가계획 업무분장'.repeat(20),method:'hwp-native'})>=.9);
