@@ -33,10 +33,8 @@ if(!src.includes(sourceAwareKey))throw new Error('v1 v23 preparation found no so
 // privacy signal must make auto-apply fail closed. Analysis/review still remain available.
 const oldSensitive="sensitive=privacy.length>0&&doc.classId==='student'";
 const privacySensitive='sensitive=privacy.length>0';
-if(!src.includes(privacySensitive)){
-  if(src.includes(oldSensitive))src=src.replace(oldSensitive,privacySensitive);
-  else throw new Error('v1 v23 privacy guard found no expected analysis sensitivity source');
-}
+if(src.includes(oldSensitive))src=src.replace(oldSensitive,privacySensitive);
+else if(!src.includes(privacySensitive))throw new Error('v1 v23 privacy guard found no expected analysis sensitivity source');
 const oldCorrected="sensitive:classId==='student'";
 const correctedSensitive="sensitive:classId==='student'||(report.privacy||[]).length>0";
 if(!src.includes(correctedSensitive)){
@@ -50,6 +48,7 @@ if(!src.includes(privacyNotice)){
   else throw new Error('v1 v23 privacy guard notice source is missing');
 }
 for(const token of [privacySensitive,correctedSensitive,privacyNotice])if(!src.includes(token))throw new Error(`v1 v23 privacy guard missing: ${token}`);
+if(src.includes(oldSensitive))throw new Error('v1 v23 privacy guard still depends on student classification');
 
 fs.writeFileSync(path,src,'utf8');
 
