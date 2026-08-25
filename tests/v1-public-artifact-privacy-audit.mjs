@@ -7,9 +7,9 @@ const TEXT_EXT=new Set(['.html','.js','.css','.json','.txt','.map']);
 const FORBIDDEN_SOURCE_EXT=new Set(['.hwp','.hwpx','.pdf','.xlsx','.xls','.docx','.pptx','.csv','.ics','.wav','.mp3','.m4a','.webm']);
 
 const checks=[
-  {name:'Korean mobile phone',re:/(?:^|\D)01[016789][-. ]?\d{3,4}[-. ]?\d{4}(?:\D|$)/g},
+  {name:'Korean mobile phone',re:/(?:^|\D)01[016789][-. ]?\d{3,4}[-. ]?\d{4}(?:\D|$)/g,allowContains:['010-1234-5678']},
   {name:'resident registration number',re:/(?:^|\D)\d{6}[- ]?[1-4]\d{6}(?:\D|$)/g},
-  {name:'personal email address',re:/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi},
+  {name:'personal email address',re:/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,allowContains:['person@example.com']},
   {name:'materialized Comcigan school code',re:/["']schoolCode["']\s*:\s*\d{3,}/g},
   {name:'materialized Comcigan teacher index',re:/["']teacherIndex["']\s*:\s*\d+/g},
   {name:'materialized Comcigan teacher name',re:/["']teacherName["']\s*:\s*["'][^"']{2,}["']/g},
@@ -24,24 +24,31 @@ function walk(dir){
   return out;
 }
 
-function findHits(text,rule){
+function findHits(text,rule,applyAllowlist=true){
   rule.re.lastIndex=0;
   const hits=[]; let m;
   while((m=rule.re.exec(text))){
-    hits.push({index:m.index,value:m[0].trim().slice(0,80)});
+    const raw=m[0];
+    const allowed=applyAllowlist&&(rule.allowContains||[]).some(x=>raw.includes(x));
+    if(!allowed)hits.push({index:m.index,value:raw.trim().slice(0,80)});
     if(hits.length>=5)break;
     if(m[0].length===0)rule.re.lastIndex++;
   }
   return hits;
 }
 
-// Prove the audit itself catches representative no-PII test sentinels before scanning real artifacts.
-assert.ok(findHits('연락처 010-1234-5678',checks[0]).length,'phone detector regression');
-assert.ok(findHits('900101-1234567',checks[1]).length,'RRN detector regression');
-assert.ok(findHits('person@example.com',checks[2]).length,'email detector regression');
-assert.ok(findHits('{"schoolCode":65231}',checks[3]).length,'Comcigan school-code detector regression');
-assert.ok(findHits('{"teacherIndex":37}',checks[4]).length,'Comcigan teacher-index detector regression');
-assert.ok(findHits('{"teacherName":"홍길동"}',checks[5]).length,'Comcigan teacher-name detector regression');
+// Prove the detectors themselves catch representative synthetic sentinels.
+assert.ok(findHits('연락처 010-1234-5678',checks[0],false).length,'phone detector regression');
+assert.ok(findHits('900101-1234567',checks[1],false).length,'RRN detector regression');
+assert.ok(findHits('person@example.com',checks[2],false).length,'email detector regression');
+assert.ok(findHits('{"schoolCode":65231}',checks[3],false).length,'Comcigan school-code detector regression');
+assert.ok(findHits('{"teacherIndex":37}',checks[4],false).length,'Comcigan teacher-index detector regression');
+assert.ok(findHits('{"teacherName":"홍길동"}',checks[5],false).length,'Comcigan teacher-name detector regression');
+
+// Only explicit synthetic sentinels used by product self-tests may be ignored in public code.
+assert.equal(findHits('연락처 010-1234-5678',checks[0]).length,0,'synthetic phone sentinel allowlist regression');
+assert.equal(findHits('person@example.com',checks[2]).length,0,'synthetic email sentinel allowlist regression');
+assert.ok(findHits('연락처 010-9876-5432',checks[0]).length,'realistic phone must not be allowlisted');
 
 if(!fs.existsSync(ROOT))throw new Error('dist-v1 is missing; build the public preview before privacy audit');
 const files=walk(ROOT);
