@@ -224,3 +224,5 @@ test('v1 shared storage preserves historical state migration across reload',asyn
     await bundle.context.close();
   }
 });
+
+require('./v1-browser-intake-flow.spec.js');
