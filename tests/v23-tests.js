@@ -10,6 +10,8 @@ const adm=D.classifyDocument({name:'교직원 업무분장.xlsx',text:'업무분
 assert.equal(adm.classId,'admin');
 const tt=D.classifyDocument({name:'교사 시간표.xlsx',text:'월 화 수 목 금 1교시 2교시 시간표',ext:'xlsx',layout:{tableRows:10,timetableSlots:24,dayHeaders:5}});
 assert.equal(tt.classId,'timetable');
+const replacement=D.classifyDocument({name:'대체시간표.xlsx',text:'이번 주 변경표 대체 보강 결강 월 화 수 목 금 1교시 2교시',ext:'xlsx',layout:{tableRows:12,dayHeaders:5,classCodes:7,periodMarkers:5}});
+assert.equal(replacement.classId,'live','explicit replacement timetables must not be swallowed by generic timetable layout scoring');
 assert.equal(D.feedbackSignature('2026_1학기_평가계획.xlsx'),D.feedbackSignature('2027_1학기_평가계획.xlsx'));
 const good=D.fuseSuggestion({baseConfidence:.96,docClass:'assessment',docConfidence:.95,extractionQuality:.95,kind:'assessment'});
 assert.ok(good.auto);assert.ok(good.confidence>.9);
