@@ -42,6 +42,8 @@ jobs:
           node scripts/prepare-v1-hwpx-structure.mjs
           node scripts/prepare-v1-v23-multisheet.mjs
           node scripts/prepare-v1-v23-pdf-layout.mjs
+          node scripts/prepare-v1-lazy-doc-deps.mjs
+          node scripts/prepare-v1-lazy-doc-shell.mjs
           node scripts/prepare-v1-comcigan-status.mjs
 
       - name: Guard critical stable-main accuracy parity
@@ -83,6 +85,9 @@ jobs:
 
       - name: Build separate-layer reference and consolidated preview
         run: node scripts/build-v1-runtime.mjs
+
+      - name: Verify v1 lazy document dependencies
+        run: node tests/v1-lazy-doc-deps-tests.mjs
 
       - name: Audit consolidated storage boundary through v0.32
         run: node tests/v1-storage-boundary-audit-tests.mjs
