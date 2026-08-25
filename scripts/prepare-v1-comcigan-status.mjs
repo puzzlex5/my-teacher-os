@@ -4,10 +4,8 @@ const path='app-v14.js';
 let src=fs.readFileSync(path,'utf8');
 
 function replaceOnce(label,from,to){
-  if(!src.includes(from)){
-    if(src.includes(to))return;
-    throw new Error(`v1 Comcigan source preparation failed (${label})`);
-  }
+  if(src.includes(to))return;
+  if(!src.includes(from))throw new Error(`v1 Comcigan source preparation failed (${label})`);
   src=src.replace(from,to);
 }
 
