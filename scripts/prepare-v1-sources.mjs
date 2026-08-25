@@ -6,6 +6,7 @@ let src=fs.readFileSync(path,'utf8');
 function replaceOnce(label,from,to){
   if(!src.includes(from)){
     if(src.includes(to))return;
+    if(label==='truthful auto apply accounting'&&src.includes('function suggestionMaterialized23(y,s)'))return;
     throw new Error(`v1 source preparation failed (${label}): expected source pattern not found`);
   }
   src=src.replace(from,to);
