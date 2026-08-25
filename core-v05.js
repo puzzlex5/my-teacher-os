@@ -89,7 +89,8 @@
     text=String(text||''); const signals=[];
     if(/\b\d{6}-?[1-4]\d{6}\b/.test(text))signals.push('주민등록번호 형태');
     if(/\b01[016789][- .]?\d{3,4}[- .]?\d{4}\b/.test(text))signals.push('휴대전화번호 형태');
-    if(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(text))signals.push('이메일 주소');
+    const emailText=text.replace(/^UID(?:;[^:]*)?:[^\r\n]*(?:\r?\n[ \t][^\r\n]*)*/gim,'');
+    if(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(emailText))signals.push('이메일 주소');
     return signals;
   }
   function detectOffice(text,officeNames){return arr(officeNames).find(n=>String(text||'').includes(n))||''}
