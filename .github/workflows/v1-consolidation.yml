@@ -39,6 +39,7 @@ jobs:
         run: |
           node scripts/prepare-v1-v21-direct-pii.mjs
           node scripts/prepare-v1-v21-neis-generation.mjs
+          node scripts/prepare-v1-v21-lifecycle.mjs
           node scripts/prepare-v1-v23-storage.mjs
           node scripts/prepare-v1-sources.mjs
           node scripts/prepare-v1-v18-source-link.mjs
@@ -56,6 +57,9 @@ jobs:
 
       - name: Verify v1 source preparation is deterministic
         run: node tests/v1-prepare-idempotence-tests.mjs
+
+      - name: Verify v21 shared lifecycle hooks
+        run: node tests/v1-v21-lifecycle-tests.mjs
 
       - name: Verify v18 imported metadata preserves document source
         run: node tests/v1-v18-source-link-tests.mjs
@@ -126,6 +130,9 @@ jobs:
 
       - name: Syntax check shared storage service
         run: node --check v1-storage-service.js
+
+      - name: Syntax check shared lifecycle service
+        run: node --check v1-lifecycle-service.js
 
       - name: Verify corrupted state is never overwritten
         run: node tests/v1-storage-corruption-guard-tests.mjs
