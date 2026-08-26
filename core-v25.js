@@ -10,7 +10,7 @@
   const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
   function clean(s){return String(s||'').replace(/\s+/g,' ').trim()}
   function sentences(text){return String(text||'').replace(/\r/g,'').split(/\n+|(?<=[.!?])\s+/).map(clean).filter(x=>x.length>=5)}
-  function tokens(text){return clean(text).replace(/[^가-힣A-Za-z0-9\s]/g,' ').split(/\s+/).map(x=>x.replace(/(?:을|를|이|가|은|는|에|의|와|과|로|으로|에서|에게|도|만|며|고|함|됨)$/,'')).filter(x=>x.length>=2&&!STOP.has(x))}
+  function tokens(text){return clean(text).replace(/[^가-힣A-Za-z0-9\s]/g,' ').split(/\s+/).map(x=>x.replace(/(?:으로|에서|에게|을|를|이|가|은|는|에|의|와|과|로|도|만|며|고|함|됨)$/,'')).filter(x=>x.length>=2&&!STOP.has(x))}
   function overlapCount(a,b){const B=new Set(tokens(b));return [...new Set(tokens(a))].filter(x=>B.has(x)).length}
   function uniqueDates(rows){return [...new Set((rows||[]).map(x=>x.date).filter(Boolean))].sort()}
   function repeatedPhrases(text){const s=clean(text);const chunks=[];for(let i=0;i<=s.length-12;i+=4){const c=s.slice(i,i+12);if(!/\s/.test(c[0]||''))chunks.push(c)}const count=new Map();chunks.forEach(c=>count.set(c,(count.get(c)||0)+1));return [...count.entries()].filter(([,n])=>n>=2).map(([c])=>c).slice(0,4)}
