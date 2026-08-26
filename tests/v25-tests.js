@@ -46,6 +46,8 @@ const app=fs.readFileSync('app-v25.js','utf8'),css=fs.readFileSync('app-v25.css'
 for(const token of ['QUALITY GATE','현재 초안 품질검사','공식 기준 보기','합격 가능성 점수','qualityCheck','function saveMain25(){globalThis.TeacherOSStorage.writeJSON(KEY,state)}'])if(!app.includes(token))throw new Error('v25 app missing '+token);
 if(/localStorage\.setItem\(KEY\s*,/.test(app))throw new Error('v0.25 quality snapshot must use shared TeacherOSStorage');
 for(const token of ['lastSignature','function signature25(','function invalidateSnapshot25()','inputSignature:lastSignature','signature!==current','invalidateSnapshot25();reset()'])if(!app.includes(token))throw new Error('v25 stale-quality guard missing '+token);
+if(!app.includes('r.eligible===true'))throw new Error('quality snapshot signature must distinguish explicit eligible=true from missing eligibility');
+if(app.includes('r.eligible!==false'))throw new Error('quality snapshot signature must not treat missing eligibility as valid evidence');
 if(!/delete d\.qualityCheck/.test(app))throw new Error('editing a selected draft must invalidate the persisted quality snapshot before save');
 if(!/saveSnapshot\(lastResult,lastSignature\)/.test(app))throw new Error('draft save must revalidate the quality snapshot against the current input signature');
 if(!css.includes('@media(max-width:780px)'))throw new Error('v25 mobile CSS missing');
