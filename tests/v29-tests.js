@@ -6,6 +6,8 @@ ok(T.nextLessonTruth({comciganSync:{status:'waiting'}},{status:'none',live:false
 ok(T.nextLessonTruth({comciganSync:{status:'mismatch'}},{status:'none',live:false,slot:null}).label==='컴시간 설정 불일치','mismatch label');
 ok(T.nextLessonTruth({comciganSync:{status:'collector-error'}},{status:'none',live:false,slot:null}).label==='컴시간 수집 오류','collector error label');
 ok(T.nextLessonTruth({comciganSync:{status:'collector-error'}},{status:'none',live:true,slot:null}).known===false,'collector error overrides stale live-week certainty');
+ok(T.nextLessonTruth({comciganSync:{status:'transport-unavailable'}},{status:'current',live:true,slot:{period:1,target:'2-1'}}).known===false,'unavailable transport overrides stale live lesson context');
+ok(T.nextLessonTruth({comciganSync:{status:'transport-unavailable'}},{status:'none',live:false,slot:null}).label==='컴시간 동기화 경로 미구성','unavailable transport label');
 ok(T.nextLessonTruth({timetable:[{day:'월',period:1}]},{status:'none',live:false,slot:null}).known===true,'basic timetable makes zero-day result interpretable');
 ok(T.nextLessonTruth({}, {status:'none',live:true,slot:null}).known===true,'live week with zero slots is confirmed zero');
 ok(T.nextLessonTruth({}, {status:'done',live:false,slot:null}).known===true,'completed day is known');
