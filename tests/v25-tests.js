@@ -8,6 +8,10 @@ const good=R.analyzeDraft({area:'subject',evidence:goodEvidence,text:'모둠 합
 if(good.critical)throw new Error('grounded draft must not be critical');
 if(good.score<75)throw new Error('grounded draft quality unexpectedly low: '+good.score);
 if(good.dimensions.grounding<25)throw new Error('grounding score too low');
+if(R.tokens('음악으로 표현함').includes('음악으'))throw new Error('으로 suffix must not be truncated as 로');
+if(!R.tokens('음악으로 표현함').includes('음악'))throw new Error('으로 suffix must normalize to the base token');
+const directionalGrounding=R.grounding('음악으로 감정을 표현함.',[{text:'음악을 활용해 감정을 표현함.'}]);
+if(directionalGrounding.ratio!==1)throw new Error('으로/을 particle variation should preserve evidence overlap');
 const noEvidence=R.analyzeDraft({area:'subject',evidence:[],text:'수업에 적극적으로 참여하며 탐구 역량이 향상됨.'});
 if(!noEvidence.critical||!noEvidence.issues.some(x=>x.code==='NO_EVIDENCE'))throw new Error('missing evidence must be critical');
 const prohibited=R.analyzeDraft({area:'subject',evidence:goodEvidence,text:'모둠 합주에 참여하고 교외 대회 수상 실적을 바탕으로 탁월한 음악적 역량을 보임.'});
@@ -35,4 +39,4 @@ if(!css.includes('@media(max-width:780px)'))throw new Error('v25 mobile CSS miss
 if(!Array.isArray(lib.sources)||lib.sources.length<4)throw new Error('official quality source library too small');
 if(!lib.sources.some(x=>x.authority==='rule'&&x.publisher==='교육부'))throw new Error('MOE rule source missing');
 if(!idx.includes('core-v25.js')||!idx.includes('app-v25.js')||!idx.includes('app-v25.css'))throw new Error('v25 loader missing');
-console.log('v0.25 grounded school-record quality tests passed with strict sentence and stale-evidence checks');
+console.log('v0.25 grounded school-record quality tests passed with strict sentence, Korean particle, and stale-evidence checks');
