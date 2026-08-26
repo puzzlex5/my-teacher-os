@@ -9,10 +9,10 @@ function replaceOnce(src,from,to,label){
 const appPath='app-v21.js';
 let app=fs.readFileSync(appPath,'utf8');
 const legacy="  const prevRender21=globalThis.render;if(typeof prevRender21==='function')globalThis.render=function(){const r=prevRender21.apply(this,arguments);setTimeout(renderStudio21,0);return r};\n  const prevSwitch21=globalThis.switchView;if(typeof prevSwitch21==='function')globalThis.switchView=function(id){const r=prevSwitch21.apply(this,arguments);if(id==='studentrecords')setTimeout(renderStudio21,0);return r};";
-const shared="  const lifecycle21=globalThis.TeacherOSLifecycle;if(!lifecycle21)throw new Error('TeacherOSLifecycle is required by v21');\n  lifecycle21.onRender(renderStudio21,{defer:true});\n  lifecycle21.onSwitch(id=>{if(id==='studentrecords')renderStudio21()},{defer:true});";
+const shared="  const lifecycle21=globalThis.TeacherOSLifecycle;\n  if(lifecycle21){\n    lifecycle21.onRender(renderStudio21,{defer:true});\n    lifecycle21.onSwitch(id=>{if(id==='studentrecords')renderStudio21()},{defer:true});\n  }else{\n    const fallbackRender21=globalThis.render;if(typeof fallbackRender21==='function')globalThis.render=function(){const r=fallbackRender21.apply(this,arguments);setTimeout(renderStudio21,0);return r};\n    const fallbackSwitch21=globalThis.switchView;if(typeof fallbackSwitch21==='function')globalThis.switchView=function(id){const r=fallbackSwitch21.apply(this,arguments);if(id==='studentrecords')setTimeout(renderStudio21,0);return r};\n  }";
 app=replaceOnce(app,legacy,shared,'app-v21 render/switch hooks');
-if(app.includes('prevRender21=globalThis.render')||app.includes('prevSwitch21=globalThis.switchView'))throw new Error('v21 still wraps global lifecycle functions directly');
-for(const token of ['TeacherOSLifecycle','lifecycle21.onRender','lifecycle21.onSwitch'])if(!app.includes(token))throw new Error(`prepared v21 missing ${token}`);
+if(app.includes('prevRender21=globalThis.render')||app.includes('prevSwitch21=globalThis.switchView'))throw new Error('v21 still carries the historical direct wrapper names');
+for(const token of ['TeacherOSLifecycle','lifecycle21.onRender','lifecycle21.onSwitch','fallbackRender21','fallbackSwitch21'])if(!app.includes(token))throw new Error(`prepared v21 missing ${token}`);
 fs.writeFileSync(appPath,app,'utf8');
 
 const buildPath='scripts/build-v1-runtime.mjs';
@@ -34,4 +34,4 @@ build=replaceOnce(build,
 "  bootstrapJs:[storageServiceFile,lifecycleServiceFile],",
 'asset report lifecycle bootstrap');
 fs.writeFileSync(buildPath,build,'utf8');
-console.log('Prepared v1 v21 to use the shared render/switch lifecycle service.');
+console.log('Prepared v1 v21 to use shared lifecycle hooks with isolated-test fallback.');
