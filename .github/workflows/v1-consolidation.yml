@@ -52,6 +52,7 @@ jobs:
           node scripts/prepare-v1-lazy-doc-shell.mjs
           node scripts/prepare-v1-comcigan-status.mjs
           node scripts/prepare-v1-v27-contact-cache.mjs
+          node scripts/prepare-v1-v27-truth.mjs
 
       - name: Verify v1 source preparation is deterministic
         run: node tests/v1-prepare-idempotence-tests.mjs
@@ -61,6 +62,9 @@ jobs:
 
       - name: Verify v27 local contact search reuses parsed data
         run: node tests/v1-v27-contact-cache-tests.mjs
+
+      - name: Verify Teacher Desk rejects unknown timetable truth before rendering conclusions
+        run: node tests/v1-v27-truth-render-tests.mjs
 
       - name: Verify direct PII never enters v21 draft generation
         run: node tests/v1-v21-direct-pii-draft-tests.mjs
