@@ -2,6 +2,7 @@
   const R=globalThis.TeacherOSRecordQuality;if(!R)return;
   const q=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const SUBJECT_NEIS_LIMIT25=1500;
   let library=null,lastResult=null,lastSignature='';
   function y(){return typeof cur==='function'?cur():null}
   function sid(){return q('#srStudentList .sr-student.active')?.dataset?.studentId||q('#srStudentList [data-student-id].active')?.dataset?.studentId||''}
@@ -10,6 +11,8 @@
   function evidenceIds(){return (q('#v21DraftGrid')?.dataset?.evidenceIds||'').split(',').filter(Boolean)}
   function evidenceRows(){const yy=y(),id=sid(),ids=new Set(evidenceIds());return (yy?.studentRecords||[]).filter(r=>r.studentId===id&&ids.has(r.id))}
   function input25(){return{text:selectedText(),area:area(),evidence:evidenceRows()}}
+  function neisBytes25(text){const s=String(text||'').replace(/\r\n?/g,'\n');if(globalThis.TextEncoder)return new TextEncoder().encode(s).length;let n=0;for(const ch of s){const cp=ch.codePointAt(0);n+=cp<=0x7f?1:cp<=0x7ff?2:cp<=0xffff?3:4}return n}
+  function analyze25(input){const res=R.analyzeDraft(input),bytes=neisBytes25(input?.text||''),limit=input?.area==='subject'?SUBJECT_NEIS_LIMIT25:null;res.neisBytes=bytes;res.neisLimit=limit;if(limit&&bytes>limit&&!res.issues.some(x=>x.code==='NEIS_LIMIT')){const oldSafety=Number(res.dimensions?.safety)||0;if(res.dimensions)res.dimensions.safety=0;res.score=Math.max(0,(Number(res.score)||0)-oldSafety);res.critical=true;res.level='최종 사용 금지';res.issues.push({severity:'critical',code:'NEIS_LIMIT',message:`NEIS 환산 ${bytes}Byte로 과목별 세부능력 및 특기사항 최대 ${limit}Byte를 초과합니다.`})}else if(limit&&!res.strengths.some(x=>String(x).startsWith('NEIS 환산 ')))res.strengths.push(`NEIS 환산 ${bytes}/${limit}Byte 범위 안입니다.`);return res}
   function signature25(input=input25()){return JSON.stringify({text:String(input.text||''),area:String(input.area||''),evidence:(input.evidence||[]).map(r=>[r.id||'',r.date||'',r.area||'',r.kind||'',r.eligible!==false,String(r.text||'')])})}
   function draft25(){const yy=y(),id=sid(),a=area();return yy&&id&&a?yy.studentDrafts?.[id]?.[a]:null}
   function invalidateSnapshot25(){lastResult=null;lastSignature='';const d=draft25();if(d?.qualityCheck)delete d.qualityCheck}
@@ -39,10 +42,10 @@
       unsupported.hidden=!res.unsupportedSentences?.length;
       unsupported.innerHTML=res.unsupportedSentences?.length?`<b>근거 연결이 약한 문장</b>${res.unsupportedSentences.map(x=>`<div>${esc(x)}</div>`).join('')}`:'';
     }
-    const at=q('#v25CheckedAt');if(at)at.textContent='마지막 검사 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    const at=q('#v25CheckedAt');if(at){const byteText=res.neisLimit?` · NEIS ${res.neisBytes}/${res.neisLimit}Byte`:'';at.textContent='마지막 검사 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})+byteText}
   }
-  function run(){ensureUI();const input=input25();if(!input.text)return alert('A/B/C 초안 중 하나를 먼저 선택하세요.');const res=R.analyzeDraft(input);lastSignature=signature25(input);renderResult(res);saveSnapshot(res,lastSignature);return res}
-  function saveSnapshot(res,signature=lastSignature){const d=draft25();if(!d)return;const input=input25(),current=signature25(input);if(!res||!signature||signature!==current){if(!input.text){invalidateSnapshot25();return}res=R.analyzeDraft(input);lastResult=res;lastSignature=current;renderResult(res)}d.qualityCheck={score:res.score,level:res.level,critical:res.critical,issueCodes:res.issues.map(x=>x.code),evidenceCount:res.evidenceCount,checkedAt:new Date().toISOString(),inputSignature:lastSignature};saveMain25()}
+  function run(){ensureUI();const input=input25();if(!input.text)return alert('A/B/C 초안 중 하나를 먼저 선택하세요.');const res=analyze25(input);lastSignature=signature25(input);renderResult(res);saveSnapshot(res,lastSignature);return res}
+  function saveSnapshot(res,signature=lastSignature){const d=draft25();if(!d)return;const input=input25(),current=signature25(input);if(!res||!signature||signature!==current){if(!input.text){invalidateSnapshot25();return}res=analyze25(input);lastResult=res;lastSignature=current;renderResult(res)}d.qualityCheck={score:res.score,level:res.level,critical:res.critical,issueCodes:res.issues.map(x=>x.code),evidenceCount:res.evidenceCount,checkedAt:new Date().toISOString(),inputSignature:lastSignature,neisBytes:res.neisBytes,neisLimit:res.neisLimit};saveMain25()}
   async function showSources(){
     ensureUI();await loadLibrary();const box=q('#v25SourceList');
     if(box){
