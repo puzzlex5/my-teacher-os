@@ -16,7 +16,8 @@ const PREPARE_SCRIPTS=[
   'scripts/prepare-v1-v23-memory-hygiene.mjs',
   'scripts/prepare-v1-lazy-doc-deps.mjs',
   'scripts/prepare-v1-lazy-doc-shell.mjs',
-  'scripts/prepare-v1-comcigan-status.mjs'
+  'scripts/prepare-v1-comcigan-status.mjs',
+  'scripts/prepare-v1-v27-contact-cache.mjs'
 ];
 
 function changedPaths(){
