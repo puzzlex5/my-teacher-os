@@ -74,6 +74,9 @@ jobs:
       - name: Verify v25 Korean short-noun grounding
         run: node tests/v1-v25-short-noun-token-tests.mjs
 
+      - name: Verify v25 NEIS byte accounting and subject limit
+        run: node tests/v1-v25-neis-byte-tests.mjs
+
       - name: Verify v1 intake accuracy sync
         run: node tests/v1-v23-accuracy-tests.mjs
 
