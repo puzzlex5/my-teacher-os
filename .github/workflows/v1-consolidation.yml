@@ -38,6 +38,7 @@ jobs:
       - name: Prepare v1 legacy sources
         run: |
           node scripts/prepare-v1-v21-direct-pii.mjs
+          node scripts/prepare-v1-v21-neis-generation.mjs
           node scripts/prepare-v1-v23-storage.mjs
           node scripts/prepare-v1-sources.mjs
           node scripts/prepare-v1-hwpx-structure.mjs
@@ -54,6 +55,9 @@ jobs:
 
       - name: Verify direct PII never enters v21 draft generation
         run: node tests/v1-v21-direct-pii-draft-tests.mjs
+
+      - name: Verify v21 subject draft generation respects NEIS bytes
+        run: node tests/v1-v21-neis-generation-tests.mjs
 
       - name: Verify exact upload hash reuse
         run: node tests/v1-file-hash-reuse-tests.mjs
