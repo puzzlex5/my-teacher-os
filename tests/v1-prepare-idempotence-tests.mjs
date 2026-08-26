@@ -8,6 +8,7 @@ const PREPARE_SCRIPTS=[
   'scripts/prepare-v1-v21-neis-generation.mjs',
   'scripts/prepare-v1-v23-storage.mjs',
   'scripts/prepare-v1-sources.mjs',
+  'scripts/prepare-v1-v18-source-link.mjs',
   'scripts/prepare-v1-hwpx-structure.mjs',
   'scripts/prepare-v1-v23-multisheet.mjs',
   'scripts/prepare-v1-v23-pdf-layout.mjs',
