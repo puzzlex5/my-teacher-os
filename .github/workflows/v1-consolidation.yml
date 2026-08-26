@@ -67,6 +67,9 @@ jobs:
             test -f "$f" && node "$f"
           done
 
+      - name: Verify v25 Korean short-noun grounding
+        run: node tests/v1-v25-short-noun-token-tests.mjs
+
       - name: Verify v1 intake accuracy sync
         run: node tests/v1-v23-accuracy-tests.mjs
 
