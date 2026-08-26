@@ -30,6 +30,12 @@ const staleIneligible=R.analyzeDraft({area:'subject',evidence:[{id:'s1',eligible
 if(!staleIneligible.critical||staleIneligible.evidenceCount!==0||!staleIneligible.issues.some(x=>x.code==='NO_EVIDENCE'))throw new Error('evidence later marked ineligible must stop supporting the draft');
 const staleSensitive=R.analyzeDraft({area:'subject',evidence:[{id:'s2',eligible:true,area:'subject',kind:'교과관찰',text:'우울 증상과 관련해 상담한 뒤 합주에 참여함.'}],text:'합주에 참여함.'});
 if(!staleSensitive.critical||staleSensitive.evidenceCount!==0)throw new Error('sensitive evidence must not support school-record quality scoring');
+const directPhoneEvidence=R.analyzeDraft({area:'subject',evidence:[{id:'s2p',eligible:true,area:'subject',kind:'교과관찰',text:'연락처 010-1234-5678을 확인한 뒤 합주에서 리듬을 반복 연습함.'}],text:'합주에서 리듬을 반복 연습함.'});
+if(!directPhoneEvidence.critical||directPhoneEvidence.evidenceCount!==0||!directPhoneEvidence.issues.some(x=>x.code==='NO_EVIDENCE'))throw new Error('direct phone number in evidence must invalidate that evidence');
+const directEmailDraft=R.analyzeDraft({area:'subject',evidence:goodEvidence,text:'모둠 합주에 참여함. 연락은 student@example.com으로 함.'});
+if(!directEmailDraft.critical||!directEmailDraft.issues.some(x=>x.code==='SENSITIVE'))throw new Error('direct email address in draft must be treated as sensitive');
+const directRrnDraft=R.analyzeDraft({area:'subject',evidence:goodEvidence,text:'주민 식별값 060101-3123456을 기록함.'});
+if(!directRrnDraft.critical||!directRrnDraft.issues.some(x=>x.code==='SENSITIVE'))throw new Error('resident-registration-shaped value in draft must be treated as sensitive');
 const wrongArea=R.analyzeDraft({area:'subject',evidence:[{id:'s3',eligible:true,area:'career',kind:'진로활동',text:'음악 관련 진로를 조사하고 발표함.'}],text:'음악 관련 진로를 조사하고 발표함.'});
 if(!wrongArea.critical||wrongArea.evidenceCount!==0)throw new Error('evidence moved to another record area must not support this draft');
 const wrongKind=R.analyzeDraft({area:'subject',evidence:[{id:'s4',eligible:true,area:'subject',kind:'상담',text:'합주에서 반복 연습함.'}],text:'합주에서 반복 연습함.'});
@@ -41,4 +47,4 @@ if(!css.includes('@media(max-width:780px)'))throw new Error('v25 mobile CSS miss
 if(!Array.isArray(lib.sources)||lib.sources.length<4)throw new Error('official quality source library too small');
 if(!lib.sources.some(x=>x.authority==='rule'&&x.publisher==='교육부'))throw new Error('MOE rule source missing');
 if(!idx.includes('core-v25.js')||!idx.includes('app-v25.js')||!idx.includes('app-v25.css'))throw new Error('v25 loader missing');
-console.log('v0.25 grounded school-record quality tests passed with strict sentence, Korean particle, and stale-evidence checks');
+console.log('v0.25 grounded school-record quality tests passed with strict sentence, Korean particle, stale-evidence, and direct-PII checks');
