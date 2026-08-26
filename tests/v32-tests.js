@@ -19,6 +19,9 @@ ok(app.includes('IndexedDB 쓰기·읽기·무결성·삭제 통과'),'visible s
 ok(app.includes('안전하게 출처·버전 보관으로 사용합니다'),'visible safe fallback on failure');
 ok(app.includes("input.accept='.hwpx,.pdf,.xlsx,.xls,.csv,.txt,.docx,.pptx,.ics,.jpg,.jpeg,.png,.webp,.bmp'"),'legacy HWP is not advertised as directly supported');
 ok(app.includes("/\\.hwp$/i"),'legacy HWP selection is explicitly detected');
+ok(app.includes('supported.length'),'mixed batches distinguish supported files from legacy HWP');
+ok(app.includes('함께 선택한 지원 파일'),'mixed batches visibly continue supported files');
+ok(app.includes("if(supported.length){"),'mixed legacy HWP batch does not clear the whole selection');
 ok(app.includes('구형 HWP는 아직 직접 분석하지 않습니다'),'legacy HWP failure is truthful and actionable');
 ok(app.includes('HWPX 또는 PDF로 저장한 뒤 다시 올려 주세요'),'legacy HWP tells user the safe conversion path');
 ok(!app.includes('fetch('),'device self-test has no network upload');
