@@ -2,13 +2,17 @@
   const R=globalThis.TeacherOSRecordQuality;if(!R)return;
   const q=s=>document.querySelector(s),qa=s=>[...document.querySelectorAll(s)];
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-  let library=null,lastResult=null;
+  let library=null,lastResult=null,lastSignature='';
   function y(){return typeof cur==='function'?cur():null}
   function sid(){return q('#srStudentList .sr-student.active')?.dataset?.studentId||q('#srStudentList [data-student-id].active')?.dataset?.studentId||''}
   function area(){return q('[data-v21-area].active')?.dataset?.v21Area||''}
   function selectedText(){const k=q('[data-v21-card].selected')?.dataset?.v21Card;return k?q(`[data-v21-text="${k}"]`)?.value.trim()||'':''}
   function evidenceIds(){return (q('#v21DraftGrid')?.dataset?.evidenceIds||'').split(',').filter(Boolean)}
   function evidenceRows(){const yy=y(),id=sid(),ids=new Set(evidenceIds());return (yy?.studentRecords||[]).filter(r=>r.studentId===id&&ids.has(r.id))}
+  function input25(){return{text:selectedText(),area:area(),evidence:evidenceRows()}}
+  function signature25(input=input25()){return JSON.stringify({text:String(input.text||''),area:String(input.area||''),evidence:(input.evidence||[]).map(r=>[r.id||'',r.date||'',r.area||'',r.kind||'',r.eligible!==false,String(r.text||'')])})}
+  function draft25(){const yy=y(),id=sid(),a=area();return yy&&id&&a?yy.studentDrafts?.[id]?.[a]:null}
+  function invalidateSnapshot25(){lastResult=null;lastSignature='';const d=draft25();if(d?.qualityCheck)delete d.qualityCheck}
   function saveMain25(){globalThis.TeacherOSStorage.writeJSON(KEY,state)}
   async function loadLibrary(){if(library)return library;try{const r=await fetch('./school-record-quality-library.json?v='+Date.now(),{cache:'no-store'});if(r.ok)library=await r.json()}catch{}return library}
   function ensureUI(){
@@ -37,8 +41,8 @@
     }
     const at=q('#v25CheckedAt');if(at)at.textContent='마지막 검사 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
   }
-  function run(){ensureUI();const text=selectedText(),a=area();if(!text)return alert('A/B/C 초안 중 하나를 먼저 선택하세요.');const rows=evidenceRows();const res=R.analyzeDraft({text,evidence:rows,area:a});renderResult(res);saveSnapshot(res);return res}
-  function saveSnapshot(res){const yy=y(),id=sid(),a=area();if(!yy||!id||!a||!yy.studentDrafts?.[id]?.[a])return;yy.studentDrafts[id][a].qualityCheck={score:res.score,level:res.level,critical:res.critical,issueCodes:res.issues.map(x=>x.code),evidenceCount:res.evidenceCount,checkedAt:new Date().toISOString()};saveMain25()}
+  function run(){ensureUI();const input=input25();if(!input.text)return alert('A/B/C 초안 중 하나를 먼저 선택하세요.');const res=R.analyzeDraft(input);lastSignature=signature25(input);renderResult(res);saveSnapshot(res,lastSignature);return res}
+  function saveSnapshot(res,signature=lastSignature){const d=draft25();if(!d)return;const input=input25(),current=signature25(input);if(!res||!signature||signature!==current){if(!input.text){invalidateSnapshot25();return}res=R.analyzeDraft(input);lastResult=res;lastSignature=current;renderResult(res)}d.qualityCheck={score:res.score,level:res.level,critical:res.critical,issueCodes:res.issues.map(x=>x.code),evidenceCount:res.evidenceCount,checkedAt:new Date().toISOString(),inputSignature:lastSignature};saveMain25()}
   async function showSources(){
     ensureUI();await loadLibrary();const box=q('#v25SourceList');
     if(box){
@@ -52,8 +56,8 @@
     }
     q('#v25SourceDlg')?.showModal();
   }
-  function reset(){ensureUI();lastResult=null;const s=q('#v25Score');if(s){s.className='v25-score';s.innerHTML='<b>-</b><span>점검 전</span>'}q('#v25Dimensions')&&(q('#v25Dimensions').innerHTML='');q('#v25Issues')&&(q('#v25Issues').innerHTML='<div class="empty">초안을 선택한 뒤 품질검사를 실행하세요.</div>');q('#v25Strengths')&&(q('#v25Strengths').innerHTML='<div class="empty">검사 후 표시됩니다.</div>');q('#v25Unsupported')&&(q('#v25Unsupported').hidden=true)}
-  function bind(){document.body.addEventListener('click',e=>{if(e.target.closest('#v25Run')){run();return}if(e.target.closest('#v25Sources')){showSources();return}if(e.target.closest('#v25SourceClose')){q('#v25SourceDlg')?.close();return}if(e.target.closest('[data-v21-select]'))setTimeout(()=>{reset();run()},0);if(e.target.closest('[data-v21-area]')||e.target.closest('[data-student-id]'))setTimeout(reset,0);if(e.target.closest('#v21SaveDraft'))setTimeout(()=>{if(lastResult)saveSnapshot(lastResult)},0)});document.body.addEventListener('input',e=>{if(e.target.matches('.v21-draft-text')&&e.target.closest('[data-v21-card].selected')){clearTimeout(e.target._v25t);e.target._v25t=setTimeout(run,500)}})}
+  function reset(){ensureUI();lastResult=null;lastSignature='';const s=q('#v25Score');if(s){s.className='v25-score';s.innerHTML='<b>-</b><span>점검 전</span>'}q('#v25Dimensions')&&(q('#v25Dimensions').innerHTML='');q('#v25Issues')&&(q('#v25Issues').innerHTML='<div class="empty">초안을 선택한 뒤 품질검사를 실행하세요.</div>');q('#v25Strengths')&&(q('#v25Strengths').innerHTML='<div class="empty">검사 후 표시됩니다.</div>');q('#v25Unsupported')&&(q('#v25Unsupported').hidden=true)}
+  function bind(){document.body.addEventListener('click',e=>{if(e.target.closest('#v25Run')){run();return}if(e.target.closest('#v25Sources')){showSources();return}if(e.target.closest('#v25SourceClose')){q('#v25SourceDlg')?.close();return}if(e.target.closest('[data-v21-select]'))setTimeout(()=>{reset();run()},0);if(e.target.closest('[data-v21-area]')||e.target.closest('[data-student-id]'))setTimeout(reset,0);if(e.target.closest('#v21SaveDraft'))setTimeout(()=>{const input=input25();if(input.text)saveSnapshot(lastResult,lastSignature)},0)});document.body.addEventListener('input',e=>{if(e.target.matches('.v21-draft-text')&&e.target.closest('[data-v21-card].selected')){invalidateSnapshot25();reset();clearTimeout(e.target._v25t);e.target._v25t=setTimeout(run,500)}})}
   function boot(){ensureUI();bind();loadLibrary();const foot=q('.side-foot');if(foot)foot.textContent='v0.25 · grounded school-record quality gate'}
   setTimeout(boot,0);const prevRender=globalThis.render;if(typeof prevRender==='function')globalThis.render=function(){const r=prevRender.apply(this,arguments);setTimeout(ensureUI,0);return r};const prevSwitch=globalThis.switchView;if(typeof prevSwitch==='function')globalThis.switchView=function(id){const r=prevSwitch.apply(this,arguments);if(id==='studentrecords')setTimeout(ensureUI,0);return r};
 })();
