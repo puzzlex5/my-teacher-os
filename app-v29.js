@@ -2,9 +2,10 @@
   const T=globalThis.TeacherOSDataTruth,D=globalThis.TeacherOSDeskCore,S=globalThis.TeacherOSStorage;if(!T||!D)return;
   const q=s=>document.querySelector(s);
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  const COLLECTOR_STATE_PERSIST_MS29=60000;
   let checkingCollector29=false;
   function y29(){try{return typeof cur==='function'?cur():null}catch{return null}}
-  async function syncCollectorTruth29(){if(checkingCollector29)return;const y=y29();if(!y)return;checkingCollector29=true;try{const r=await fetch('./live/comcigan-status.json?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const s=await r.json();if(s?.status!=='error')return;y.comciganSync=y.comciganSync&&typeof y.comciganSync==='object'?y.comciganSync:{};y.comciganSync.status='collector-error';y.comciganSync.errorCategory=String(s.category||'runtime');y.comciganSync.errorDetail=String(s.detail||'runtime');y.comciganSync.lastChecked=new Date().toISOString();try{S?.writeJSON(KEY,state)}catch{} }catch{}finally{checkingCollector29=false}}
+  async function syncCollectorTruth29(){if(checkingCollector29)return;const y=y29();if(!y)return;checkingCollector29=true;try{const r=await fetch('./live/comcigan-status.json?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;const s=await r.json();if(s?.status!=='error')return;y.comciganSync=y.comciganSync&&typeof y.comciganSync==='object'?y.comciganSync:{};const category=String(s.category||'runtime'),detail=String(s.detail||'runtime'),last=Date.parse(y.comciganSync.lastChecked||'')||0,changed=y.comciganSync.status!=='collector-error'||y.comciganSync.errorCategory!==category||y.comciganSync.errorDetail!==detail,due=!last||Date.now()-last>=COLLECTOR_STATE_PERSIST_MS29;if(!changed&&!due)return;y.comciganSync.status='collector-error';y.comciganSync.errorCategory=category;y.comciganSync.errorDetail=detail;y.comciganSync.lastChecked=new Date().toISOString();try{S?.writeJSON(KEY,state)}catch{} }catch{}finally{checkingCollector29=false}}
   function truth29(){const y=y29();if(!y)return null;const d=D.lessonContext(y,new Date());return{y,d,truth:T.nextLessonTruth(y,d)}}
   function correctNextLessonTruth(){
     const box=q('#deskNext27'),x=truth29();if(!box||!x||x.truth.known)return;
