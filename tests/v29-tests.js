@@ -20,4 +20,6 @@ ok(app.includes('이전 표를 현재표로 간주하지 않습니다.'),'stale 
 ok(app.includes('TeacherOSStorage'),'v1 collector truth state uses shared storage service');
 ok(app.includes('S?.writeJSON(KEY,state)'),'v1 collector truth state writes through shared storage boundary');
 ok(!app.includes('localStorage.setItem(KEY'),'v1 collector truth state must not bypass storage service');
+ok(app.includes('COLLECTOR_STATE_PERSIST_MS29=60000'),'collector truth persistence is rate-limited without delaying fetch freshness');
+ok(app.includes('changed=')&&app.includes('due=')&&app.includes('if(!changed&&!due)return'),'unchanged collector errors skip redundant whole-state writes');
 console.log(`v0.29 data truth tests passed (${n} assertions)`);
