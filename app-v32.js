@@ -45,8 +45,10 @@
   }
   function rejectLegacyHwpUpload(e){
     const input=e.target;if(input?.id!=='importFiles'||!input.files?.length)return false;
-    const hwp=[...input.files].find(f=>/\.hwp$/i.test(String(f?.name||'')));if(!hwp)return false;
-    e.preventDefault();e.stopImmediatePropagation();input.value='';const status=q('#importStatus');if(status)status.innerHTML='<b>구형 HWP는 아직 직접 분석하지 않습니다.</b> 한글에서 HWPX 또는 PDF로 저장한 뒤 다시 올려 주세요. 변환 전 파일을 지원된 것처럼 처리하지 않습니다.';return true
+    const files=[...input.files],hwp=files.filter(f=>/\.hwp$/i.test(String(f?.name||'')));if(!hwp.length)return false;
+    const supported=files.filter(f=>!/\.hwp$/i.test(String(f?.name||''))),status=q('#importStatus');
+    if(supported.length){if(status)status.innerHTML=`<b>구형 HWP ${hwp.length}개는 직접 분석하지 못합니다.</b> 함께 선택한 지원 파일 ${supported.length}개는 계속 분석합니다. HWP는 HWPX 또는 PDF로 저장해 다시 올려 주세요.`;return false}
+    e.preventDefault();e.stopImmediatePropagation();input.value='';if(status)status.innerHTML='<b>구형 HWP는 아직 직접 분석하지 않습니다.</b> 한글에서 HWPX 또는 PDF로 저장한 뒤 다시 올려 주세요. 변환 전 파일을 지원된 것처럼 처리하지 않습니다.';return true
   }
   function ensureUI(){
     const vault=q('#retentionVault31');if(!vault||q('#deviceStorageTest32'))return;
@@ -63,7 +65,7 @@
     else{box.className='mini fail';box.textContent=`실패(${r.stage||'unknown'}) · ${r.message} · 안전하게 출처·버전 보관으로 사용합니다. · ${when}`}
   }
   function maybeAutoTest(){const r=readResult();if(!freshPass(r))setTimeout(()=>runSelfTest(false),700)}
-  function refresh(){ensureUI();render();applyLegacyHwpGuard();const foot=q('.side-foot');if(foot)foot.textContent='v0.32.1 · fresh real-device vault guard'}
+  function refresh(){ensureUI();render();applyLegacyHwpGuard();const foot=q('.side-foot');if(foot)foot.textContent='v0.32.2 · mixed HWP upload guard'}
 
   document.addEventListener('change',e=>{if(rejectLegacyHwpUpload(e))return;if(e.target?.id==='retentionMode31')applyLocalModeGuard()},true);
   setTimeout(()=>{refresh();maybeAutoTest()},0);
