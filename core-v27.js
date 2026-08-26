@@ -12,10 +12,15 @@
   function weekStart(date){const d=new Date(date);d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return iso(d)}
   function normalizeTarget(v){const s=String(v||'').trim();let m=s.match(/^(\d+)\s*[-학년반 ]\s*(\d+)$/);if(m)return`${m[1]}-${m[2]}`;m=s.match(/(\d+)\s*학년\s*(\d+)\s*반/);return m?`${m[1]}-${m[2]}`:s}
   function parseRange(v){const m=String(v||'').match(/(\d{1,2}:\d{2})\s*[~\-–]\s*(\d{1,2}:\d{2})/);if(!m)return null;const start=timeToMin(m[1]),end=timeToMin(m[2]);return Number.isFinite(start)&&Number.isFinite(end)&&end>start?{start,end,label:`${m[1]}~${m[2]}`,exact:true}:null}
-  function periodRange(y,period){
-    const found=(y?.timetable||[]).find(s=>Number(s.period)===Number(period)&&parseRange(s.time));
-    if(found)return parseRange(found.time);
-    const table=y?.schoolLevel==='고등학교'?DEFAULT_HIGH:DEFAULT_MIDDLE,raw=table[Number(period)];
+  function periodRangeMap(y){
+    const exact=new Map();
+    for(const s of y?.timetable||[]){const p=Number(s.period);if(!Number.isFinite(p)||exact.has(p))continue;const r=parseRange(s.time);if(r)exact.set(p,r)}
+    return exact
+  }
+  function periodRange(y,period,exactMap){
+    const p=Number(period),cached=exactMap?.get(p);if(cached)return cached;
+    if(!exactMap){const found=(y?.timetable||[]).find(s=>Number(s.period)===p&&parseRange(s.time));if(found)return parseRange(found.time)}
+    const table=y?.schoolLevel==='고등학교'?DEFAULT_HIGH:DEFAULT_MIDDLE,raw=table[p];
     return raw?{start:timeToMin(raw[0]),end:timeToMin(raw[1]),label:`${raw[0]}~${raw[1]}`,exact:false}:null;
   }
   function todaySlots(y,now=new Date()){
@@ -24,7 +29,7 @@
     return{source:'기본 시간표',live:false,slots:(y?.timetable||[]).filter(s=>s.day===dayKo(now)).map(s=>({...s,target:normalizeTarget(s.target||s.label)})).filter(s=>/^\d+-\d+$/.test(s.target)).sort((a,b)=>Number(a.period)-Number(b.period))};
   }
   function lessonContext(y,now=new Date()){
-    const info=todaySlots(y,now),n=minuteOfDay(now),slots=info.slots.map(s=>({...s,range:periodRange(y,s.period)}));
+    const info=todaySlots(y,now),n=minuteOfDay(now),ranges=periodRangeMap(y),slots=info.slots.map(s=>({...s,range:periodRange(y,s.period,ranges)}));
     if(!slots.length)return{status:'none',source:info.source,live:info.live,slot:null,seconds:null,exact:false};
     const current=slots.find(s=>s.range&&n>=s.range.start&&n<s.range.end);
     if(current)return{status:'current',source:info.source,live:info.live,slot:current,seconds:Math.max(0,Math.round((current.range.end-n)*60)),exact:!!current.range.exact};
@@ -44,5 +49,5 @@
   }
   function tidyText(text){return String(text||'').replace(/\r/g,'').split('\n').map(s=>s.replace(/[ \t]+/g,' ').trim()).filter(Boolean).join('\n').replace(/([!?.,])\1{1,}/g,'$1')}
   function safeContactRows(rows){return(rows||[]).map(r=>({name:String(r.name||'').trim(),extension:String(r.extension||'').replace(/[^0-9-]/g,'').trim(),department:String(r.department||'').trim(),room:String(r.room||'').trim()})).filter(r=>r.name&&(r.extension||r.department||r.room))}
-  return{iso,weekStart,normalizeTarget,parseRange,periodRange,todaySlots,lessonContext,formatDuration,messageDigest,tidyText,safeContactRows};
+  return{iso,weekStart,normalizeTarget,parseRange,periodRangeMap,periodRange,todaySlots,lessonContext,formatDuration,messageDigest,tidyText,safeContactRows};
 });
