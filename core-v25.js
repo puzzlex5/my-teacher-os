@@ -7,10 +7,12 @@
   const PROCESS_RE=/(과정|활동|수업|평가|역할|시도|노력|문제|해결|협력|책임|탐구|참여)/;
   const ALLOWED_EVIDENCE_KINDS=new Set(['담임관찰','교과관찰','자율자치활동','진로활동','동아리·창체','수업·평가관찰']);
   const STOP=new Set('학생 학교 수업 활동 과정 모습 관찰 평가 위와 같은 통해 관련 대한 해당 또한 이후 최근 있으며 함 됨 보임 중심 바탕 내용 기록 경우 정도'.split(' '));
+  const PARTICLE_SUFFIXES=['으로','에서','에게','을','를','이','가','은','는','에','의','와','과','로','도','만','며','고','함','됨'];
   const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
   function clean(s){return String(s||'').replace(/\s+/g,' ').trim()}
   function sentences(text){return String(text||'').replace(/\r/g,'').split(/\n+|(?<=[.!?])\s+/).map(clean).filter(x=>x.length>=5)}
-  function tokens(text){return clean(text).replace(/[^가-힣A-Za-z0-9\s]/g,' ').split(/\s+/).map(x=>x.replace(/(?:으로|에서|에게|을|를|이|가|은|는|에|의|와|과|로|도|만|며|고|함|됨)$/,'')).filter(x=>x.length>=2&&!STOP.has(x))}
+  function normalizeToken(token){const x=String(token||'');for(const suffix of PARTICLE_SUFFIXES){if(!x.endsWith(suffix))continue;const base=x.slice(0,-suffix.length);if(base.length>=2)return base}return x}
+  function tokens(text){return clean(text).replace(/[^가-힣A-Za-z0-9\s]/g,' ').split(/\s+/).map(normalizeToken).filter(x=>x.length>=2&&!STOP.has(x))}
   function overlapCount(a,b){const B=new Set(tokens(b));return [...new Set(tokens(a))].filter(x=>B.has(x)).length}
   function uniqueDates(rows){return [...new Set((rows||[]).map(x=>x.date).filter(Boolean))].sort()}
   function repeatedPhrases(text){const s=clean(text);const chunks=[];for(let i=0;i<=s.length-12;i+=4){const c=s.slice(i,i+12);if(!/\s/.test(c[0]||''))chunks.push(c)}const count=new Map();chunks.forEach(c=>count.set(c,(count.get(c)||0)+1));return [...count.entries()].filter(([,n])=>n>=2).map(([c])=>c).slice(0,4)}
