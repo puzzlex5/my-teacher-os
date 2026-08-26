@@ -5,6 +5,7 @@
   const ACTION_RE=/(참여|발표|설명|분석|비교|탐구|연습|수행|제작|협력|질문|적용|표현|작성|조정|해결|선택|기획|준비|관찰|토의|토론|연주|창작|실험|조사|정리|피드백)/;
   const GROWTH_RE=/(이후|최근|점차|향상|변화|성장|개선|확장|심화|발전|보완|스스로|자기주도)/;
   const PROCESS_RE=/(과정|활동|수업|평가|역할|시도|노력|문제|해결|협력|책임|탐구|참여)/;
+  const ALLOWED_EVIDENCE_KINDS=new Set(['담임관찰','교과관찰','자율자치활동','진로활동','동아리·창체','수업·평가관찰']);
   const STOP=new Set('학생 학교 수업 활동 과정 모습 관찰 평가 위와 같은 통해 관련 대한 해당 또한 이후 최근 있으며 함 됨 보임 중심 바탕 내용 기록 경우 정도'.split(' '));
   const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
   function clean(s){return String(s||'').replace(/\s+/g,' ').trim()}
@@ -13,6 +14,15 @@
   function overlapCount(a,b){const B=new Set(tokens(b));return [...new Set(tokens(a))].filter(x=>B.has(x)).length}
   function uniqueDates(rows){return [...new Set((rows||[]).map(x=>x.date).filter(Boolean))].sort()}
   function repeatedPhrases(text){const s=clean(text);const chunks=[];for(let i=0;i<=s.length-12;i+=4){const c=s.slice(i,i+12);if(!/\s/.test(c[0]||''))chunks.push(c)}const count=new Map();chunks.forEach(c=>count.set(c,(count.get(c)||0)+1));return [...count.entries()].filter(([,n])=>n>=2).map(([c])=>c).slice(0,4)}
+  function usableEvidence(rows,area=''){
+    return (Array.isArray(rows)?rows:[]).filter(x=>{
+      if(!x||x.eligible===false)return false;
+      if(x.area&&area&&x.area!==area)return false;
+      if(x.kind&&!ALLOWED_EVIDENCE_KINDS.has(x.kind))return false;
+      if(SENSITIVE_RE.test(x.text||''))return false;
+      return !!clean(x.text);
+    });
+  }
   function grounding(text,evidence){
     const ev=(evidence||[]).map(x=>clean(x.text)).filter(Boolean),ss=sentences(text);if(!ev.length)return{score:0,unsupported:ss,ratio:0};
     let supported=0;const unsupported=[];
@@ -20,7 +30,7 @@
     const ratio=ss.length?supported/ss.length:0;return{score:Math.round(ratio*35),unsupported,ratio};
   }
   function analyzeDraft(input={}){
-    const text=clean(input.text),evidence=Array.isArray(input.evidence)?input.evidence:[],area=input.area||'subject';const issues=[],strengths=[];
+    const text=clean(input.text),area=input.area||'subject',evidence=usableEvidence(input.evidence,area),issues=[],strengths=[];
     if(!text)return{score:0,level:'검사 필요',critical:true,issues:[{severity:'critical',code:'EMPTY',message:'검사할 초안이 없습니다.'}],strengths:[],dimensions:{grounding:0,specificity:0,growth:0,process:0,clarity:0,safety:0},unsupportedSentences:[]};
     const g=grounding(text,evidence);if(!evidence.length)issues.push({severity:'critical',code:'NO_EVIDENCE',message:'연결된 직접 관찰 근거가 없습니다.'});else if(g.unsupported.length)issues.push({severity:'warn',code:'UNSUPPORTED',message:`근거 연결이 약한 문장 ${g.unsupported.length}개가 있습니다.`});else strengths.push('모든 문장이 선택된 관찰근거와 연결됩니다.');
     let specificity=0;if(text.length>=55)specificity+=5;if(ACTION_RE.test(text))specificity+=6;if(/구체|예를|\d|교시|모둠|발표|연주|작품|과제|질문|역할/.test(text))specificity+=4;specificity=Math.min(15,specificity);if(specificity<9)issues.push({severity:'info',code:'SPECIFICITY',message:'관찰한 행동·과정이 더 구체적으로 드러나면 좋습니다.'});else strengths.push('구체적인 활동·행동 단서가 포함되어 있습니다.');
@@ -32,5 +42,5 @@
     const dimensions={grounding:g.score,specificity,growth,process,clarity,safety};const score=clamp(g.score+specificity+growth+process+clarity+safety);const level=critical?'최종 사용 금지':score>=88?'매우 안정':score>=78?'안정':score>=65?'보완 권장':'검토 필요';
     return{score,level,critical,issues,strengths:[...new Set(strengths)],dimensions,unsupportedSentences:g.unsupported,evidenceCount:evidence.length,dateCount:dates.length};
   }
-  return{analyzeDraft,tokens,grounding,SENSITIVE_RE,PROHIBITED_RE,PRAISE_RE};
+  return{analyzeDraft,tokens,grounding,usableEvidence,SENSITIVE_RE,PROHIBITED_RE,PRAISE_RE};
 });
