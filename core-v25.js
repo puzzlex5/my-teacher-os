@@ -20,7 +20,7 @@
   function repeatedPhrases(text){const s=clean(text);const chunks=[];for(let i=0;i<=s.length-12;i+=4){const c=s.slice(i,i+12);if(!/\s/.test(c[0]||''))chunks.push(c)}const count=new Map();chunks.forEach(c=>count.set(c,(count.get(c)||0)+1));return [...count.entries()].filter(([,n])=>n>=2).map(([c])=>c).slice(0,4)}
   function usableEvidence(rows,area=''){
     return (Array.isArray(rows)?rows:[]).filter(x=>{
-      if(!x||x.eligible===false)return false;
+      if(!x||x.eligible!==true)return false;
       if(x.area&&area&&x.area!==area)return false;
       if(x.kind&&!ALLOWED_EVIDENCE_KINDS.has(x.kind))return false;
       if(sensitiveText(x.text))return false;
