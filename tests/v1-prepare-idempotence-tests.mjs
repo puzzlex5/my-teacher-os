@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 
 const PREPARE_SCRIPTS=[
+  'scripts/prepare-v1-v21-direct-pii.mjs',
   'scripts/prepare-v1-v23-storage.mjs',
   'scripts/prepare-v1-sources.mjs',
   'scripts/prepare-v1-hwpx-structure.mjs',
