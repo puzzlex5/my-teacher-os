@@ -50,12 +50,16 @@ jobs:
           node scripts/prepare-v1-lazy-doc-deps.mjs
           node scripts/prepare-v1-lazy-doc-shell.mjs
           node scripts/prepare-v1-comcigan-status.mjs
+          node scripts/prepare-v1-v27-contact-cache.mjs
 
       - name: Verify v1 source preparation is deterministic
         run: node tests/v1-prepare-idempotence-tests.mjs
 
       - name: Verify v18 imported metadata preserves document source
         run: node tests/v1-v18-source-link-tests.mjs
+
+      - name: Verify v27 local contact search reuses parsed data
+        run: node tests/v1-v27-contact-cache-tests.mjs
 
       - name: Verify direct PII never enters v21 draft generation
         run: node tests/v1-v21-direct-pii-draft-tests.mjs
