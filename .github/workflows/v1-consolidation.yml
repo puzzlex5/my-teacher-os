@@ -40,6 +40,7 @@ jobs:
           node scripts/prepare-v1-v21-direct-pii.mjs
           node scripts/prepare-v1-v21-neis-generation.mjs
           node scripts/prepare-v1-v21-lifecycle.mjs
+          node scripts/prepare-v1-v22-lifecycle.mjs
           node scripts/prepare-v1-v23-storage.mjs
           node scripts/prepare-v1-sources.mjs
           node scripts/prepare-v1-v18-source-link.mjs
@@ -60,6 +61,9 @@ jobs:
 
       - name: Verify v21 shared lifecycle hooks
         run: node tests/v1-v21-lifecycle-tests.mjs
+
+      - name: Verify v22 recovery shared lifecycle hook
+        run: node tests/v1-v22-lifecycle-tests.mjs
 
       - name: Verify v18 imported metadata preserves document source
         run: node tests/v1-v18-source-link-tests.mjs
