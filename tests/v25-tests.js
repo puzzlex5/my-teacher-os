@@ -20,6 +20,8 @@ const unsupported=R.analyzeDraft({area:'subject',evidence:goodEvidence,text:'모
 if(!unsupported.issues.some(x=>x.code==='UNSUPPORTED'))throw new Error('unsupported sentence must be flagged');
 const multiline=R.grounding('리듬을 반복 연습함\n전문 작곡가 수준 작품 완성함',goodEvidence);
 if(multiline.unsupported.length!==1||!multiline.unsupported[0].includes('전문 작곡가'))throw new Error('newline-separated unsupported claim is being merged into supported evidence');
+const multilineAnalyze=R.analyzeDraft({area:'subject',evidence:[goodEvidence[0]],text:'리듬을 반복 연습함\n전문 작곡가 수준 작품 완성함'});
+if(multilineAnalyze.unsupportedSentences.length!==1||!multilineAnalyze.unsupportedSentences[0].includes('전문 작곡가')||!multilineAnalyze.issues.some(x=>x.code==='UNSUPPORTED'))throw new Error('analyzeDraft must preserve line breaks before grounding');
 const shortUnsupported=R.grounding('천재적임.',goodEvidence);
 if(shortUnsupported.ratio!==0||shortUnsupported.unsupported.length!==1)throw new Error('short unsupported sentence must not be auto-grounded');
 const genericObserved=R.grounding('전문 작곡가 수준 작품이 관찰됨.',goodEvidence);
