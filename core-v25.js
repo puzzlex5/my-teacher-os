@@ -8,7 +8,7 @@
   const STOP=new Set('학생 학교 수업 활동 과정 모습 관찰 평가 위와 같은 통해 관련 대한 해당 또한 이후 최근 있으며 함 됨 보임 중심 바탕 내용 기록 경우 정도'.split(' '));
   const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
   function clean(s){return String(s||'').replace(/\s+/g,' ').trim()}
-  function sentences(text){return clean(text).split(/(?<=[.!?])\s+|\n+/).map(clean).filter(x=>x.length>=5)}
+  function sentences(text){return String(text||'').replace(/\r/g,'').split(/\n+|(?<=[.!?])\s+/).map(clean).filter(x=>x.length>=5)}
   function tokens(text){return clean(text).replace(/[^가-힣A-Za-z0-9\s]/g,' ').split(/\s+/).map(x=>x.replace(/(?:을|를|이|가|은|는|에|의|와|과|로|으로|에서|에게|도|만|며|고|함|됨)$/,'')).filter(x=>x.length>=2&&!STOP.has(x))}
   function overlapCount(a,b){const B=new Set(tokens(b));return [...new Set(tokens(a))].filter(x=>B.has(x)).length}
   function uniqueDates(rows){return [...new Set((rows||[]).map(x=>x.date).filter(Boolean))].sort()}
@@ -16,7 +16,7 @@
   function grounding(text,evidence){
     const ev=(evidence||[]).map(x=>clean(x.text)).filter(Boolean),ss=sentences(text);if(!ev.length)return{score:0,unsupported:ss,ratio:0};
     let supported=0;const unsupported=[];
-    ss.forEach(s=>{const ts=tokens(s);if(ts.length<3){supported++;return}const best=Math.max(0,...ev.map(e=>overlapCount(s,e)));const need=ts.length>=8?2:1;if(best>=need||(/관찰됨|확인됨/.test(s)&&ev.length)){supported++;return}unsupported.push(s)});
+    ss.forEach(s=>{const ts=tokens(s),best=Math.max(0,...ev.map(e=>overlapCount(s,e))),need=ts.length>=8?2:1;if(ts.length>0&&best>=need){supported++;return}unsupported.push(s)});
     const ratio=ss.length?supported/ss.length:0;return{score:Math.round(ratio*35),unsupported,ratio};
   }
   function analyzeDraft(input={}){
