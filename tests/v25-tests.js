@@ -14,6 +14,12 @@ const prohibited=R.analyzeDraft({area:'subject',evidence:goodEvidence,text:'모�
 if(!prohibited.critical||!prohibited.issues.some(x=>x.code==='PROHIBITED'))throw new Error('prohibited expression guard missing');
 const unsupported=R.analyzeDraft({area:'subject',evidence:goodEvidence,text:'모둠 합주에서 반복 연습함. 인공지능 작곡 프로그램을 독학하여 전문 작곡가 수준의 작품을 완성함.'});
 if(!unsupported.issues.some(x=>x.code==='UNSUPPORTED'))throw new Error('unsupported sentence must be flagged');
+const multiline=R.grounding('리듬을 반복 연습함\n전문 작곡가 수준 작품 완성함',goodEvidence);
+if(multiline.unsupported.length!==1||!multiline.unsupported[0].includes('전문 작곡가'))throw new Error('newline-separated unsupported claim is being merged into supported evidence');
+const shortUnsupported=R.grounding('천재적임.',goodEvidence);
+if(shortUnsupported.ratio!==0||shortUnsupported.unsupported.length!==1)throw new Error('short unsupported sentence must not be auto-grounded');
+const genericObserved=R.grounding('전문 작곡가 수준 작품이 관찰됨.',goodEvidence);
+if(genericObserved.ratio!==0)throw new Error('generic observed wording must not bypass evidence overlap');
 const app=fs.readFileSync('app-v25.js','utf8'),css=fs.readFileSync('app-v25.css','utf8'),idx=fs.readFileSync('index.html','utf8'),lib=JSON.parse(fs.readFileSync('school-record-quality-library.json','utf8'));
 for(const token of ['QUALITY GATE','현재 초안 품질검사','공식 기준 보기','합격 가능성 점수','qualityCheck','function saveMain25(){globalThis.TeacherOSStorage.writeJSON(KEY,state)}'])if(!app.includes(token))throw new Error('v25 app missing '+token);
 if(/localStorage\.setItem\(KEY\s*,/.test(app))throw new Error('v0.25 quality snapshot must use shared TeacherOSStorage');
@@ -21,4 +27,4 @@ if(!css.includes('@media(max-width:780px)'))throw new Error('v25 mobile CSS miss
 if(!Array.isArray(lib.sources)||lib.sources.length<4)throw new Error('official quality source library too small');
 if(!lib.sources.some(x=>x.authority==='rule'&&x.publisher==='교육부'))throw new Error('MOE rule source missing');
 if(!idx.includes('core-v25.js')||!idx.includes('app-v25.js')||!idx.includes('app-v25.css'))throw new Error('v25 loader missing');
-console.log('v0.25 grounded school-record quality tests passed');
+console.log('v0.25 grounded school-record quality tests passed with strict sentence evidence checks');
