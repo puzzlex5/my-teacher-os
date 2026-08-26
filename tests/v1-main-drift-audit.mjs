@@ -4,6 +4,7 @@ import {execFileSync} from 'node:child_process';
 
 const EXACT_PARITY_FILES=[
   'app-v16.js',
+  'app-v17.js',
   'app-v19.js',
   'core-v23.js',
   'app-v23.js',
