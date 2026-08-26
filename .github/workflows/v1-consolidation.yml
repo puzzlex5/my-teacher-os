@@ -47,6 +47,7 @@ jobs:
           node scripts/prepare-v1-v23-pdf-layout.mjs
           node scripts/prepare-v1-v23-materialized-count.mjs
           node scripts/prepare-v1-v23-memory-hygiene.mjs
+          node scripts/prepare-v1-v23-ocr-recovery.mjs
           node scripts/prepare-v1-lazy-doc-deps.mjs
           node scripts/prepare-v1-lazy-doc-shell.mjs
           node scripts/prepare-v1-comcigan-status.mjs
@@ -97,6 +98,9 @@ jobs:
 
       - name: Verify v1 transient document-memory hygiene
         run: node tests/v1-v23-memory-hygiene-tests.mjs
+
+      - name: Verify v1 OCR initialization recovery
+        run: node tests/v1-v23-ocr-recovery-tests.mjs
 
       - name: Verify v1 multi-sheet spreadsheet intake
         run: node tests/v1-v23-multisheet-tests.mjs
