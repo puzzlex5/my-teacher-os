@@ -37,6 +37,7 @@ jobs:
 
       - name: Prepare v1 legacy sources
         run: |
+          node scripts/prepare-v1-korean-text-encoding.mjs
           node scripts/prepare-v1-v21-direct-pii.mjs
           node scripts/prepare-v1-v21-neis-generation.mjs
           node scripts/prepare-v1-v21-lifecycle.mjs
@@ -58,6 +59,9 @@ jobs:
 
       - name: Verify v1 source preparation is deterministic
         run: node tests/v1-prepare-idempotence-tests.mjs
+
+      - name: Verify Korean TXT and CSV encoding fallback
+        run: node tests/v1-korean-text-encoding-tests.mjs
 
       - name: Verify v21 shared lifecycle hooks
         run: node tests/v1-v21-lifecycle-tests.mjs
