@@ -42,3 +42,29 @@ if(src.includes('state.version=6;'))throw new Error('v1 prepared v06 still downg
 
 fs.writeFileSync(path,src,'utf8');
 console.log('Prepared v1 app-v06 with monotonic, change-only schema migration persistence.');
+
+const path7='app-v07.js';
+let src7=fs.readFileSync(path7,'utf8');
+const old7="  function migrateV7(){state.version=7;Object.values(state.years||{}).forEach(y=>{y.liveTimetableWeeks=y.liveTimetableWeeks&&typeof y.liveTimetableWeeks==='object'&&!Array.isArray(y.liveTimetableWeeks)?y.liveTimetableWeeks:{};y.comciganSync=y.comciganSync&&typeof y.comciganSync==='object'?y.comciganSync:{lastChecked:null,lastApplied:null,status:'not-connected'}});localStorage.setItem(KEY,JSON.stringify(state))}";
+const new7=`  function migrateV7(){
+    let changed=false;
+    const version=Math.max(Number(state.version)||0,7);
+    if(state.version!==version){state.version=version;changed=true}
+    Object.values(state.years||{}).forEach(y=>{
+      if(!(y.liveTimetableWeeks&&typeof y.liveTimetableWeeks==='object'&&!Array.isArray(y.liveTimetableWeeks))){y.liveTimetableWeeks={};changed=true}
+      if(!(y.comciganSync&&typeof y.comciganSync==='object'&&!Array.isArray(y.comciganSync))){y.comciganSync={lastChecked:null,lastApplied:null,status:'not-connected'};changed=true}
+    });
+    if(changed)localStorage.setItem(KEY,JSON.stringify(state));
+    return changed;
+  }`;
+if(src7.includes(old7))src7=src7.replace(old7,new7);
+else if(!src7.includes('const version=Math.max(Number(state.version)||0,7);'))throw new Error('v1 v07 preparation failed: migrateV7 block not found');
+for(const token of [
+  'const version=Math.max(Number(state.version)||0,7);',
+  'if(state.version!==version){state.version=version;changed=true}',
+  'if(changed)localStorage.setItem(KEY,JSON.stringify(state));',
+  'return changed;'
+])if(!src7.includes(token))throw new Error(`v1 prepared v07 missing: ${token}`);
+if(src7.includes('state.version=7;'))throw new Error('v1 prepared v07 still downgrades the schema version on render');
+fs.writeFileSync(path7,src7,'utf8');
+console.log('Prepared v1 app-v07 with monotonic, change-only schema migration persistence.');
