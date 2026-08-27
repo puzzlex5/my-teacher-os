@@ -16,16 +16,25 @@ const replacement="const d=D.lessonContext(y,new Date()),truth=truth27(y,d);if(t
 if(src.includes(old))src=src.replace(old,replacement);
 else if(!src.includes("const d=D.lessonContext(y,new Date()),truth=truth27(y,d);"))throw new Error('v1 v27 truth preparation failed: renderNext anchor missing');
 
+const legacyLifecycle="  const prevRender=globalThis.render;if(typeof prevRender==='function')globalThis.render=function(){const r=prevRender.apply(this,arguments);setTimeout(renderDesk,0);return r};\n  const prevSwitch=globalThis.switchView;if(typeof prevSwitch==='function')globalThis.switchView=function(id){const r=prevSwitch.apply(this,arguments);if(id==='dashboard')setTimeout(renderDesk,0);return r};\n";
+const sharedLifecycle="  function registerLifecycle27(){const L=globalThis.TeacherOSLifecycle;if(!L||typeof L.onRender!=='function'||typeof L.onSwitch!=='function')return false;L.onRender(renderDesk,{defer:true});L.onSwitch(id=>{if(id==='dashboard')renderDesk()},{defer:true});return true}\n  if(!registerLifecycle27()){\n    const prevRender=globalThis.render;if(typeof prevRender==='function')globalThis.render=function(){const r=prevRender.apply(this,arguments);setTimeout(renderDesk,0);return r};\n    const prevSwitch=globalThis.switchView;if(typeof prevSwitch==='function')globalThis.switchView=function(id){const r=prevSwitch.apply(this,arguments);if(id==='dashboard')setTimeout(renderDesk,0);return r};\n  }\n";
+if(src.includes(legacyLifecycle))src=src.replace(legacyLifecycle,sharedLifecycle);
+else if(!src.includes('function registerLifecycle27()'))throw new Error('v1 v27 lifecycle preparation failed: wrapper anchor missing');
+
 for(const token of [
   'function truth27(y,d)',
   "T.nextLessonTruth(y,d)",
   "truth&&!truth.known",
   '오늘 수업 여부를 확정할 수 없습니다.',
   "truth.reason==='transport-unavailable'",
-  '이전 표를 현재표로 간주하지 않습니다.'
+  '이전 표를 현재표로 간주하지 않습니다.',
+  'function registerLifecycle27()',
+  'TeacherOSLifecycle',
+  'L.onRender(renderDesk,{defer:true})',
+  "L.onSwitch(id=>{if(id==='dashboard')renderDesk()},{defer:true})"
 ]){
-  if(!src.includes(token))throw new Error(`v1 prepared v27 truth guard missing: ${token}`);
+  if(!src.includes(token))throw new Error(`v1 prepared v27 truth/lifecycle guard missing: ${token}`);
 }
 
 fs.writeFileSync(path,src,'utf8');
-console.log('Prepared v1 Teacher Desk to render unknown timetable truth before any later correction layer.');
+console.log('Prepared v1 Teacher Desk truth guard and shared lifecycle refresh.');
