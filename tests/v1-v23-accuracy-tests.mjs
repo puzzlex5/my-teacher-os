@@ -29,7 +29,10 @@ const required=[
   "x=>`${x.source||''}|${x.kind}|${x.date||''}|${x.day||''}|${x.period||''}|${x.title||x.label||''}|${x.profileType||''}|${x.target||''}`",
   "if(ext==='hwp')throw new Error('구형 HWP는 아직 직접 분석하지 않습니다.",
   "input.accept='.hwpx,.pdf,.xlsx,.xls,.csv,.txt,.docx,.pptx,.ics,.jpg,.jpeg,.png,.webp,.bmp'",
-  '구형 HWP는 HWPX/PDF로 변환'
+  '구형 HWP는 HWPX/PDF로 변환',
+  'const lifecycle23=globalThis.TeacherOSLifecycle',
+  'lifecycle23.onRender(()=>{ensureReportUI23();bind23();renderReports23()},{defer:true})',
+  'const fallbackRender23=globalThis.render'
 ];
 for(const token of required){
   if(!app.includes(token))throw new Error(`v1 v23 accuracy guard missing: ${token}`);
@@ -44,4 +47,7 @@ if(app.includes('const remainingIds=new Set((suggestions||[]).map(s=>s.id))')){
 if(app.includes('localStorage.setItem(KEY')||app.includes('localStorage.getItem(KEY')){
   throw new Error('v1 v23 accuracy fix must preserve shared-storage boundary');
 }
-console.log('v1 v23 retry, materialized/equivalent apply classification, truthful per-file outcome metadata, source provenance, empty-result, legacy-HWP and shared-storage guards passed');
+if(app.includes('const prevRender23=globalThis.render')){
+  throw new Error('v1 v23 must not reintroduce the historical direct render wrapper');
+}
+console.log('v1 v23 retry, materialized/equivalent apply classification, truthful per-file outcome metadata, source provenance, lifecycle, empty-result, legacy-HWP and shared-storage guards passed');
