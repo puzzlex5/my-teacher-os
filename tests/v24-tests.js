@@ -9,6 +9,9 @@ const required=[
   "if(wasFirst){y.clubs=[];y.roleProfile={roles:[]",
   "state.profile.major=''",
   "function saveMain24(){globalThis.TeacherOSStorage.writeJSON(KEY,state)}",
+  "function refresh24(){ensureSubjectField();wrapYearForm();wrapYearButtons();personalizeCopy();ensureIsolationCard()}",
+  "const lifecycle24=globalThis.TeacherOSLifecycle",
+  "lifecycle24.onRender(refresh24,{defer:true})",
   '같은 사이트 주소를 사용해도 이 브라우저의 학교·교과·업무·학생기록은 다른 사용자와 섞이지 않습니다',
   '이 기기만의 Teacher OS'
 ];
@@ -19,4 +22,5 @@ if(!index.includes('app-v24.js')||!index.includes('app-v24.css'))throw new Error
 if(/localStorage\.clear\s*\(|removeItem\(KEY\)/.test(js))throw new Error('v0.24 must never clear existing Teacher OS data');
 if(/localStorage\.setItem\(KEY\s*,/.test(js))throw new Error('v0.24 main Teacher OS state must use TeacherOSStorage');
 if(!/localStorage\.setItem\(DEVICE_KEY\s*,/.test(js))throw new Error('v0.24 per-device profile must remain a separate local setting');
+if(!js.includes("if(lifecycle24?.onRender)"))throw new Error('v0.24 shared lifecycle guard missing');
 console.log('v0.24 personal browser isolation tests passed');
