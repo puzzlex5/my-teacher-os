@@ -59,6 +59,7 @@ jobs:
           node scripts/prepare-v1-v27-truth.mjs
           node scripts/prepare-v1-v28-lifecycle.mjs
           node scripts/prepare-v1-v30-lifecycle.mjs
+          node scripts/prepare-v1-v31-lifecycle.mjs
           node scripts/prepare-v1-v32-lifecycle.mjs
 
       - name: Verify v1 source preparation is deterministic
@@ -81,6 +82,9 @@ jobs:
 
       - name: Verify v30 document-version shared lifecycle hooks
         run: node tests/v1-v30-lifecycle-tests.mjs
+
+      - name: Verify v31 source-retention shared lifecycle hooks
+        run: node tests/v1-v31-lifecycle-tests.mjs
 
       - name: Verify v32 device-storage shared lifecycle hooks
         run: node tests/v1-v32-lifecycle-tests.mjs
