@@ -38,6 +38,7 @@ jobs:
       - name: Prepare v1 legacy sources
         run: |
           node scripts/prepare-v1-korean-text-encoding.mjs
+          node scripts/prepare-v1-v15-lifecycle.mjs
           node scripts/prepare-v1-v16-lifecycle.mjs
           node scripts/prepare-v1-v17-lifecycle.mjs
           node scripts/prepare-v1-v19-lifecycle.mjs
@@ -72,6 +73,9 @@ jobs:
 
       - name: Verify Korean TXT and CSV encoding fallback
         run: node tests/v1-korean-text-encoding-tests.mjs
+
+      - name: Verify v15 timetable auto-only shared lifecycle hook
+        run: node tests/v1-v15-lifecycle-tests.mjs
 
       - name: Verify v16 lesson auto-context shared lifecycle hook
         run: node tests/v1-v16-lifecycle-tests.mjs
