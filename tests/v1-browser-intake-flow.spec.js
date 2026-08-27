@@ -37,25 +37,47 @@ async function openSeeded(browser,url){
   return {context,page,pageErrors};
 }
 
-async function uploadSyntheticCalendar(page){
+function syntheticCalendarBuffer(title='합성 학교축제'){
   const ics=[
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Teacher OS Synthetic Test//KO',
     'BEGIN:VEVENT',
-    'UID:synthetic-school-festival-20260903',
+    `UID:synthetic-${title==='합성 학교축제'?'school-festival':'mixed-upload'}-20260903`,
     'DTSTART;VALUE=DATE:20260903',
-    'SUMMARY:합성 학교축제',
+    `SUMMARY:${title}`,
     'END:VEVENT',
     'END:VCALENDAR'
   ].join('\r\n');
+  return Buffer.from(ics,'utf8');
+}
+
+async function uploadSyntheticCalendar(page){
   await page.locator('#nav button[data-view="importer"]').click();
   await page.locator('#importFiles').setInputFiles({
     name:'2026학년도_합성_학사일정.ics',
     mimeType:'text/calendar',
-    buffer:Buffer.from(ics,'utf8')
+    buffer:syntheticCalendarBuffer()
   });
   await expect(page.locator('#importStatus')).toContainText('처리 완료',{timeout:15000});
+}
+
+async function uploadMixedLegacyHwpAndCalendar(page){
+  await page.locator('#nav button[data-view="importer"]').click();
+  await page.locator('#importFiles').setInputFiles([
+    {
+      name:'구형_업무분장.hwp',
+      mimeType:'application/octet-stream',
+      buffer:Buffer.from('synthetic no-pii legacy hwp placeholder','utf8')
+    },
+    {
+      name:'2026학년도_혼합업로드_학사일정.ics',
+      mimeType:'text/calendar',
+      buffer:syntheticCalendarBuffer('합성 혼합업로드 행사')
+    }
+  ]);
+  await expect(page.locator('#importStatus')).toContainText('처리 완료',{timeout:15000});
+  await expect(page.locator('#importStatus')).toContainText('실패 1개');
 }
 
 async function intakeProjection(page){
@@ -80,6 +102,19 @@ async function intakeProjection(page){
   },STATE_KEY);
 }
 
+async function mixedIntakeProjection(page){
+  return page.evaluate(key=>{
+    const state=JSON.parse(localStorage.getItem(key)||'null');
+    const y=state?.years?.['2026']||{};
+    const event=(y.calendarEvents||[]).find(x=>x.title==='합성 혼합업로드 행사');
+    const goodImport=(y.imports||[]).find(x=>x.name==='2026학년도_혼합업로드_학사일정.ics');
+    return {
+      event:event?{date:event.date,title:event.title,source:event.source}:null,
+      goodImport:goodImport?{name:goodImport.name,appliedCount:Number(goodImport.appliedCount||0)}:null
+    };
+  },STATE_KEY);
+}
+
 for(const [name,url] of Object.entries(TARGETS)){
   test(`v1 ${name} browser intake applies and persists a synthetic ICS calendar`,async({browser})=>{
     const app=await openSeeded(browser,url);
@@ -97,6 +132,25 @@ for(const [name,url] of Object.entries(TARGETS)){
       await app.page.reload({waitUntil:'domcontentloaded'});
       await app.page.waitForTimeout(900);
       expect(await intakeProjection(app.page)).toEqual(first);
+      expect(app.pageErrors).toEqual([]);
+    } finally {
+      await app.context.close();
+    }
+  });
+
+  test(`v1 ${name} mixed legacy HWP upload still applies supported files`,async({browser})=>{
+    const app=await openSeeded(browser,url);
+    try{
+      await uploadMixedLegacyHwpAndCalendar(app.page);
+      const first=await mixedIntakeProjection(app.page);
+      expect(first.event).toEqual({date:'2026-09-03',title:'합성 혼합업로드 행사',source:'2026학년도_혼합업로드_학사일정.ics'});
+      expect(first.goodImport).not.toBeNull();
+      expect(first.goodImport.appliedCount).toBe(1);
+      expect(app.pageErrors).toEqual([]);
+
+      await app.page.reload({waitUntil:'domcontentloaded'});
+      await app.page.waitForTimeout(900);
+      expect(await mixedIntakeProjection(app.page)).toEqual(first);
       expect(app.pageErrors).toEqual([]);
     } finally {
       await app.context.close();
