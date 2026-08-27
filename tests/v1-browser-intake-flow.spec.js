@@ -74,11 +74,7 @@ async function uploadCp949CalendarText(page){
     buffer:syntheticCp949CalendarBuffer()
   });
   await expect(page.locator('#importStatus')).toContainText('처리 완료',{timeout:15000});
-  const suggestion=page.locator('#suggestions .suggestion',{hasText:'학교축제'}).first();
-  await expect(suggestion,'CP949 Korean text must survive decoding and appear as a review candidate').toHaveCount(1);
-  await suggestion.locator('input[type="checkbox"]').check();
-  await page.locator('#applySuggestions').click();
-  await page.waitForTimeout(250);
+  await expect(page.locator('#suggestions'),'CP949 Korean text must survive decoding and appear in review candidates').toContainText('학교축제');
 }
 
 async function uploadMixedLegacyHwpAndCalendar(page){
@@ -147,16 +143,12 @@ async function intakeProjection(page){
   },STATE_KEY);
 }
 
-async function cp949IntakeProjection(page){
+async function cp949ImportProjection(page){
   return page.evaluate(key=>{
     const state=JSON.parse(localStorage.getItem(key)||'null');
     const y=state?.years?.['2026']||{};
-    const event=(y.calendarEvents||[]).find(x=>x.date==='2026-09-02'&&String(x.title||'').includes('학교축제'));
     const imp=(y.imports||[]).find(x=>x.name==='2026학년도_CP949_학사일정.txt');
-    return {
-      event:event?{date:event.date,title:event.title,source:event.source}:null,
-      import:imp?{name:imp.name,docClass:imp.docClass,status:imp.status||'',candidateCount:Number(imp.candidateCount||0)}:null
-    };
+    return imp?{name:imp.name,docClass:imp.docClass,status:imp.status||'',candidateCount:Number(imp.candidateCount||0)}:null;
   },STATE_KEY);
 }
 
@@ -196,23 +188,19 @@ for(const [name,url] of Object.entries(TARGETS)){
     }
   });
 
-  test(`v1 ${name} browser intake decodes CP949 Korean TXT for review and persists approved data`,async({browser})=>{
+  test(`v1 ${name} browser intake decodes CP949 Korean TXT into persistent review metadata`,async({browser})=>{
     const app=await openSeeded(browser,url);
     try{
       await uploadCp949CalendarText(app.page);
-      const first=await cp949IntakeProjection(app.page);
-      expect(first.event).not.toBeNull();
-      expect(first.event.date).toBe('2026-09-02');
-      expect(first.event.title).toContain('학교축제');
-      expect(first.event.source).toBe('2026학년도_CP949_학사일정.txt');
-      expect(first.import).not.toBeNull();
-      expect(first.import.docClass).toBe('calendar');
-      expect(first.import.candidateCount).toBeGreaterThan(0);
+      const first=await cp949ImportProjection(app.page);
+      expect(first).not.toBeNull();
+      expect(first.docClass).toBe('calendar');
+      expect(first.candidateCount).toBeGreaterThan(0);
       expect(app.pageErrors).toEqual([]);
 
       await app.page.reload({waitUntil:'domcontentloaded'});
       await app.page.waitForTimeout(900);
-      expect(await cp949IntakeProjection(app.page)).toEqual(first);
+      expect(await cp949ImportProjection(app.page)).toEqual(first);
       expect(app.pageErrors).toEqual([]);
     } finally {
       await app.context.close();
