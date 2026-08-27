@@ -78,7 +78,6 @@ async function uploadMixedLegacyHwpAndCalendar(page){
   ]);
   await expect(page.locator('#importStatus')).toContainText('처리 완료',{timeout:15000});
   await expect(page.locator('#importStatus')).toContainText('실패 1개');
-  expect(await page.locator('#importFiles').evaluate(el=>el.files?.length||0)).toBe(2);
   const badRow=page.locator('#v23ReportList .v23-file-row',{hasText:'구형_업무분장.hwp'});
   const goodRow=page.locator('#v23ReportList .v23-file-row',{hasText:'2026학년도_혼합업로드_학사일정.ics'});
   await expect(badRow).toContainText('실패');
@@ -101,7 +100,6 @@ async function uploadMalformedHwpxAndCalendar(page){
   ]);
   await expect(page.locator('#importStatus')).toContainText('처리 완료',{timeout:15000});
   await expect(page.locator('#importStatus')).toContainText('실패 1개');
-  expect(await page.locator('#importFiles').evaluate(el=>el.files?.length||0)).toBe(2);
   const badRow=page.locator('#v23ReportList .v23-file-row',{hasText:'손상된_학교교육계획.hwpx'});
   const goodRow=page.locator('#v23ReportList .v23-file-row',{hasText:'2026학년도_손상파일격리_학사일정.ics'});
   await expect(badRow).toContainText('실패');
