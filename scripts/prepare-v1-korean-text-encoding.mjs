@@ -13,9 +13,11 @@ if(!src.includes(anchor))throw new Error('app-v05 readTextFile anchor not found'
 
 const helper=`async function decodeLegacyText05(file){
  const bytes=new Uint8Array(await file.arrayBuffer());
+ if(bytes.length>=2&&bytes[0]===0xff&&bytes[1]===0xfe)return new TextDecoder('utf-16le',{fatal:true}).decode(bytes.subarray(2));
+ if(bytes.length>=2&&bytes[0]===0xfe&&bytes[1]===0xff)return new TextDecoder('utf-16be',{fatal:true}).decode(bytes.subarray(2));
  try{return new TextDecoder('utf-8',{fatal:true}).decode(bytes)}catch{}
  try{return new TextDecoder('euc-kr',{fatal:true}).decode(bytes)}catch{}
- return new TextDecoder('utf-8').decode(bytes)
+ throw new Error('지원하지 않는 텍스트 인코딩입니다. UTF-8, CP949/EUC-KR 또는 BOM이 있는 UTF-16 파일을 사용해 주세요.')
 }
 `;
 src=src.replace(anchor,helper+anchor);
@@ -31,4 +33,4 @@ if(!src.includes(oldCsv))throw new Error('app-v05 CSV spreadsheet decode pattern
 src=src.replace(oldCsv,newCsv);
 
 fs.writeFileSync(path,src);
-console.log('Prepared UTF-8 with CP949/EUC-KR fallback for Korean TXT/CSV intake.');
+console.log('Prepared strict UTF-8, CP949/EUC-KR, and BOM-marked UTF-16 decoding for Korean TXT/CSV intake.');
