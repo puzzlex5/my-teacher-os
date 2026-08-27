@@ -18,6 +18,7 @@ const PREPARE_SCRIPTS=[
   'scripts/prepare-v1-v23-materialized-count.mjs',
   'scripts/prepare-v1-v23-memory-hygiene.mjs',
   'scripts/prepare-v1-v23-ocr-recovery.mjs',
+  'scripts/prepare-v1-v25-lifecycle.mjs',
   'scripts/prepare-v1-lazy-doc-deps.mjs',
   'scripts/prepare-v1-lazy-doc-shell.mjs',
   'scripts/prepare-v1-comcigan-status.mjs',
