@@ -43,7 +43,7 @@ function syntheticCalendarBuffer(title='합성 학교축제'){
     'VERSION:2.0',
     'PRODID:-//Teacher OS Synthetic Test//KO',
     'BEGIN:VEVENT',
-    `UID:synthetic-${title==='합성 학교축제'?'school-festival':'mixed-upload'}-20260903`,
+    `UID:synthetic-${title==='합성 학교축제'?'school-festival':title==='합성 혼합업로드 행사'?'mixed-upload':'malformed-isolation'}-20260903`,
     'DTSTART;VALUE=DATE:20260903',
     `SUMMARY:${title}`,
     'END:VEVENT',
@@ -80,6 +80,24 @@ async function uploadMixedLegacyHwpAndCalendar(page){
   await expect(page.locator('#importStatus')).toContainText('실패 1개');
 }
 
+async function uploadMalformedHwpxAndCalendar(page){
+  await page.locator('#nav button[data-view="importer"]').click();
+  await page.locator('#importFiles').setInputFiles([
+    {
+      name:'손상된_학교교육계획.hwpx',
+      mimeType:'application/zip',
+      buffer:Buffer.from('not-a-valid-zip synthetic no-pii fixture','utf8')
+    },
+    {
+      name:'2026학년도_손상파일격리_학사일정.ics',
+      mimeType:'text/calendar',
+      buffer:syntheticCalendarBuffer('합성 손상파일 격리 행사')
+    }
+  ]);
+  await expect(page.locator('#importStatus')).toContainText('처리 완료',{timeout:15000});
+  await expect(page.locator('#importStatus')).toContainText('실패 1개');
+}
+
 async function intakeProjection(page){
   return page.evaluate(key=>{
     const state=JSON.parse(localStorage.getItem(key)||'null');
@@ -102,17 +120,17 @@ async function intakeProjection(page){
   },STATE_KEY);
 }
 
-async function mixedIntakeProjection(page){
-  return page.evaluate(key=>{
+async function mixedIntakeProjection(page,title,importName){
+  return page.evaluate(({key,title,importName})=>{
     const state=JSON.parse(localStorage.getItem(key)||'null');
     const y=state?.years?.['2026']||{};
-    const event=(y.calendarEvents||[]).find(x=>x.title==='합성 혼합업로드 행사');
-    const goodImport=(y.imports||[]).find(x=>x.name==='2026학년도_혼합업로드_학사일정.ics');
+    const event=(y.calendarEvents||[]).find(x=>x.title===title);
+    const goodImport=(y.imports||[]).find(x=>x.name===importName);
     return {
       event:event?{date:event.date,title:event.title,source:event.source}:null,
       goodImport:goodImport?{name:goodImport.name,appliedCount:Number(goodImport.appliedCount||0)}:null
     };
-  },STATE_KEY);
+  },{key:STATE_KEY,title,importName});
 }
 
 for(const [name,url] of Object.entries(TARGETS)){
@@ -142,7 +160,7 @@ for(const [name,url] of Object.entries(TARGETS)){
     const app=await openSeeded(browser,url);
     try{
       await uploadMixedLegacyHwpAndCalendar(app.page);
-      const first=await mixedIntakeProjection(app.page);
+      const first=await mixedIntakeProjection(app.page,'합성 혼합업로드 행사','2026학년도_혼합업로드_학사일정.ics');
       expect(first.event).toEqual({date:'2026-09-03',title:'합성 혼합업로드 행사',source:'2026학년도_혼합업로드_학사일정.ics'});
       expect(first.goodImport).not.toBeNull();
       expect(first.goodImport.appliedCount).toBe(1);
@@ -150,7 +168,26 @@ for(const [name,url] of Object.entries(TARGETS)){
 
       await app.page.reload({waitUntil:'domcontentloaded'});
       await app.page.waitForTimeout(900);
-      expect(await mixedIntakeProjection(app.page)).toEqual(first);
+      expect(await mixedIntakeProjection(app.page,'합성 혼합업로드 행사','2026학년도_혼합업로드_학사일정.ics')).toEqual(first);
+      expect(app.pageErrors).toEqual([]);
+    } finally {
+      await app.context.close();
+    }
+  });
+
+  test(`v1 ${name} malformed supported file is isolated from valid files`,async({browser})=>{
+    const app=await openSeeded(browser,url);
+    try{
+      await uploadMalformedHwpxAndCalendar(app.page);
+      const first=await mixedIntakeProjection(app.page,'합성 손상파일 격리 행사','2026학년도_손상파일격리_학사일정.ics');
+      expect(first.event).toEqual({date:'2026-09-03',title:'합성 손상파일 격리 행사',source:'2026학년도_손상파일격리_학사일정.ics'});
+      expect(first.goodImport).not.toBeNull();
+      expect(first.goodImport.appliedCount).toBe(1);
+      expect(app.pageErrors).toEqual([]);
+
+      await app.page.reload({waitUntil:'domcontentloaded'});
+      await app.page.waitForTimeout(900);
+      expect(await mixedIntakeProjection(app.page,'합성 손상파일 격리 행사','2026학년도_손상파일격리_학사일정.ics')).toEqual(first);
       expect(app.pageErrors).toEqual([]);
     } finally {
       await app.context.close();
