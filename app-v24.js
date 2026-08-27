@@ -45,7 +45,10 @@
     if(anchor)anchor.insertAdjacentHTML('afterend',html);else settings.insertAdjacentHTML('beforeend',html);
   }
   function neutralizeFreshDefaults(){if(!blankAtBoot)return;state.profile=state.profile&&typeof state.profile==='object'?state.profile:{};state.profile.major='';saveMain24()}
-  function boot(){neutralizeFreshDefaults();ensureSubjectField();wrapYearForm();wrapYearButtons();personalizeCopy();ensureIsolationCard();const foot=q('.side-foot');if(foot)foot.textContent='v0.24 · personal browser isolation'}
-  const prevRender=globalThis.render;if(typeof prevRender==='function')globalThis.render=function(){const r=prevRender.apply(this,arguments);setTimeout(()=>{ensureSubjectField();wrapYearForm();wrapYearButtons();personalizeCopy();ensureIsolationCard()},0);return r};
+  function refresh24(){ensureSubjectField();wrapYearForm();wrapYearButtons();personalizeCopy();ensureIsolationCard()}
+  function boot(){neutralizeFreshDefaults();refresh24();const foot=q('.side-foot');if(foot)foot.textContent='v0.24 · personal browser isolation'}
+  const lifecycle24=globalThis.TeacherOSLifecycle;
+  if(lifecycle24?.onRender)lifecycle24.onRender(refresh24,{defer:true});
+  else{const prevRender=globalThis.render;if(typeof prevRender==='function')globalThis.render=function(){const r=prevRender.apply(this,arguments);setTimeout(refresh24,0);return r}}
   boot();
 })();
