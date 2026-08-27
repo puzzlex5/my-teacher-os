@@ -58,6 +58,7 @@ jobs:
           node scripts/prepare-v1-v27-contact-cache.mjs
           node scripts/prepare-v1-v27-truth.mjs
           node scripts/prepare-v1-v28-lifecycle.mjs
+          node scripts/prepare-v1-v29-lifecycle.mjs
           node scripts/prepare-v1-v30-lifecycle.mjs
           node scripts/prepare-v1-v31-lifecycle.mjs
           node scripts/prepare-v1-v32-lifecycle.mjs
@@ -79,6 +80,9 @@ jobs:
 
       - name: Verify v28 precision shared lifecycle hooks
         run: node tests/v1-v28-lifecycle-tests.mjs
+
+      - name: Verify v29 verified-data shared lifecycle hooks
+        run: node tests/v1-v29-lifecycle-tests.mjs
 
       - name: Verify v30 document-version shared lifecycle hooks
         run: node tests/v1-v30-lifecycle-tests.mjs
@@ -182,7 +186,7 @@ jobs:
 
       - name: Install Chromium parity runner
         run: |
-          npm install --no-save --no-package-lock @playwright/test@1.55.0
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
       - name: Browser parity — separate historical layers vs bundled runtime
