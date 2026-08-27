@@ -51,6 +51,7 @@ jobs:
           node scripts/prepare-v1-v23-materialized-count.mjs
           node scripts/prepare-v1-v23-memory-hygiene.mjs
           node scripts/prepare-v1-v23-ocr-recovery.mjs
+          node scripts/prepare-v1-v25-lifecycle.mjs
           node scripts/prepare-v1-lazy-doc-deps.mjs
           node scripts/prepare-v1-lazy-doc-shell.mjs
           node scripts/prepare-v1-comcigan-status.mjs
@@ -69,6 +70,9 @@ jobs:
 
       - name: Verify v22 recovery shared lifecycle hook
         run: node tests/v1-v22-lifecycle-tests.mjs
+
+      - name: Verify v25 quality shared lifecycle hooks
+        run: node tests/v1-v25-lifecycle-tests.mjs
 
       - name: Verify v32 device-storage shared lifecycle hooks
         run: node tests/v1-v32-lifecycle-tests.mjs
