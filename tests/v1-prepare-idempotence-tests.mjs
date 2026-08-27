@@ -5,6 +5,7 @@ import {execFileSync} from 'node:child_process';
 
 const PREPARE_SCRIPTS=[
   'scripts/prepare-v1-korean-text-encoding.mjs',
+  'scripts/prepare-v1-v14-lifecycle.mjs',
   'scripts/prepare-v1-v15-lifecycle.mjs',
   'scripts/prepare-v1-v16-lifecycle.mjs',
   'scripts/prepare-v1-v17-lifecycle.mjs',
