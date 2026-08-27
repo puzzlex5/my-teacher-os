@@ -24,6 +24,7 @@ const PREPARE_SCRIPTS=[
   'scripts/prepare-v1-comcigan-status.mjs',
   'scripts/prepare-v1-v27-contact-cache.mjs',
   'scripts/prepare-v1-v27-truth.mjs',
+  'scripts/prepare-v1-v28-lifecycle.mjs',
   'scripts/prepare-v1-v32-lifecycle.mjs'
 ];
 
