@@ -74,6 +74,11 @@ async function uploadCp949CalendarText(page){
     buffer:syntheticCp949CalendarBuffer()
   });
   await expect(page.locator('#importStatus')).toContainText('처리 완료',{timeout:15000});
+  const suggestion=page.locator('#suggestions .suggestion',{hasText:'학교축제'}).first();
+  await expect(suggestion,'CP949 Korean text must survive decoding and appear as a review candidate').toHaveCount(1);
+  await suggestion.locator('input[type="checkbox"]').check();
+  await page.locator('#applySuggestions').click();
+  await page.waitForTimeout(250);
 }
 
 async function uploadMixedLegacyHwpAndCalendar(page){
@@ -150,7 +155,7 @@ async function cp949IntakeProjection(page){
     const imp=(y.imports||[]).find(x=>x.name==='2026학년도_CP949_학사일정.txt');
     return {
       event:event?{date:event.date,title:event.title,source:event.source}:null,
-      import:imp?{name:imp.name,docClass:imp.docClass,status:imp.status||'',appliedCount:Number(imp.appliedCount||0),blockedCount:Number(imp.blockedCount||0)}:null
+      import:imp?{name:imp.name,docClass:imp.docClass,status:imp.status||'',candidateCount:Number(imp.candidateCount||0)}:null
     };
   },STATE_KEY);
 }
@@ -191,7 +196,7 @@ for(const [name,url] of Object.entries(TARGETS)){
     }
   });
 
-  test(`v1 ${name} browser intake decodes and persists CP949 Korean TXT`,async({browser})=>{
+  test(`v1 ${name} browser intake decodes CP949 Korean TXT for review and persists approved data`,async({browser})=>{
     const app=await openSeeded(browser,url);
     try{
       await uploadCp949CalendarText(app.page);
@@ -202,8 +207,7 @@ for(const [name,url] of Object.entries(TARGETS)){
       expect(first.event.source).toBe('2026학년도_CP949_학사일정.txt');
       expect(first.import).not.toBeNull();
       expect(first.import.docClass).toBe('calendar');
-      expect(first.import.appliedCount).toBeGreaterThan(0);
-      expect(first.import.blockedCount).toBe(0);
+      expect(first.import.candidateCount).toBeGreaterThan(0);
       expect(app.pageErrors).toEqual([]);
 
       await app.page.reload({waitUntil:'domcontentloaded'});
