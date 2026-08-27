@@ -52,12 +52,26 @@ function syntheticCalendarBuffer(title='합성 학교축제'){
   return Buffer.from(ics,'utf8');
 }
 
+function syntheticCp949CalendarBuffer(){
+  return Buffer.from([199,208,187,231,192,207,193,164,44,50,48,50,54,45,48,51,45,48,50,44,176,179,199,208,10]);
+}
+
 async function uploadSyntheticCalendar(page){
   await page.locator('#nav button[data-view="importer"]').click();
   await page.locator('#importFiles').setInputFiles({
     name:'2026학년도_합성_학사일정.ics',
     mimeType:'text/calendar',
     buffer:syntheticCalendarBuffer()
+  });
+  await expect(page.locator('#importStatus')).toContainText('처리 완료',{timeout:15000});
+}
+
+async function uploadCp949CalendarText(page){
+  await page.locator('#nav button[data-view="importer"]').click();
+  await page.locator('#importFiles').setInputFiles({
+    name:'2026학년도_CP949_학사일정.txt',
+    mimeType:'text/plain',
+    buffer:syntheticCp949CalendarBuffer()
   });
   await expect(page.locator('#importStatus')).toContainText('처리 완료',{timeout:15000});
 }
@@ -128,6 +142,19 @@ async function intakeProjection(page){
   },STATE_KEY);
 }
 
+async function cp949IntakeProjection(page){
+  return page.evaluate(key=>{
+    const state=JSON.parse(localStorage.getItem(key)||'null');
+    const y=state?.years?.['2026']||{};
+    const event=(y.calendarEvents||[]).find(x=>x.date==='2026-03-02'&&String(x.title||'').includes('개학'));
+    const imp=(y.imports||[]).find(x=>x.name==='2026학년도_CP949_학사일정.txt');
+    return {
+      event:event?{date:event.date,title:event.title,source:event.source}:null,
+      import:imp?{name:imp.name,docClass:imp.docClass,status:imp.status||'',appliedCount:Number(imp.appliedCount||0),blockedCount:Number(imp.blockedCount||0)}:null
+    };
+  },STATE_KEY);
+}
+
 async function mixedIntakeProjection(page,title,importName){
   return page.evaluate(({key,title,importName})=>{
     const state=JSON.parse(localStorage.getItem(key)||'null');
@@ -158,6 +185,30 @@ for(const [name,url] of Object.entries(TARGETS)){
       await app.page.reload({waitUntil:'domcontentloaded'});
       await app.page.waitForTimeout(900);
       expect(await intakeProjection(app.page)).toEqual(first);
+      expect(app.pageErrors).toEqual([]);
+    } finally {
+      await app.context.close();
+    }
+  });
+
+  test(`v1 ${name} browser intake decodes and persists CP949 Korean TXT`,async({browser})=>{
+    const app=await openSeeded(browser,url);
+    try{
+      await uploadCp949CalendarText(app.page);
+      const first=await cp949IntakeProjection(app.page);
+      expect(first.event).not.toBeNull();
+      expect(first.event.date).toBe('2026-03-02');
+      expect(first.event.title).toContain('개학');
+      expect(first.event.source).toBe('2026학년도_CP949_학사일정.txt');
+      expect(first.import).not.toBeNull();
+      expect(first.import.docClass).toBe('calendar');
+      expect(first.import.appliedCount).toBe(1);
+      expect(first.import.blockedCount).toBe(0);
+      expect(app.pageErrors).toEqual([]);
+
+      await app.page.reload({waitUntil:'domcontentloaded'});
+      await app.page.waitForTimeout(900);
+      expect(await cp949IntakeProjection(app.page)).toEqual(first);
       expect(app.pageErrors).toEqual([]);
     } finally {
       await app.context.close();
