@@ -40,6 +40,7 @@ jobs:
           node scripts/prepare-v1-korean-text-encoding.mjs
           node scripts/prepare-v1-v06-migration.mjs
           node scripts/prepare-v1-v10-migration.mjs
+          node scripts/prepare-v1-v10-lifecycle.mjs
           node scripts/prepare-v1-v13-lifecycle.mjs
           node scripts/prepare-v1-v14-lifecycle.mjs
           node scripts/prepare-v1-v15-lifecycle.mjs
@@ -83,6 +84,9 @@ jobs:
 
       - name: Verify v10 Teacher Skills migration skips redundant persistence
         run: node tests/v1-v10-migration-tests.mjs
+
+      - name: Verify v10 Teacher Skills shared lifecycle hooks
+        run: node tests/v1-v10-lifecycle-tests.mjs
 
       - name: Verify v13 search and inbox shared lifecycle hook
         run: node tests/v1-v13-lifecycle-tests.mjs
