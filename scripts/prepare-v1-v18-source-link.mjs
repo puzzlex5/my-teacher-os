@@ -17,5 +17,21 @@ for(const [oldText,newText] of replacements){
   changed=true;
 }
 
+const legacyLifecycle="  renderCapabilities();\n  requestAnimationFrame(renderCapabilities);\n  const prevRender=globalThis.render;\n  if(typeof prevRender==='function')globalThis.render=function(){const r=prevRender.apply(this,arguments);setTimeout(renderCapabilities,0);return r};";
+const sharedLifecycle="  renderCapabilities();\n  requestAnimationFrame(renderCapabilities);\n  const lifecycle18=globalThis.TeacherOSLifecycle;\n  if(lifecycle18?.onRender)lifecycle18.onRender(renderCapabilities,{defer:true});\n  else{const prevRender=globalThis.render;if(typeof prevRender==='function')globalThis.render=function(){const r=prevRender.apply(this,arguments);setTimeout(renderCapabilities,0);return r}};";
+if(src.includes(legacyLifecycle)){
+  src=src.replace(legacyLifecycle,sharedLifecycle);
+  changed=true;
+}else if(!src.includes('const lifecycle18=globalThis.TeacherOSLifecycle')){
+  throw new Error('v18 lifecycle preparation anchor missing');
+}
+
+for(const token of [
+  'const lifecycle18=globalThis.TeacherOSLifecycle',
+  'lifecycle18.onRender(renderCapabilities,{defer:true})',
+  'x.source===s.source&&x.date===s.date&&x.title===s.title',
+  "x.source===s.source&&x.name===s.title&&x.due===(s.date||'')"
+])if(!src.includes(token))throw new Error(`v18 prepared source missing: ${token}`);
+
 if(changed)fs.writeFileSync(path,src);
-console.log(changed?'v18 enrichment now preserves document source identity':'v18 source-aware enrichment already prepared');
+console.log(changed?'v18 enrichment preserves document source identity and uses shared lifecycle':'v18 source-aware enrichment and shared lifecycle already prepared');
