@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 
 const PREPARE_SCRIPTS=[
+  'scripts/prepare-v1-korean-text-encoding.mjs',
   'scripts/prepare-v1-v21-direct-pii.mjs',
   'scripts/prepare-v1-v21-neis-generation.mjs',
   'scripts/prepare-v1-v21-lifecycle.mjs',
