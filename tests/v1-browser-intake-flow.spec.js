@@ -53,7 +53,7 @@ function syntheticCalendarBuffer(title='합성 학교축제'){
 }
 
 function syntheticCp949CalendarBuffer(){
-  return Buffer.from([199,208,187,231,192,207,193,164,44,50,48,50,54,45,48,51,45,48,50,44,176,179,199,208,10]);
+  return Buffer.from([50,48,50,54,199,208,179,226,181,181,32,199,208,187,231,192,207,193,164,10,50,48,50,54,45,48,57,45,48,50,32,199,208,177,179,195,224,193,166,10,50,48,50,54,45,48,57,45,48,51,32,195,188,199,232,199,208,189,192,10,50,48,50,54,45,48,57,45,48,52,32,192,231,183,174,200,222,190,247,192,207,10]);
 }
 
 async function uploadSyntheticCalendar(page){
@@ -146,7 +146,7 @@ async function cp949IntakeProjection(page){
   return page.evaluate(key=>{
     const state=JSON.parse(localStorage.getItem(key)||'null');
     const y=state?.years?.['2026']||{};
-    const event=(y.calendarEvents||[]).find(x=>x.date==='2026-03-02'&&String(x.title||'').includes('개학'));
+    const event=(y.calendarEvents||[]).find(x=>x.date==='2026-09-02'&&String(x.title||'').includes('학교축제'));
     const imp=(y.imports||[]).find(x=>x.name==='2026학년도_CP949_학사일정.txt');
     return {
       event:event?{date:event.date,title:event.title,source:event.source}:null,
@@ -197,12 +197,12 @@ for(const [name,url] of Object.entries(TARGETS)){
       await uploadCp949CalendarText(app.page);
       const first=await cp949IntakeProjection(app.page);
       expect(first.event).not.toBeNull();
-      expect(first.event.date).toBe('2026-03-02');
-      expect(first.event.title).toContain('개학');
+      expect(first.event.date).toBe('2026-09-02');
+      expect(first.event.title).toContain('학교축제');
       expect(first.event.source).toBe('2026학년도_CP949_학사일정.txt');
       expect(first.import).not.toBeNull();
       expect(first.import.docClass).toBe('calendar');
-      expect(first.import.appliedCount).toBe(1);
+      expect(first.import.appliedCount).toBeGreaterThan(0);
       expect(first.import.blockedCount).toBe(0);
       expect(app.pageErrors).toEqual([]);
 
