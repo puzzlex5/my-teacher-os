@@ -2,7 +2,7 @@
   const V6=globalThis.TeacherOSCoreV6;
   if(!V6)return;
   const q=s=>document.querySelector(s);
-  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]));
+  const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const pad=n=>String(n).padStart(2,'0');
   function iso(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}
   function parseDate(s){return new Date(String(s||'')+'T00:00:00')}
