@@ -56,6 +56,7 @@ jobs:
           node scripts/prepare-v1-comcigan-status.mjs
           node scripts/prepare-v1-v27-contact-cache.mjs
           node scripts/prepare-v1-v27-truth.mjs
+          node scripts/prepare-v1-v32-lifecycle.mjs
 
       - name: Verify v1 source preparation is deterministic
         run: node tests/v1-prepare-idempotence-tests.mjs
@@ -68,6 +69,9 @@ jobs:
 
       - name: Verify v22 recovery shared lifecycle hook
         run: node tests/v1-v22-lifecycle-tests.mjs
+
+      - name: Verify v32 device-storage shared lifecycle hooks
+        run: node tests/v1-v32-lifecycle-tests.mjs
 
       - name: Verify v18 imported metadata preserves document source
         run: node tests/v1-v18-source-link-tests.mjs
@@ -162,7 +166,7 @@ jobs:
 
       - name: Install Chromium parity runner
         run: |
-          npm install --no-save --no-package-lock @playwright/test@1.55.0
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
       - name: Browser parity — separate historical layers vs bundled runtime
