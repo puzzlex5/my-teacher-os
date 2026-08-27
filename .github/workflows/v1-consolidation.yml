@@ -38,6 +38,7 @@ jobs:
       - name: Prepare v1 legacy sources
         run: |
           node scripts/prepare-v1-korean-text-encoding.mjs
+          node scripts/prepare-v1-v14-lifecycle.mjs
           node scripts/prepare-v1-v15-lifecycle.mjs
           node scripts/prepare-v1-v16-lifecycle.mjs
           node scripts/prepare-v1-v17-lifecycle.mjs
@@ -73,6 +74,9 @@ jobs:
 
       - name: Verify Korean TXT and CSV encoding fallback
         run: node tests/v1-korean-text-encoding-tests.mjs
+
+      - name: Verify v14 Comcigan shared lifecycle hook
+        run: node tests/v1-v14-lifecycle-tests.mjs
 
       - name: Verify v15 timetable auto-only shared lifecycle hook
         run: node tests/v1-v15-lifecycle-tests.mjs
@@ -215,7 +219,7 @@ jobs:
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/teacher-os-v1-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill $SERVER_PID || true' EXIT
-          npx playwright test tests/v1-browser-bundle-parity.spec.js --reporter=line --workers=1
+          npx playwright test tests/v1-browser-bundle-parity.spec.js tests/v1-browser-lifecycle-active.spec.js --reporter=line --workers=1
 
       - name: Bundle report
         if: always()
