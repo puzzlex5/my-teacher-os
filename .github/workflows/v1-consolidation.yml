@@ -38,6 +38,7 @@ jobs:
       - name: Prepare v1 legacy sources
         run: |
           node scripts/prepare-v1-korean-text-encoding.mjs
+          node scripts/prepare-v1-v17-lifecycle.mjs
           node scripts/prepare-v1-v19-lifecycle.mjs
           node scripts/prepare-v1-v20-lifecycle.mjs
           node scripts/prepare-v1-v21-direct-pii.mjs
@@ -70,6 +71,9 @@ jobs:
 
       - name: Verify Korean TXT and CSV encoding fallback
         run: node tests/v1-korean-text-encoding-tests.mjs
+
+      - name: Verify v17 lesson truth shared lifecycle hook
+        run: node tests/v1-v17-lifecycle-tests.mjs
 
       - name: Verify v19 work-library shared lifecycle hooks
         run: node tests/v1-v19-lifecycle-tests.mjs
@@ -194,7 +198,7 @@ jobs:
 
       - name: Install Chromium parity runner
         run: |
-          npm install --no-save --no-package-lock @playwright/test@1.55.0
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
       - name: Browser parity — separate historical layers vs bundled runtime
