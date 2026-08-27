@@ -8,6 +8,7 @@ const PREPARE_SCRIPTS=[
   'scripts/prepare-v1-v06-migration.mjs',
   'scripts/prepare-v1-v10-migration.mjs',
   'scripts/prepare-v1-v10-lifecycle.mjs',
+  'scripts/prepare-v1-v12-lifecycle.mjs',
   'scripts/prepare-v1-v13-lifecycle.mjs',
   'scripts/prepare-v1-v14-lifecycle.mjs',
   'scripts/prepare-v1-v15-lifecycle.mjs',
