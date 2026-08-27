@@ -10,27 +10,18 @@ if(src.includes(direct))throw new Error('v1 v23 storage preparation left direct 
 if(!src.includes(shared))throw new Error('v1 v23 storage preparation found no shared TeacherOSStorage state write');
 if(src.includes('localStorage.getItem(KEY)'))throw new Error('v1 v23 storage preparation found direct Teacher OS state read');
 
-// Hashing large school documents is expensive. v23 analysis and v31 retention receive the
-// same File objects in one upload event, so share the exact SHA-256 Promise through a WeakMap.
-// This preserves byte-exact matching while avoiding a second full file read/hash pass.
 const oldHash23="  async function hashFile23(file){const ab=await file.arrayBuffer(),dig=await crypto.subtle.digest('SHA-256',ab);return [...new Uint8Array(dig)].map(x=>x.toString(16).padStart(2,'0')).join('')}";
 const newHash23="  const FILE_HASH_CACHE23=globalThis.TeacherOSFileHashCache||(globalThis.TeacherOSFileHashCache=new WeakMap());\n  async function hashFile23(file){if(FILE_HASH_CACHE23.has(file))return FILE_HASH_CACHE23.get(file);const p=(async()=>{const ab=await file.arrayBuffer(),dig=await crypto.subtle.digest('SHA-256',ab);return [...new Uint8Array(dig)].map(x=>x.toString(16).padStart(2,'0')).join('')})();FILE_HASH_CACHE23.set(file,p);try{return await p}catch(e){FILE_HASH_CACHE23.delete(file);throw e}}";
 if(src.includes(oldHash23))src=src.replace(oldHash23,newHash23);
 else if(!src.includes('TeacherOSFileHashCache'))throw new Error('v1 v23 hash cache preparation found no expected hash source');
 if(!src.includes('FILE_HASH_CACHE23.has(file)')||!src.includes('FILE_HASH_CACHE23.delete(file)'))throw new Error('v1 v23 hash cache preparation incomplete');
 
-// Suggestion identity must include source. Different versions/documents can legitimately
-// produce the same logical item, and collapsing them here destroys provenance before
-// v30 document-version/Undo logic gets a chance to decide which source should win.
 const oldSuggestionKey="x=>`${x.kind}|${x.date||''}|${x.day||''}|${x.period||''}|${x.title||x.label||''}|${x.profileType||''}|${x.target||''}`";
 const sourceAwareKey="x=>`${x.source||''}|${x.kind}|${x.date||''}|${x.day||''}|${x.period||''}|${x.title||x.label||''}|${x.profileType||''}|${x.target||''}`";
 if(src.includes(oldSuggestionKey))src=src.split(oldSuggestionKey).join(sourceAwareKey);
 if(src.includes(oldSuggestionKey))throw new Error('v1 v23 preparation left source-blind suggestion dedupe');
 if(!src.includes(sourceAwareKey))throw new Error('v1 v23 preparation found no source-aware suggestion dedupe');
 
-// Privacy detection is independent evidence from document classification. A roster or
-// counseling export can be misclassified after OCR/table extraction, so any detected
-// privacy signal must make auto-apply fail closed. Analysis/review still remain available.
 const oldSensitive="sensitive=privacy.length>0&&doc.classId==='student'";
 const privacySensitive='sensitive=privacy.length>0';
 if(src.includes(oldSensitive))src=src.replace(oldSensitive,privacySensitive);
@@ -50,6 +41,16 @@ if(!src.includes(privacyNotice)){
 for(const token of [privacySensitive,correctedSensitive,privacyNotice])if(!src.includes(token))throw new Error(`v1 v23 privacy guard missing: ${token}`);
 if(src.includes(oldSensitive))throw new Error('v1 v23 privacy guard still depends on student classification');
 
+// v23 historically wrapped global render only to refresh its intake/report UI. Route that
+// refresh through the shared lifecycle service so later layers do not create another wrapper
+// chain. Keep a fallback only for isolated unit tests that load app-v23 without v1 services.
+const oldRender23="  boot23();const prevRender23=globalThis.render;if(typeof prevRender23==='function')globalThis.render=function(){const r=prevRender23.apply(this,arguments);setTimeout(()=>{ensureReportUI23();bind23();renderReports23()},0);return r};";
+const sharedRender23="  boot23();const lifecycle23=globalThis.TeacherOSLifecycle;\n  if(lifecycle23){\n    lifecycle23.onRender(()=>{ensureReportUI23();bind23();renderReports23()},{defer:true});\n  }else{\n    const fallbackRender23=globalThis.render;if(typeof fallbackRender23==='function')globalThis.render=function(){const r=fallbackRender23.apply(this,arguments);setTimeout(()=>{ensureReportUI23();bind23();renderReports23()},0);return r};\n  }";
+if(src.includes(oldRender23))src=src.replace(oldRender23,sharedRender23);
+else if(!src.includes('lifecycle23.onRender'))throw new Error('v1 v23 lifecycle preparation found no expected render wrapper');
+if(src.includes('const prevRender23=globalThis.render'))throw new Error('v1 v23 lifecycle preparation left historical render wrapper');
+for(const token of ['TeacherOSLifecycle','lifecycle23.onRender','fallbackRender23','ensureReportUI23();bind23();renderReports23()'])if(!src.includes(token))throw new Error(`v1 v23 lifecycle preparation missing: ${token}`);
+
 fs.writeFileSync(path,src,'utf8');
 
 const path31='app-v31.js';
@@ -61,4 +62,4 @@ else if(!src31.includes('FILE_HASH_CACHE31'))throw new Error('v1 v31 hash cache 
 for(const token of ['TeacherOSFileHashCache','FILE_HASH_CACHE31.has(file)','FILE_HASH_CACHE31.delete(file)','imports31(y).find(x=>x.hash===h)||null'])if(!src31.includes(token))throw new Error(`v1 v31 hash cache preparation missing: ${token}`);
 fs.writeFileSync(path31,src31,'utf8');
 
-console.log(`Prepared v1 shared storage, source-aware provenance, privacy fail-closed auto-apply, and exact SHA-256 upload hash reuse (${before} direct state write${before===1?'':'s'} converted).`);
+console.log(`Prepared v1 shared storage/lifecycle, source-aware provenance, privacy fail-closed auto-apply, and exact SHA-256 upload hash reuse (${before} direct state write${before===1?'':'s'} converted).`);
