@@ -9,6 +9,10 @@ if(!app.includes('privacySignals26'))throw new Error('local feedback privacy sca
 if(!app.includes('guardExternal26'))throw new Error('external feedback privacy guard missing');
 if(!app.includes('개인정보 형태가 감지되어 외부 공유를 막았습니다'))throw new Error('PII export block message missing');
 if(!app.includes("if(reportPrivacy26(r).length)return''"))throw new Error('GitHub URL fail-closed guard missing');
+if(!app.includes('개인정보 보호를 위해 자유서술 피드백·오류 원문·문서 내용은 GitHub URL에 자동 첨부하지 않았습니다'))throw new Error('GitHub metadata-only privacy notice missing');
+if(app.includes("function githubUrl26(r){if(reportPrivacy26(r).length)return'';const body=reportText26(r)"))throw new Error('GitHub issue URL still exports free-text feedback');
+if(app.includes("title=`[테스트] ${r.type} · ${r.meta?.page||'Teacher OS'}`"))throw new Error('GitHub issue title still exports dynamic page text');
+if(!app.includes("title=`[테스트] ${r.type||'피드백'} · Teacher OS`"))throw new Error('GitHub issue title is not metadata-only');
 if(!app.includes('오류 원문은 개인정보 보호를 위해 외부 신고에 자동 첨부하지 않음'))throw new Error('runtime error redaction missing');
 if(app.includes('m.lastRuntimeError?`\\n[직전 기술 오류]\\n ${m.lastRuntimeError}`'))throw new Error('raw runtime error still exported');
 if(!app.includes('navigator.share'))throw new Error('native share fallback missing');
