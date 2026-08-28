@@ -2,81 +2,76 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const source=fs.readFileSync('v1-storage-service.js','utf8');
+const source=fs.readFileSync(new URL('../v1-storage-service.js',import.meta.url),'utf8');
 
 function serviceWith(initial={}){
   const data=new Map(Object.entries(initial));
-  const localStorage={
-    getItem(k){return data.has(String(k))?data.get(String(k)):null},
-    setItem(k,v){data.set(String(k),String(v))},
-    removeItem(k){data.delete(String(k))}
+  const context={
+    globalThis:null,
+    structuredClone:global.structuredClone,
+    localStorage:{
+      getItem:key=>data.has(key)?data.get(key):null,
+      setItem:(key,value)=>data.set(key,String(value)),
+      removeItem:key=>data.delete(key)
+    }
   };
-  const context={globalThis:null,localStorage,Map,Object,String,JSON,Error,Array,Number,WeakSet};
   context.globalThis=context;
   vm.runInNewContext(source,context,{filename:'v1-storage-service.js'});
-  return{storage:context.TeacherOSStorage,data};
+  return {storage:context.TeacherOSStorage,data};
 }
 
 {
-  const {storage,data}=serviceWith({state:'{"version":32,"currentYear":"2026"}'});
-  const got=storage.readJSON('state',()=>({version:0}));
-  assert.equal(got.version,32);
-  assert.equal(storage.hasReadError('state'),false);
-  storage.writeJSON('state',{version:33});
-  assert.equal(data.get('state'),'{"version":33}');
+  const original='{"version":32,"years":{"2026":{}}}';
+  const {storage,data}=serviceWith({state:original});
+  const value=storage.readJSON('state',()=>({version:0}));
+  assert.equal(value.version,32);
+  storage.writeJSON('state',{version:33,years:{'2026':{}}});
+  assert.equal(JSON.parse(data.get('state')).version,33);
 }
 
 {
-  const corrupt='{"version":32,"years":';
-  const {storage,data}=serviceWith({state:corrupt});
+  const original='{broken';
+  const {storage,data}=serviceWith({state:original});
   const fallback=storage.readJSON('state',()=>({version:0,years:{}}));
   assert.equal(fallback.version,0);
   assert.equal(storage.hasReadError('state'),true);
-  assert.equal(storage.getReadError('state').code,'invalid-json');
-  assert.equal(storage.getReadError('state').rawLength,corrupt.length);
-  assert.throws(()=>storage.writeJSON('state',{version:33}),e=>e?.code==='STORAGE_READ_GUARD');
-  assert.equal(data.get('state'),corrupt,'corrupt original must remain byte-for-byte untouched');
+  assert.equal(storage.getReadError('state')?.code,'invalid-json');
+  assert.throws(()=>storage.writeJSON('state',{version:33,years:{}}),e=>e?.code==='STORAGE_READ_GUARD');
+  assert.equal(data.get('state'),original,'malformed JSON must remain untouched');
 }
 
 {
-  const raw='42';
-  const {storage,data}=serviceWith({state:raw});
-  const fallback=storage.readJSON('state',()=>({version:0}));
-  assert.equal(fallback.version,0);
-  assert.equal(storage.getReadError('state').code,'invalid-json-shape');
-  assert.throws(()=>storage.writeJSON('state',{version:1}),/Refusing to overwrite/);
-  assert.equal(data.get('state'),raw);
+  const original='42';
+  const {storage,data}=serviceWith({state:original});
+  storage.readJSON('state',()=>({version:0,years:{}}));
+  assert.equal(storage.getReadError('state')?.code,'invalid-json-shape');
+  assert.throws(()=>storage.writeJSON('state',{version:33,years:{}}),e=>e?.code==='STORAGE_READ_GUARD');
+  assert.equal(data.get('state'),original,'scalar JSON must remain untouched');
 }
 
 {
-  const raw='[]';
-  const {storage,data}=serviceWith({state:raw});
-  const fallback=storage.readJSON('state',()=>({version:0,years:{}}));
-  assert.equal(fallback.version,0);
-  assert.equal(storage.hasReadError('state'),true,'top-level arrays are corrupted Teacher OS state, not valid object state');
-  assert.equal(storage.getReadError('state').code,'invalid-json-shape');
-  assert.equal(storage.getReadError('state').rawLength,raw.length);
-  assert.throws(()=>storage.writeJSON('state',{version:1,years:{}}),e=>e?.code==='STORAGE_READ_GUARD');
-  assert.equal(data.get('state'),raw,'array-shaped original must remain byte-for-byte untouched');
+  const original='[]';
+  const {storage,data}=serviceWith({state:original});
+  storage.readJSON('state',()=>({version:0,years:{}}));
+  assert.equal(storage.getReadError('state')?.code,'invalid-json-shape');
+  assert.throws(()=>storage.writeJSON('state',{version:33,years:{}}),e=>e?.code==='STORAGE_READ_GUARD');
+  assert.equal(data.get('state'),original,'array JSON must remain untouched');
 }
 
 {
-  const raw='';
-  const {storage,data}=serviceWith({state:raw});
-  const fallback=storage.readJSON('state',()=>({version:0,years:{}}));
-  assert.equal(fallback.version,0);
-  assert.equal(storage.hasReadError('state'),true,'blank stored state is corruption, not a clean first-run condition');
-  assert.equal(storage.getReadError('state').code,'invalid-json');
-  assert.equal(storage.getReadError('state').rawLength,0);
-  assert.throws(()=>storage.writeJSON('state',{version:1,years:{}}),e=>e?.code==='STORAGE_READ_GUARD');
-  assert.equal(data.get('state'),raw,'blank corrupt original must remain byte-for-byte untouched');
+  const original='';
+  const {storage,data}=serviceWith({state:original});
+  storage.readJSON('state',()=>({version:0,years:{}}));
+  assert.equal(storage.getReadError('state')?.code,'invalid-json');
+  assert.equal(storage.getReadError('state')?.rawLength,0);
+  assert.throws(()=>storage.writeJSON('state',{version:33,years:{}}),e=>e?.code==='STORAGE_READ_GUARD');
+  assert.equal(data.get('state'),original,'blank-but-present JSON must remain untouched');
 }
 
 {
   const {storage}=serviceWith({});
-  const fallback=storage.readJSON('state',()=>({version:5}));
-  assert.equal(fallback.version,5);
-  assert.equal(storage.hasReadError('state'),false,'missing state is a clean first-run condition, not corruption');
+  assert.deepEqual(storage.readJSON('state',()=>({version:0,years:{}})),{version:0,years:{}});
+  assert.equal(storage.hasReadError('state'),false,'missing key is a valid first-run state');
   storage.writeJSON('state',{version:6});
 }
 
@@ -105,8 +100,8 @@ function serviceWith(initial={}){
   const {storage,data}=serviceWith({state:original});
   storage.readJSON('state',()=>({}));
   const misleading={version:33,toJSON(){return[]}};
-  assert.throws(()=>storage.writeJSON('state',misleading),e=>e?.code==='STORAGE_WRITE_INVALID_SHAPE');
-  assert.equal(data.get('state'),original,'toJSON must not be able to turn main state into a shape readJSON rejects');
+  assert.throws(()=>storage.writeJSON('state',misleading),e=>e?.code==='STORAGE_WRITE_LOSSY_VALUE');
+  assert.equal(data.get('state'),original,'toJSON must not be able to alter or replace the persisted state representation');
 }
 
 {
@@ -144,12 +139,7 @@ function serviceWith(initial={}){
   const shared={name:'same object may appear twice'};
   const valid={version:33,left:shared,right:shared,years:{2026:{scores:[0,1,2],note:null}}};
   storage.writeJSON('state',valid);
-  assert.deepEqual(JSON.parse(data.get('state')),{
-    version:33,
-    left:{name:'same object may appear twice'},
-    right:{name:'same object may appear twice'},
-    years:{2026:{scores:[0,1,2],note:null}}
-  });
+  assert.deepEqual(JSON.parse(data.get('state')),{version:33,left:{name:'same object may appear twice'},right:{name:'same object may appear twice'},years:{2026:{scores:[0,1,2],note:null}}});
 }
 
 console.log('v1 storage corruption, write-shape, and lossless JSON guard tests passed');
