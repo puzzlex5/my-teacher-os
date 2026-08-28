@@ -183,7 +183,11 @@
       throw writeError('STORAGE_READ_GUARD','Teacher OS stored data could not be read. Refusing to overwrite it until recovery is completed.');
     }
     const raw=encodeJSONShape(value,topLevelArray);
-    localStorage.setItem(k,raw);
+    try{
+      localStorage.setItem(k,raw);
+    }catch{
+      throw writeError('STORAGE_WRITE_FAILED','Teacher OS could not save data to browser storage. Existing stored data was left unchanged.');
+    }
     return value;
   }
 
