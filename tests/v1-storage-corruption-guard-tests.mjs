@@ -61,6 +61,18 @@ function serviceWith(initial={}){
 }
 
 {
+  const raw='';
+  const {storage,data}=serviceWith({state:raw});
+  const fallback=storage.readJSON('state',()=>({version:0,years:{}}));
+  assert.equal(fallback.version,0);
+  assert.equal(storage.hasReadError('state'),true,'blank stored state is corruption, not a clean first-run condition');
+  assert.equal(storage.getReadError('state').code,'invalid-json');
+  assert.equal(storage.getReadError('state').rawLength,0);
+  assert.throws(()=>storage.writeJSON('state',{version:1,years:{}}),e=>e?.code==='STORAGE_READ_GUARD');
+  assert.equal(data.get('state'),raw,'blank corrupt original must remain byte-for-byte untouched');
+}
+
+{
   const {storage}=serviceWith({});
   const fallback=storage.readJSON('state',()=>({version:5}));
   assert.equal(fallback.version,5);
