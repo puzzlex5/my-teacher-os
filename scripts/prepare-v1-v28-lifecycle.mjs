@@ -23,8 +23,8 @@ replaceOnce(
 
 replaceOnce(
   "  function readCalHistory28(){try{const x=JSON.parse(localStorage.getItem(CAL_HISTORY_KEY)||'[]');return Array.isArray(x)?x:[]}catch{return[]}}\n  function writeCalHistory28(a){localStorage.setItem(CAL_HISTORY_KEY,JSON.stringify((a||[]).slice(-20)))}",
-  "  function readCalHistory28(){let raw;try{raw=localStorage.getItem(CAL_HISTORY_KEY)}catch{calHistoryLoadFailed28=true;return[]}if(raw===null){calHistoryLoadFailed28=false;return[]}try{const x=JSON.parse(raw);if(!Array.isArray(x))throw new Error('invalid-calendar-history-shape');calHistoryLoadFailed28=false;return x}catch{calHistoryLoadFailed28=true;return[]}}\n  function writeCalHistory28(a){if(calHistoryLoadFailed28)throw new Error('기존 일정 수정 이력을 불러오지 못해 덮어쓰기를 중단했습니다.');const next=Array.isArray(a)?a.slice(-20):[];localStorage.setItem(CAL_HISTORY_KEY,JSON.stringify(next))}\n  function resetCalHistory28(){localStorage.removeItem(CAL_HISTORY_KEY);calHistoryLoadFailed28=false}",
-  'calendar history fail-closed storage helpers'
+  "  function readCalHistory28(){const storage=globalThis.TeacherOSStorage;if(storage?.readJSONArray){const x=storage.readJSONArray(CAL_HISTORY_KEY,()=>[]);calHistoryLoadFailed28=storage.hasReadError(CAL_HISTORY_KEY);return x}let raw;try{raw=localStorage.getItem(CAL_HISTORY_KEY)}catch{calHistoryLoadFailed28=true;return[]}if(raw===null){calHistoryLoadFailed28=false;return[]}try{const x=JSON.parse(raw);if(!Array.isArray(x))throw new Error('invalid-calendar-history-shape');calHistoryLoadFailed28=false;return x}catch{calHistoryLoadFailed28=true;return[]}}\n  function writeCalHistory28(a){if(calHistoryLoadFailed28)throw new Error('기존 일정 수정 이력을 불러오지 못해 덮어쓰기를 중단했습니다.');const next=Array.isArray(a)?a.slice(-20):[];const storage=globalThis.TeacherOSStorage;if(storage?.writeJSONArray)storage.writeJSONArray(CAL_HISTORY_KEY,next);else localStorage.setItem(CAL_HISTORY_KEY,JSON.stringify(next))}\n  function resetCalHistory28(){const storage=globalThis.TeacherOSStorage;if(storage?.removeJSON)storage.removeJSON(CAL_HISTORY_KEY);else localStorage.removeItem(CAL_HISTORY_KEY);calHistoryLoadFailed28=false}",
+  'calendar history fail-closed shared array storage helpers'
 );
 
 replaceOnce(
@@ -51,9 +51,12 @@ for(const token of [
   "lifecycle28.onSwitch(id=>{if(id==='studentrecords'||id==='calendar'||id==='dashboard')refresh28()})",
   'if(lifecycle28?.onRender&&lifecycle28?.onSwitch)',
   'calHistoryLoadFailed28=false',
+  'storage?.readJSONArray',
+  'storage.hasReadError(CAL_HISTORY_KEY)',
+  'storage?.writeJSONArray',
+  'storage?.removeJSON',
   "if(!Array.isArray(x))throw new Error('invalid-calendar-history-shape')",
   "if(calHistoryLoadFailed28)throw new Error('기존 일정 수정 이력을 불러오지 못해 덮어쓰기를 중단했습니다.')",
-  'function resetCalHistory28(){localStorage.removeItem(CAL_HISTORY_KEY);calHistoryLoadFailed28=false}',
   "b.textContent=calHistoryLoadFailed28?'일정 수정 이력 확인 필요':'최근 일정 수정 되돌리기'",
   "if(calHistoryLoadFailed28){alert('저장된 일정 수정 이력을 불러오지 못했습니다. 데이터가 손상됐을 수 있어 Undo를 실행하지 않았습니다.');return}",
   "손상된 이력을 삭제하고 이번 수정부터 새 Undo 이력을 시작할까요?"
@@ -62,4 +65,4 @@ for(const token of [
 if(src.includes("JSON.parse(localStorage.getItem(CAL_HISTORY_KEY)||'[]')"))throw new Error('v1 prepared v28 still collapses unreadable calendar history into empty');
 
 fs.writeFileSync(path,src,'utf8');
-console.log('Prepared v1 app-v28 precision UI on shared lifecycle hooks with fail-closed calendar Undo history recovery.');
+console.log('Prepared v1 app-v28 precision UI on shared lifecycle hooks with shared fail-closed array storage for calendar Undo history.');
