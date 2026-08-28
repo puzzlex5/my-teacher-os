@@ -33,7 +33,7 @@
     }
     try{
       const parsed=JSON.parse(raw);
-      if(parsed&&typeof parsed==='object'){
+      if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed)){
         clearReadError(k);
         return parsed;
       }
