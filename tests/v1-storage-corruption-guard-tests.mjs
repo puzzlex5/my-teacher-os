@@ -80,4 +80,33 @@ function serviceWith(initial={}){
   storage.writeJSON('state',{version:6});
 }
 
-console.log('v1 storage corruption fail-closed tests passed');
+{
+  const original='{"version":32,"years":{}}';
+  const {storage,data}=serviceWith({state:original});
+  storage.readJSON('state',()=>({}));
+  for(const bad of [undefined,null,42,'bad',[]]){
+    assert.throws(()=>storage.writeJSON('state',bad),e=>e?.code==='STORAGE_WRITE_INVALID_SHAPE');
+    assert.equal(data.get('state'),original,'invalid top-level write must not alter the existing state');
+  }
+}
+
+{
+  const original='{"version":32,"years":{}}';
+  const {storage,data}=serviceWith({state:original});
+  storage.readJSON('state',()=>({}));
+  const circular={version:33};
+  circular.self=circular;
+  assert.throws(()=>storage.writeJSON('state',circular),e=>e?.code==='STORAGE_SERIALIZE_FAILED');
+  assert.equal(data.get('state'),original,'serialization failure must preserve the existing state');
+}
+
+{
+  const original='{"version":32,"years":{}}';
+  const {storage,data}=serviceWith({state:original});
+  storage.readJSON('state',()=>({}));
+  const misleading={version:33,toJSON(){return[]}};
+  assert.throws(()=>storage.writeJSON('state',misleading),e=>e?.code==='STORAGE_WRITE_INVALID_SHAPE');
+  assert.equal(data.get('state'),original,'toJSON must not be able to turn main state into a shape readJSON rejects');
+}
+
+console.log('v1 storage corruption and write-shape fail-closed tests passed');
