@@ -17,6 +17,28 @@ ok(src5.includes('if(changed)localStorage.setItem(KEY,JSON.stringify(state));'),
 ok(!src5.includes('state.version=5;'),'v5 bootstrap no longer resets later schema versions to 5');
 ok(src5.includes('return changed;'),'v5 exposes whether bootstrap repair changed persisted state');
 
+const migrate5Start=src5.indexOf('function migrate(){');
+const migrate5End=src5.indexOf('\nfunction cur()',migrate5Start);
+ok(migrate5Start>=0&&migrate5End>migrate5Start,'v5 migration function can be isolated for behavior testing');
+const migrate5Source=src5.slice(migrate5Start,migrate5End);
+function runV5(initial){
+  let state=structuredClone(initial),writes=0,result=null;
+  const KEY='test',fresh=()=>({version:5,currentYear:null,profile:{major:'음악',minutes:45},years:{}});
+  const defaultClubs=()=>[{id:'synthetic-club',name:'합성 동아리',type:'테스트',goal:'',due:'',activities:[]}];
+  const localStorage={setItem(){writes++}};
+  eval(`${migrate5Source}\nresult=migrate();`);
+  return {state,writes,result};
+}
+const validYear={projects:[],assessments:[],memories:[],tasks:[],calendarEvents:[],timetable:[],imports:[],clubs:[{id:'existing'}],educationOffice:'경기도교육청',subjects:['음악'],lastBackupAt:null,keepMe:'preserved'};
+const validRun=runV5({version:32,currentYear:2026,profile:{major:'음악'},years:{2026:validYear},futureField:{enabled:true}});
+ok(validRun.result===false,'v5 reports no repair for already-valid later-version state');
+ok(validRun.writes===0,'v5 performs zero persistence writes for already-valid state');
+ok(validRun.state.version===32,'v5 behavior preserves a later schema version');
+ok(validRun.state.years[2026].keepMe==='preserved'&&validRun.state.futureField?.enabled===true,'v5 behavior preserves fields owned by later schemas');
+const repairRun=runV5({version:4,currentYear:null,profile:{major:'음악'},years:[]});
+ok(repairRun.result===true&&repairRun.writes===1,'v5 persists exactly once when bootstrap repair is required');
+ok(repairRun.state.version===5&&!Array.isArray(repairRun.state.years),'v5 repairs an old invalid years container without version regression');
+
 ok(src.includes('const version=Math.max(Number(state.version)||0,6);'),'v6 migration must never downgrade a later schema version');
 ok(src.includes('if(state.version!==version){state.version=version;changed=true}'),'v6 version migration writes only when version actually changes');
 ok(src.includes('if(!Array.isArray(y.timetable)){y.timetable=[];changed=true}'),'v6 timetable repair is change-tracked');
