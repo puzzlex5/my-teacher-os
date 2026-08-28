@@ -4,9 +4,10 @@ import vm from 'node:vm';
 
 const source=fs.readFileSync(new URL('../v1-storage-service.js',import.meta.url),'utf8');
 
-function serviceWith(initial={},failures=1){
+function serviceWith(initial={},failures=1,removeFailures=0){
   const data=new Map(Object.entries(initial));
   let remainingFailures=failures;
+  let remainingRemoveFailures=removeFailures;
   const localStorage={
     getItem:key=>data.has(key)?data.get(key):null,
     setItem:(key,value)=>{
@@ -18,7 +19,15 @@ function serviceWith(initial={},failures=1){
       }
       data.set(key,String(value));
     },
-    removeItem:key=>data.delete(key)
+    removeItem:key=>{
+      if(remainingRemoveFailures>0){
+        remainingRemoveFailures--;
+        const error=new Error('synthetic removal failure');
+        error.name='SecurityError';
+        throw error;
+      }
+      data.delete(key);
+    }
   };
   const context={globalThis:null,structuredClone:global.structuredClone,localStorage};
   context.globalThis=context;
@@ -64,4 +73,20 @@ function serviceWith(initial={},failures=1){
   assert.equal(data.has('new-state'),false,'failed first write must not create a phantom persisted state');
 }
 
-console.log('v1 browser storage write failure normalization tests passed');
+{
+  const original='{bad json';
+  const {storage,data}=serviceWith({recovery:original},0,1);
+  assert.deepEqual(storage.readJSON('recovery',()=>({safe:true})),{safe:true});
+  assert.equal(storage.hasReadError('recovery'),true,'malformed recovery state must set the read guard before removal');
+  assert.throws(
+    ()=>storage.removeJSON('recovery'),
+    error=>error?.code==='STORAGE_REMOVE_FAILED'
+  );
+  assert.equal(data.get('recovery'),original,'failed removal must preserve the browser value');
+  assert.equal(storage.hasReadError('recovery'),true,'failed removal must preserve the recovery guard');
+  storage.removeJSON('recovery');
+  assert.equal(data.has('recovery'),false,'a later successful removal retry must delete the browser value');
+  assert.equal(storage.hasReadError('recovery'),false,'the recovery guard must clear only after successful removal');
+}
+
+console.log('v1 browser storage write/remove failure normalization tests passed');
