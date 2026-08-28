@@ -20,7 +20,7 @@
   function periodRange(y,period,exactMap){
     const p=Number(period),cached=exactMap?.get(p);if(cached)return cached;
     if(!exactMap){const found=(y?.timetable||[]).find(s=>Number(s.period)===p&&parseRange(s.time));if(found)return parseRange(found.time)}
-    const table=y?.schoolLevel==='고등학교'?DEFAULT_HIGH:DEFAULT_MIDDLE,raw=table[p];
+    const table=y?.schoolLevel==='고등학교'?DEFAULT_HIGH:y?.schoolLevel==='중학교'?DEFAULT_MIDDLE:null,raw=table?.[p];
     return raw?{start:timeToMin(raw[0]),end:timeToMin(raw[1]),label:`${raw[0]}~${raw[1]}`,exact:false}:null;
   }
   function todaySlots(y,now=new Date()){
@@ -35,6 +35,7 @@
     if(current)return{status:'current',source:info.source,live:info.live,slot:current,seconds:Math.max(0,Math.round((current.range.end-n)*60)),exact:!!current.range.exact};
     const next=slots.filter(s=>s.range&&s.range.start>n).sort((a,b)=>a.range.start-b.range.start)[0];
     if(next)return{status:'next',source:info.source,live:info.live,slot:next,seconds:Math.max(0,Math.round((next.range.start-n)*60)),exact:!!next.range.exact};
+    if(slots.some(s=>!s.range))return{status:'unknown',source:info.source,live:info.live,slot:null,seconds:null,exact:false,reason:'bell-time-unconfirmed'};
     return{status:'done',source:info.source,live:info.live,slot:null,seconds:null,exact:false};
   }
   function formatDuration(seconds){const s=Math.max(0,Number(seconds)||0),m=Math.floor(s/60),r=Math.floor(s%60);if(m>=60){const h=Math.floor(m/60),mm=m%60;return`${h}시간 ${mm?mm+'분 ':''}`.trim()}return`${m}분 ${pad(r)}초`}
