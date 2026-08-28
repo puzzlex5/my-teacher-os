@@ -55,9 +55,47 @@
     return err;
   }
 
+  function validateJSONSafeValue(value,seen){
+    if(value===null)return;
+    const type=typeof value;
+    if(type==='number'){
+      if(!Number.isFinite(value)){
+        throw writeError('STORAGE_WRITE_LOSSY_VALUE','Teacher OS state contains a non-finite number that JSON would silently convert to null. Existing stored data was left unchanged.');
+      }
+      return;
+    }
+    if(type==='string'||type==='boolean')return;
+    if(type==='undefined'||type==='function'||type==='symbol'||type==='bigint'){
+      throw writeError('STORAGE_WRITE_LOSSY_VALUE','Teacher OS state contains a value that JSON would omit or cannot preserve. Existing stored data was left unchanged.');
+    }
+    if(type!=='object')return;
+    if(Object.getOwnPropertySymbols(value).length){
+      throw writeError('STORAGE_WRITE_LOSSY_VALUE','Teacher OS state contains symbol-keyed data that JSON would silently omit. Existing stored data was left unchanged.');
+    }
+    if(seen.has(value)){
+      throw writeError('STORAGE_SERIALIZE_FAILED','Teacher OS state contains a circular reference. Existing stored data was left unchanged.');
+    }
+    seen.add(value);
+    try{
+      if(Array.isArray(value)){
+        for(const item of value)validateJSONSafeValue(item,seen);
+      }else{
+        for(const key of Object.keys(value))validateJSONSafeValue(value[key],seen);
+      }
+    }finally{
+      seen.delete(value);
+    }
+  }
+
   function encodeJSONObject(value){
     if(!value||typeof value!=='object'||Array.isArray(value)){
       throw writeError('STORAGE_WRITE_INVALID_SHAPE','Teacher OS state must be a JSON object. Refusing to write an unreadable top-level value.');
+    }
+    try{
+      validateJSONSafeValue(value,new WeakSet());
+    }catch(err){
+      if(err&&err.code)throw err;
+      throw writeError('STORAGE_SERIALIZE_FAILED','Teacher OS state could not be validated for lossless JSON storage. Existing stored data was left unchanged.');
     }
     let raw;
     try{

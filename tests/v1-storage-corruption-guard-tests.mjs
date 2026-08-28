@@ -11,7 +11,7 @@ function serviceWith(initial={}){
     setItem(k,v){data.set(String(k),String(v))},
     removeItem(k){data.delete(String(k))}
   };
-  const context={globalThis:null,localStorage,Map,Object,String,JSON,Error,Array};
+  const context={globalThis:null,localStorage,Map,Object,String,JSON,Error,Array,Number,WeakSet};
   context.globalThis=context;
   vm.runInNewContext(source,context,{filename:'v1-storage-service.js'});
   return{storage:context.TeacherOSStorage,data};
@@ -109,4 +109,47 @@ function serviceWith(initial={}){
   assert.equal(data.get('state'),original,'toJSON must not be able to turn main state into a shape readJSON rejects');
 }
 
-console.log('v1 storage corruption and write-shape fail-closed tests passed');
+{
+  const original='{"version":32,"years":{}}';
+  const {storage,data}=serviceWith({state:original});
+  storage.readJSON('state',()=>({}));
+  const lossy=[
+    {version:33,years:{2026:{memo:undefined}}},
+    {version:33,years:{2026:{scores:[1,undefined,3]}}},
+    {version:33,years:{2026:{score:NaN}}},
+    {version:33,years:{2026:{score:Infinity}}},
+    {version:33,years:{2026:{score:-Infinity}}},
+    {version:33,years:{2026:{handler(){}}}},
+    {version:33,years:{2026:{token:Symbol('x')}}}
+  ];
+  for(const bad of lossy){
+    assert.throws(()=>storage.writeJSON('state',bad),e=>e?.code==='STORAGE_WRITE_LOSSY_VALUE');
+    assert.equal(data.get('state'),original,'lossy nested JSON values must not alter the existing state');
+  }
+}
+
+{
+  const original='{"version":32,"years":{}}';
+  const {storage,data}=serviceWith({state:original});
+  storage.readJSON('state',()=>({}));
+  const symbolKey=Symbol('private');
+  const next={version:33,years:{2026:{memo:'safe'}}};
+  next.years['2026'][symbolKey]='would-be-lost';
+  assert.throws(()=>storage.writeJSON('state',next),e=>e?.code==='STORAGE_WRITE_LOSSY_VALUE');
+  assert.equal(data.get('state'),original,'symbol-keyed data must not be silently omitted');
+}
+
+{
+  const {storage,data}=serviceWith({});
+  const shared={name:'same object may appear twice'};
+  const valid={version:33,left:shared,right:shared,years:{2026:{scores:[0,1,2],note:null}}};
+  storage.writeJSON('state',valid);
+  assert.deepEqual(JSON.parse(data.get('state')),{
+    version:33,
+    left:{name:'same object may appear twice'},
+    right:{name:'same object may appear twice'},
+    years:{2026:{scores:[0,1,2],note:null}}
+  });
+}
+
+console.log('v1 storage corruption, write-shape, and lossless JSON guard tests passed');
