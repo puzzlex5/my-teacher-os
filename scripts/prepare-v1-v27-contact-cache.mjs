@@ -17,8 +17,8 @@ replaceOnce(
 
 replaceOnce(
   "  function contacts(){try{const x=JSON.parse(localStorage.getItem(CONTACT_KEY)||'[]');return Array.isArray(x)?x:[]}catch{return[]}}\n  function saveContacts(rows){localStorage.setItem(CONTACT_KEY,JSON.stringify(rows||[]))}\n",
-  "  function contacts(){if(contactsCache27)return contactsCache27;let raw;try{raw=localStorage.getItem(CONTACT_KEY)}catch{contactsLoadFailed27=true;contactsCache27=[];return contactsCache27}if(raw===null){contactsLoadFailed27=false;contactsCache27=[];return contactsCache27}try{const x=JSON.parse(raw);if(!Array.isArray(x))throw new Error('invalid-contact-shape');contactsLoadFailed27=false;contactsCache27=x}catch{contactsLoadFailed27=true;contactsCache27=[]}return contactsCache27}\n  function saveContacts(rows){const next=Array.isArray(rows)?rows:[];if(contactsLoadFailed27)throw new Error('기존 연락처 저장 데이터를 불러오지 못해 덮어쓰기를 중단했습니다. 먼저 전체 삭제로 손상 데이터를 명시적으로 초기화한 뒤 다시 가져오세요.');localStorage.setItem(CONTACT_KEY,JSON.stringify(next));contactsCache27=next;contactsLoadFailed27=false}\n  function clearContacts(){localStorage.removeItem(CONTACT_KEY);contactsCache27=[];contactsLoadFailed27=false}\n",
-  'cached contact storage helpers'
+  "  function contacts(){if(contactsCache27)return contactsCache27;const storage=globalThis.TeacherOSStorage;if(storage?.readJSONArray){const x=storage.readJSONArray(CONTACT_KEY,()=>[]);contactsLoadFailed27=storage.hasReadError(CONTACT_KEY);contactsCache27=x;return contactsCache27}let raw;try{raw=localStorage.getItem(CONTACT_KEY)}catch{contactsLoadFailed27=true;contactsCache27=[];return contactsCache27}if(raw===null){contactsLoadFailed27=false;contactsCache27=[];return contactsCache27}try{const x=JSON.parse(raw);if(!Array.isArray(x))throw new Error('invalid-contact-shape');contactsLoadFailed27=false;contactsCache27=x}catch{contactsLoadFailed27=true;contactsCache27=[]}return contactsCache27}\n  function saveContacts(rows){const next=Array.isArray(rows)?rows:[];if(contactsLoadFailed27)throw new Error('기존 연락처 저장 데이터를 불러오지 못해 덮어쓰기를 중단했습니다. 먼저 전체 삭제로 손상 데이터를 명시적으로 초기화한 뒤 다시 가져오세요.');const storage=globalThis.TeacherOSStorage;if(storage?.writeJSONArray)storage.writeJSONArray(CONTACT_KEY,next);else localStorage.setItem(CONTACT_KEY,JSON.stringify(next));contactsCache27=next;contactsLoadFailed27=false}\n  function clearContacts(){const storage=globalThis.TeacherOSStorage;if(storage?.removeJSON)storage.removeJSON(CONTACT_KEY);else localStorage.removeItem(CONTACT_KEY);contactsCache27=[];contactsLoadFailed27=false}\n",
+  'cached contact shared storage helpers'
 );
 
 replaceOnce(
@@ -33,5 +33,14 @@ replaceOnce(
   'explicit contact reset path'
 );
 
+for(const token of [
+  'storage?.readJSONArray',
+  'storage.hasReadError(CONTACT_KEY)',
+  'storage?.writeJSONArray',
+  'storage?.removeJSON',
+  'contactsCache27=next;contactsLoadFailed27=false',
+  "if(!Array.isArray(x))throw new Error('invalid-contact-shape')"
+])if(!src.includes(token))throw new Error(`v1 prepared v27 contacts missing token: ${token}`);
+
 fs.writeFileSync(path,src);
-console.log('Prepared v1 Teacher Desk contact cache with explicit unreadable-vs-empty state and fail-closed overwrite protection.');
+console.log('Prepared v1 Teacher Desk contacts on shared fail-closed array storage with cached explicit unreadable-vs-empty state.');
