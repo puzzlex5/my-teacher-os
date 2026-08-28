@@ -9,6 +9,20 @@
 
   function keyOf(key){return String(key??'')}
 
+  function writeError(code,message){
+    const err=new Error(message);
+    err.code=code;
+    return err;
+  }
+
+  function requireStorageKey(key){
+    const k=keyOf(key);
+    if(k.length===0){
+      throw writeError('STORAGE_INVALID_KEY','Teacher OS storage key must be a non-empty string. Refusing to access the browser empty-key slot.');
+    }
+    return k;
+  }
+
   function markReadError(key,code,raw){
     readErrors.set(keyOf(key),Object.freeze({
       code:String(code||'read-failed'),
@@ -19,7 +33,7 @@
   function clearReadError(key){readErrors.delete(keyOf(key))}
 
   function readJSONShape(key,fallbackFactory,acceptShape){
-    const k=keyOf(key);
+    const k=requireStorageKey(key);
     let raw;
     try{
       raw=localStorage.getItem(k);
@@ -55,12 +69,6 @@
 
   function readJSONArray(key,fallbackFactory=()=>[]){
     return readJSONShape(key,fallbackFactory,Array.isArray);
-  }
-
-  function writeError(code,message){
-    const err=new Error(message);
-    err.code=code;
-    return err;
   }
 
   function isPlainRecord(value){
@@ -178,7 +186,7 @@
   }
 
   function writeShape(key,value,topLevelArray){
-    const k=keyOf(key);
+    const k=requireStorageKey(key);
     if(readErrors.has(k)){
       throw writeError('STORAGE_READ_GUARD','Teacher OS stored data could not be read. Refusing to overwrite it until recovery is completed.');
     }
@@ -195,7 +203,7 @@
   function writeJSONArray(key,value){return writeShape(key,value,true)}
 
   function removeJSON(key){
-    const k=keyOf(key);
+    const k=requireStorageKey(key);
     try{
       localStorage.removeItem(k);
     }catch{
