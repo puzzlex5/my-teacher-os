@@ -1,11 +1,21 @@
 import assert from 'node:assert';
 import fs from 'node:fs';
 
+const src5=fs.readFileSync('app-v05.js','utf8');
 const src=fs.readFileSync('app-v06.js','utf8');
 const src7=fs.readFileSync('app-v07.js','utf8');
 const src9=fs.readFileSync('app-v09.js','utf8');
 let n=0;
 const ok=(v,m)=>{assert.ok(v,m);n++};
+
+ok(src5.includes('const version=Math.max(Number(state.version)||0,5);'),'v5 bootstrap migration must never downgrade a later schema version');
+ok(src5.includes('if(state.version!==version){state.version=version;changed=true}'),'v5 bootstrap version repair is change-tracked');
+ok(src5.includes("if(!(state.years&&typeof state.years==='object'&&!Array.isArray(state.years))){state.years={};changed=true}"),'v5 rejects array-shaped years instead of treating it as a valid map');
+ok(src5.includes("for(const k of ['projects','assessments','memories','tasks','calendarEvents','timetable','imports'])if(!Array.isArray(y[k])){y[k]=[];changed=true}"),'v5 base collection repairs are change-tracked');
+ok(src5.includes("if(!Array.isArray(y.subjects)||!y.subjects.length){y.subjects=['음악'];changed=true}"),'v5 subject repair preserves existing non-empty subject arrays');
+ok(src5.includes('if(changed)localStorage.setItem(KEY,JSON.stringify(state));'),'v5 bootstrap skips whole-state persistence when nothing changed');
+ok(!src5.includes('state.version=5;'),'v5 bootstrap no longer resets later schema versions to 5');
+ok(src5.includes('return changed;'),'v5 exposes whether bootstrap repair changed persisted state');
 
 ok(src.includes('const version=Math.max(Number(state.version)||0,6);'),'v6 migration must never downgrade a later schema version');
 ok(src.includes('if(state.version!==version){state.version=version;changed=true}'),'v6 version migration writes only when version actually changes');
@@ -32,4 +42,4 @@ ok(src9.includes("if(!(y.classProgress&&typeof y.classProgress==='object'&&!Arra
 ok(src9.includes('if(changed)localStorage.setItem(KEY,JSON.stringify(state));'),'v9 skips whole-state persistence when schema is already valid');
 ok(src9.includes('return changed;'),'v9 exposes whether a repair was actually materialized');
 
-console.log(`v1 v06-v07-v09 migration persistence checks passed (${n} assertions)`);
+console.log(`v1 v05-v06-v07-v09 migration persistence checks passed (${n} assertions)`);
