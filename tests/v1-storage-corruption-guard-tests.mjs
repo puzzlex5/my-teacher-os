@@ -55,7 +55,7 @@ function serviceWith(initial={}){
   storage.readJSON('state',()=>({version:0,years:{}}));
   assert.equal(storage.getReadError('state')?.code,'invalid-json-shape');
   assert.throws(()=>storage.writeJSON('state',{version:33,years:{}}),e=>e?.code==='STORAGE_READ_GUARD');
-  assert.equal(data.get('state'),original,'array JSON must remain untouched');
+  assert.equal(data.get('state'),original,'array JSON must remain untouched by object storage');
 }
 
 {
@@ -175,4 +175,35 @@ function serviceWith(initial={}){
   assert.deepEqual(JSON.parse(data.get('state')),{version:33,left:{name:'same object may appear twice'},right:{name:'same object may appear twice'},meta:{memo:'plain null-prototype record'},years:{2026:{scores:[0,1,2],note:null}}});
 }
 
-console.log('v1 storage corruption, write-shape, and lossless JSON guard tests passed');
+{
+  const original='[{"year":2026,"eventId":"e1"}]';
+  const {storage,data}=serviceWith({history:original});
+  assert.equal(storage.readJSONArray('history',()=>[]).length,1);
+  storage.writeJSONArray('history',[{year:2026,eventId:'e2'}]);
+  assert.equal(JSON.parse(data.get('history'))[0].eventId,'e2','valid array storage must round-trip');
+}
+
+{
+  const original='{"not":"an-array"}';
+  const {storage,data}=serviceWith({history:original});
+  assert.deepEqual(storage.readJSONArray('history',()=>[]),[]);
+  assert.equal(storage.getReadError('history')?.code,'invalid-json-shape');
+  assert.throws(()=>storage.writeJSONArray('history',[]),e=>e?.code==='STORAGE_READ_GUARD');
+  assert.equal(data.get('history'),original,'wrong-shaped array storage must remain untouched');
+  storage.removeJSON('history');
+  assert.equal(storage.hasReadError('history'),false,'explicit removal must clear the read guard only after deletion');
+  storage.writeJSONArray('history',[]);
+  assert.equal(data.get('history'),'[]');
+}
+
+{
+  const original='[{"memo":"safe"}]';
+  const {storage,data}=serviceWith({history:original});
+  storage.readJSONArray('history',()=>[]);
+  assert.throws(()=>storage.writeJSONArray('history',[{memo:undefined}]),e=>e?.code==='STORAGE_WRITE_LOSSY_VALUE');
+  assert.equal(data.get('history'),original,'array storage must share the same lossless JSON contract');
+  assert.throws(()=>storage.writeJSONArray('history',{memo:'wrong top level'}),e=>e?.code==='STORAGE_WRITE_INVALID_SHAPE');
+  assert.equal(data.get('history'),original);
+}
+
+console.log('v1 storage corruption, typed-array, write-shape, and lossless JSON guard tests passed');
