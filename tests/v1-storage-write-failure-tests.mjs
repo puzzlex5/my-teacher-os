@@ -89,4 +89,16 @@ function serviceWith(initial={},failures=1,removeFailures=0){
   assert.equal(storage.hasReadError('recovery'),false,'the recovery guard must clear only after successful removal');
 }
 
-console.log('v1 browser storage write/remove failure normalization tests passed');
+{
+  const {storage,data}=serviceWith({'':'sentinel'},0,0);
+  for(const badKey of ['',null,undefined]){
+    assert.throws(()=>storage.readJSON(badKey,()=>({safe:true})),error=>error?.code==='STORAGE_INVALID_KEY');
+    assert.throws(()=>storage.readJSONArray(badKey,()=>[]),error=>error?.code==='STORAGE_INVALID_KEY');
+    assert.throws(()=>storage.writeJSON(badKey,{safe:true}),error=>error?.code==='STORAGE_INVALID_KEY');
+    assert.throws(()=>storage.writeJSONArray(badKey,[]),error=>error?.code==='STORAGE_INVALID_KEY');
+    assert.throws(()=>storage.removeJSON(badKey),error=>error?.code==='STORAGE_INVALID_KEY');
+  }
+  assert.equal(data.get(''),'sentinel','invalid keys must never read through, overwrite, or remove the browser empty-key slot');
+}
+
+console.log('v1 browser storage write/remove/key failure normalization tests passed');
