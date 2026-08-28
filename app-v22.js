@@ -8,7 +8,7 @@
   const q=s=>document.querySelector(s);
   let dbPromise=null;
 
-  function validState22(obj){return !!obj&&typeof obj==='object'&&!Array.isArray(obj)&&!!obj.years&&typeof obj.years==='object'&&!Array.isArray(obj.years)}
+  function validState22(obj){return !!obj&&typeof obj==='object'&&!Array.isArray(obj)&&!!obj.years&&typeof obj.years==='object'&&!Array.isArray(obj.years)&&Object.values(obj.years).every(y=>!!y&&typeof y==='object'&&!Array.isArray(y))}
   function openDB(){
     if(!('indexedDB' in globalThis))return Promise.reject(new Error('이 브라우저는 기기 내 복구 저장소를 지원하지 않습니다.'));
     if(dbPromise)return dbPromise;
