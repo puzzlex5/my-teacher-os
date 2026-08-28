@@ -104,6 +104,16 @@ if(src7.includes('state.version=7;'))throw new Error('v1 prepared v07 still down
 fs.writeFileSync(path7,src7,'utf8');
 console.log('Prepared v1 app-v07 with monotonic, change-only schema migration persistence.');
 
+const path8='app-v08.js';
+let src8=fs.readFileSync(path8,'utf8');
+const old8=`  input.addEventListener('change',()=>{\n    if(input.files?.length)analyzeAndApply();\n  });\n  btn.onclick=analyzeAndApply;\n  btn.textContent='다시 분석';`;
+const new8=`  function bindLegacyIntakeV8(){\n    if(input.dataset.v23)return;\n    input.addEventListener('change',()=>{\n      if(input.files?.length)analyzeAndApply();\n    });\n    btn.onclick=analyzeAndApply;\n  }\n  setTimeout(bindLegacyIntakeV8,0);\n  btn.textContent='다시 분석';`;
+if(src8.includes(old8))src8=src8.replace(old8,new8);
+else if(!src8.includes('function bindLegacyIntakeV8()')||!src8.includes('if(input.dataset.v23)return;'))throw new Error('v1 v08 preparation failed: intake binding block not found');
+for(const token of ['function bindLegacyIntakeV8()','if(input.dataset.v23)return;',"input.addEventListener('change'",'setTimeout(bindLegacyIntakeV8,0)'])if(!src8.includes(token))throw new Error(`v1 prepared v08 missing: ${token}`);
+fs.writeFileSync(path8,src8,'utf8');
+console.log('Prepared v1 app-v08 to yield primary intake ownership to v23 while retaining a legacy fallback.');
+
 const path9='app-v09.js';
 let src9=fs.readFileSync(path9,'utf8');
 const old9="  function migrate(){state.version=Math.max(Number(state.version)||0,9);Object.values(state.years||{}).forEach(y=>{y.lessonLogs=Array.isArray(y.lessonLogs)?y.lessonLogs:[];y.classProgress=y.classProgress&&typeof y.classProgress==='object'?y.classProgress:{}});localStorage.setItem(KEY,JSON.stringify(state))}";
