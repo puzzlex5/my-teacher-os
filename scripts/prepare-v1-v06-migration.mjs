@@ -1,5 +1,40 @@
 import fs from 'node:fs';
 
+const path5='app-v05.js';
+let src5=fs.readFileSync(path5,'utf8');
+const old5=`function migrate(){
+ state=state&&typeof state==='object'?state:fresh();state.version=5;state.years=state.years||{};
+ Object.values(state.years).forEach(y=>{y.projects=arr(y.projects);y.assessments=arr(y.assessments);y.memories=arr(y.memories);y.tasks=arr(y.tasks);y.calendarEvents=arr(y.calendarEvents);y.timetable=arr(y.timetable);y.imports=arr(y.imports);y.clubs=arr(y.clubs);if(!y.clubs.length)y.clubs=defaultClubs();if(!y.educationOffice)y.educationOffice='경기도교육청';if(!arr(y.subjects).length)y.subjects=['음악'];if(y.lastBackupAt===undefined)y.lastBackupAt=null});
+ localStorage.setItem(KEY,JSON.stringify(state));
+}`;
+const new5=`function migrate(){
+ let changed=false;
+ if(!(state&&typeof state==='object'&&!Array.isArray(state))){state=fresh();changed=true}
+ const version=Math.max(Number(state.version)||0,5);if(state.version!==version){state.version=version;changed=true}
+ if(!(state.years&&typeof state.years==='object'&&!Array.isArray(state.years))){state.years={};changed=true}
+ Object.values(state.years).forEach(y=>{
+  for(const k of ['projects','assessments','memories','tasks','calendarEvents','timetable','imports'])if(!Array.isArray(y[k])){y[k]=[];changed=true}
+  if(!Array.isArray(y.clubs)){y.clubs=[];changed=true}if(!y.clubs.length){y.clubs=defaultClubs();changed=true}
+  if(!y.educationOffice){y.educationOffice='경기도교육청';changed=true}
+  if(!Array.isArray(y.subjects)||!y.subjects.length){y.subjects=['음악'];changed=true}
+  if(y.lastBackupAt===undefined){y.lastBackupAt=null;changed=true}
+ });
+ if(changed)localStorage.setItem(KEY,JSON.stringify(state));
+ return changed;
+}`;
+if(src5.includes(old5))src5=src5.replace(old5,new5);
+else if(!src5.includes('const version=Math.max(Number(state.version)||0,5);'))throw new Error('v1 v05 preparation failed: bootstrap migrate block not found');
+for(const token of [
+  'const version=Math.max(Number(state.version)||0,5);',
+  'if(state.version!==version){state.version=version;changed=true}',
+  "if(!(state.years&&typeof state.years==='object'&&!Array.isArray(state.years))){state.years={};changed=true}",
+  'if(changed)localStorage.setItem(KEY,JSON.stringify(state));',
+  'return changed;'
+])if(!src5.includes(token))throw new Error(`v1 prepared v05 missing: ${token}`);
+if(src5.includes('state.version=5;'))throw new Error('v1 prepared v05 still downgrades the schema version during bootstrap');
+fs.writeFileSync(path5,src5,'utf8');
+console.log('Prepared v1 app-v05 with monotonic, change-only bootstrap schema migration.');
+
 const path='app-v06.js';
 let src=fs.readFileSync(path,'utf8');
 
