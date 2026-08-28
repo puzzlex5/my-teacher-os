@@ -3,6 +3,7 @@ import fs from 'node:fs';
 
 const src=fs.readFileSync('app-v06.js','utf8');
 const src7=fs.readFileSync('app-v07.js','utf8');
+const src9=fs.readFileSync('app-v09.js','utf8');
 let n=0;
 const ok=(v,m)=>{assert.ok(v,m);n++};
 
@@ -24,4 +25,11 @@ ok(src7.includes('if(changed)localStorage.setItem(KEY,JSON.stringify(state));'),
 ok(!src7.includes('state.version=7;'),'v7 migration no longer resets version 7 on every render');
 ok(src7.includes('render=function(){migrateV7();previousRender();'),'existing v7 pre-render migration ordering remains intact for restored older backups');
 
-console.log(`v1 v06-v07 migration persistence checks passed (${n} assertions)`);
+ok(src9.includes('const version=Math.max(Number(state.version)||0,9);'),'v9 lesson migration keeps schema version monotonic');
+ok(src9.includes('if(state.version!==version){state.version=version;changed=true}'),'v9 version repair is change-tracked');
+ok(src9.includes('if(!Array.isArray(y.lessonLogs)){y.lessonLogs=[];changed=true}'),'v9 lesson log repair is change-tracked');
+ok(src9.includes("if(!(y.classProgress&&typeof y.classProgress==='object'&&!Array.isArray(y.classProgress))){y.classProgress={};changed=true}"),'v9 rejects array-shaped class progress instead of treating it as a valid map');
+ok(src9.includes('if(changed)localStorage.setItem(KEY,JSON.stringify(state));'),'v9 skips whole-state persistence when schema is already valid');
+ok(src9.includes('return changed;'),'v9 exposes whether a repair was actually materialized');
+
+console.log(`v1 v06-v07-v09 migration persistence checks passed (${n} assertions)`);
