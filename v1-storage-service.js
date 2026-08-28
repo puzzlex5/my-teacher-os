@@ -27,8 +27,12 @@
       markReadError(k,'storage-read-failed',null);
       return cloneFallback(fallbackFactory);
     }
-    if(raw===null||raw===''){
+    if(raw===null){
       clearReadError(k);
+      return cloneFallback(fallbackFactory);
+    }
+    if(raw===''){
+      markReadError(k,'invalid-json',raw);
       return cloneFallback(fallbackFactory);
     }
     try{
