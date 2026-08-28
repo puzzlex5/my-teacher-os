@@ -8,6 +8,7 @@
   const q=s=>document.querySelector(s);
   let dbPromise=null;
 
+  function validState22(obj){return !!obj&&typeof obj==='object'&&!Array.isArray(obj)&&!!obj.years&&typeof obj.years==='object'&&!Array.isArray(obj.years)}
   function openDB(){
     if(!('indexedDB' in globalThis))return Promise.reject(new Error('이 브라우저는 기기 내 복구 저장소를 지원하지 않습니다.'));
     if(dbPromise)return dbPromise;
@@ -34,7 +35,7 @@
       req.onerror=()=>reject(req.error||new Error('복구지점을 읽지 못했습니다.'));
     });
   }
-  function currentStateJSON(){const obj=globalThis.TeacherOSStorage.readJSON(DATA_KEY,()=>null);if(!obj||typeof obj!=='object'||!obj.years||typeof obj.years!=='object')throw new Error('현재 Teacher OS 데이터 형식이 올바르지 않습니다.');return JSON.stringify(obj)}
+  function currentStateJSON(){const obj=globalThis.TeacherOSStorage.readJSON(DATA_KEY,()=>null);if(!validState22(obj))throw new Error('현재 Teacher OS 데이터 형식이 올바르지 않습니다.');return JSON.stringify(obj)}
   async function pruneSnapshots(){
     const all=await listSnapshots();if(all.length<=MAX_SNAPSHOTS)return;
     const db=await openDB(),tx=db.transaction(STORE,'readwrite'),store=tx.objectStore(STORE);
@@ -67,7 +68,7 @@
     const db=await openDB();
     const snap=await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly'),req=tx.objectStore(STORE).get(id);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('복구지점을 읽지 못했습니다.'))});
     if(!snap?.stateJson)throw new Error('복구지점 데이터가 없습니다.');
-    const obj=JSON.parse(snap.stateJson);if(!obj||typeof obj!=='object'||!obj.years||typeof obj.years!=='object')throw new Error('복구지점 형식이 올바르지 않습니다.');
+    const obj=JSON.parse(snap.stateJson);if(!validState22(obj))throw new Error('복구지점 형식이 올바르지 않습니다.');
     if(!confirm(`${new Date(snap.createdAt).toLocaleString('ko-KR')} 상태로 되돌릴까요? 현재 상태는 먼저 별도 복구지점으로 보관합니다.`))return;
     await createSnapshot('preRestore');
     globalThis.TeacherOSStorage.writeJSON(DATA_KEY,obj);
