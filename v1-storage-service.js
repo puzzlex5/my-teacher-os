@@ -196,7 +196,11 @@
 
   function removeJSON(key){
     const k=keyOf(key);
-    localStorage.removeItem(k);
+    try{
+      localStorage.removeItem(k);
+    }catch{
+      throw writeError('STORAGE_REMOVE_FAILED','Teacher OS could not remove data from browser storage. Existing stored data and recovery guard were left unchanged.');
+    }
     clearReadError(k);
   }
 
