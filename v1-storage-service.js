@@ -55,6 +55,58 @@
     return err;
   }
 
+  function isPlainRecord(value){
+    const proto=Object.getPrototypeOf(value);
+    if(proto===null)return true;
+    const parent=Object.getPrototypeOf(proto);
+    const ctor=Object.prototype.hasOwnProperty.call(proto,'constructor')?proto.constructor:null;
+    return parent===null&&typeof ctor==='function'&&ctor.name==='Object';
+  }
+
+  function lossyShape(message){
+    throw writeError('STORAGE_WRITE_LOSSY_VALUE',message+' Existing stored data was left unchanged.');
+  }
+
+  function validateArray(value,seen){
+    for(const key of Object.getOwnPropertyNames(value)){
+      if(key==='length')continue;
+      if(!/^(0|[1-9]\d*)$/.test(key)){
+        lossyShape('Teacher OS state contains an array property that JSON would silently omit.');
+      }
+      const index=Number(key);
+      if(!Number.isSafeInteger(index)||index<0||index>=value.length){
+        lossyShape('Teacher OS state contains an array property that JSON cannot preserve as an array element.');
+      }
+      const descriptor=Object.getOwnPropertyDescriptor(value,key);
+      if(!descriptor||!Object.prototype.hasOwnProperty.call(descriptor,'value')){
+        lossyShape('Teacher OS state contains an accessor-backed array element that cannot be verified for lossless JSON storage.');
+      }
+    }
+    for(let i=0;i<value.length;i++){
+      const descriptor=Object.getOwnPropertyDescriptor(value,String(i));
+      if(!descriptor){
+        lossyShape('Teacher OS state contains a sparse array hole that JSON would silently convert to null.');
+      }
+      validateJSONSafeValue(descriptor.value,seen);
+    }
+  }
+
+  function validatePlainRecord(value,seen){
+    if(!isPlainRecord(value)){
+      lossyShape('Teacher OS state contains a non-plain object whose JSON representation may change type or lose data.');
+    }
+    for(const key of Object.getOwnPropertyNames(value)){
+      const descriptor=Object.getOwnPropertyDescriptor(value,key);
+      if(!descriptor?.enumerable){
+        lossyShape('Teacher OS state contains a non-enumerable property that JSON would silently omit.');
+      }
+      if(!Object.prototype.hasOwnProperty.call(descriptor,'value')){
+        lossyShape('Teacher OS state contains an accessor property that cannot be verified for lossless JSON storage.');
+      }
+      validateJSONSafeValue(descriptor.value,seen);
+    }
+  }
+
   function validateJSONSafeValue(value,seen){
     if(value===null)return;
     const type=typeof value;
@@ -77,11 +129,8 @@
     }
     seen.add(value);
     try{
-      if(Array.isArray(value)){
-        for(const item of value)validateJSONSafeValue(item,seen);
-      }else{
-        for(const key of Object.keys(value))validateJSONSafeValue(value[key],seen);
-      }
+      if(Array.isArray(value))validateArray(value,seen);
+      else validatePlainRecord(value,seen);
     }finally{
       seen.delete(value);
     }
