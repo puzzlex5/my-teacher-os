@@ -18,7 +18,7 @@
 
   function clearReadError(key){readErrors.delete(keyOf(key))}
 
-  function readJSON(key,fallbackFactory){
+  function readJSONShape(key,fallbackFactory,acceptShape){
     const k=keyOf(key);
     let raw;
     try{
@@ -37,7 +37,7 @@
     }
     try{
       const parsed=JSON.parse(raw);
-      if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed)){
+      if(acceptShape(parsed)){
         clearReadError(k);
         return parsed;
       }
@@ -47,6 +47,14 @@
       markReadError(k,'invalid-json',raw);
       return cloneFallback(fallbackFactory);
     }
+  }
+
+  function readJSON(key,fallbackFactory){
+    return readJSONShape(key,fallbackFactory,parsed=>!!parsed&&typeof parsed==='object'&&!Array.isArray(parsed));
+  }
+
+  function readJSONArray(key,fallbackFactory=()=>[]){
+    return readJSONShape(key,fallbackFactory,Array.isArray);
   }
 
   function writeError(code,message){
@@ -136,9 +144,10 @@
     }
   }
 
-  function encodeJSONObject(value){
-    if(!value||typeof value!=='object'||Array.isArray(value)){
-      throw writeError('STORAGE_WRITE_INVALID_SHAPE','Teacher OS state must be a JSON object. Refusing to write an unreadable top-level value.');
+  function encodeJSONShape(value,topLevelArray){
+    const validTop=topLevelArray?Array.isArray(value):!!value&&typeof value==='object'&&!Array.isArray(value);
+    if(!validTop){
+      throw writeError('STORAGE_WRITE_INVALID_SHAPE',`Teacher OS state must be a JSON ${topLevelArray?'array':'object'}. Refusing to write an unreadable top-level value.`);
     }
     try{
       validateJSONSafeValue(value,new WeakSet());
@@ -157,7 +166,8 @@
     }
     try{
       const roundTrip=JSON.parse(raw);
-      if(!roundTrip||typeof roundTrip!=='object'||Array.isArray(roundTrip)){
+      const roundTripValid=topLevelArray?Array.isArray(roundTrip):!!roundTrip&&typeof roundTrip==='object'&&!Array.isArray(roundTrip);
+      if(!roundTripValid){
         throw writeError('STORAGE_WRITE_INVALID_SHAPE','Teacher OS state serialized to an unreadable top-level JSON shape. Existing stored data was left unchanged.');
       }
     }catch(err){
@@ -167,14 +177,23 @@
     return raw;
   }
 
-  function writeJSON(key,value){
+  function writeShape(key,value,topLevelArray){
     const k=keyOf(key);
     if(readErrors.has(k)){
       throw writeError('STORAGE_READ_GUARD','Teacher OS stored data could not be read. Refusing to overwrite it until recovery is completed.');
     }
-    const raw=encodeJSONObject(value);
+    const raw=encodeJSONShape(value,topLevelArray);
     localStorage.setItem(k,raw);
     return value;
+  }
+
+  function writeJSON(key,value){return writeShape(key,value,false)}
+  function writeJSONArray(key,value){return writeShape(key,value,true)}
+
+  function removeJSON(key){
+    const k=keyOf(key);
+    localStorage.removeItem(k);
+    clearReadError(k);
   }
 
   function hasReadError(key){return readErrors.has(keyOf(key))}
@@ -183,5 +202,5 @@
     return x?{code:x.code,rawLength:x.rawLength}:null;
   }
 
-  global.TeacherOSStorage=Object.freeze({readJSON,writeJSON,hasReadError,getReadError});
+  global.TeacherOSStorage=Object.freeze({readJSON,writeJSON,readJSONArray,writeJSONArray,removeJSON,hasReadError,getReadError});
 })(globalThis);
