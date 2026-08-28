@@ -68,3 +68,30 @@ for(const token of [
 if(src7.includes('state.version=7;'))throw new Error('v1 prepared v07 still downgrades the schema version on render');
 fs.writeFileSync(path7,src7,'utf8');
 console.log('Prepared v1 app-v07 with monotonic, change-only schema migration persistence.');
+
+const path9='app-v09.js';
+let src9=fs.readFileSync(path9,'utf8');
+const old9="  function migrate(){state.version=Math.max(Number(state.version)||0,9);Object.values(state.years||{}).forEach(y=>{y.lessonLogs=Array.isArray(y.lessonLogs)?y.lessonLogs:[];y.classProgress=y.classProgress&&typeof y.classProgress==='object'?y.classProgress:{}});localStorage.setItem(KEY,JSON.stringify(state))}";
+const new9=`  function migrate(){
+    let changed=false;
+    const version=Math.max(Number(state.version)||0,9);
+    if(state.version!==version){state.version=version;changed=true}
+    Object.values(state.years||{}).forEach(y=>{
+      if(!Array.isArray(y.lessonLogs)){y.lessonLogs=[];changed=true}
+      if(!(y.classProgress&&typeof y.classProgress==='object'&&!Array.isArray(y.classProgress))){y.classProgress={};changed=true}
+    });
+    if(changed)localStorage.setItem(KEY,JSON.stringify(state));
+    return changed;
+  }`;
+if(src9.includes(old9))src9=src9.replace(old9,new9);
+else if(!src9.includes('const version=Math.max(Number(state.version)||0,9);'))throw new Error('v1 v09 preparation failed: migrate block not found');
+for(const token of [
+  'const version=Math.max(Number(state.version)||0,9);',
+  'if(state.version!==version){state.version=version;changed=true}',
+  'if(!Array.isArray(y.lessonLogs)){y.lessonLogs=[];changed=true}',
+  "if(!(y.classProgress&&typeof y.classProgress==='object'&&!Array.isArray(y.classProgress))){y.classProgress={};changed=true}",
+  'if(changed)localStorage.setItem(KEY,JSON.stringify(state));',
+  'return changed;'
+])if(!src9.includes(token))throw new Error(`v1 prepared v09 missing: ${token}`);
+fs.writeFileSync(path9,src9,'utf8');
+console.log('Prepared v1 app-v09 lesson-record schema migration to persist only real repairs.');
