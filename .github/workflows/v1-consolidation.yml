@@ -213,6 +213,9 @@ jobs:
       - name: Verify corrupted state is never overwritten
         run: node tests/v1-storage-corruption-guard-tests.mjs
 
+      - name: Verify browser storage write failures stay explicit and retryable
+        run: node tests/v1-storage-write-failure-tests.mjs
+
       - name: Build separate-layer reference and consolidated preview
         run: node scripts/build-v1-runtime.mjs
 
