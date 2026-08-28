@@ -11,7 +11,7 @@ function serviceWith(initial={}){
     setItem(k,v){data.set(String(k),String(v))},
     removeItem(k){data.delete(String(k))}
   };
-  const context={globalThis:null,localStorage,Map,Object,String,JSON,Error};
+  const context={globalThis:null,localStorage,Map,Object,String,JSON,Error,Array};
   context.globalThis=context;
   vm.runInNewContext(source,context,{filename:'v1-storage-service.js'});
   return{storage:context.TeacherOSStorage,data};
@@ -46,6 +46,18 @@ function serviceWith(initial={}){
   assert.equal(storage.getReadError('state').code,'invalid-json-shape');
   assert.throws(()=>storage.writeJSON('state',{version:1}),/Refusing to overwrite/);
   assert.equal(data.get('state'),raw);
+}
+
+{
+  const raw='[]';
+  const {storage,data}=serviceWith({state:raw});
+  const fallback=storage.readJSON('state',()=>({version:0,years:{}}));
+  assert.equal(fallback.version,0);
+  assert.equal(storage.hasReadError('state'),true,'top-level arrays are corrupted Teacher OS state, not valid object state');
+  assert.equal(storage.getReadError('state').code,'invalid-json-shape');
+  assert.equal(storage.getReadError('state').rawLength,raw.length);
+  assert.throws(()=>storage.writeJSON('state',{version:1,years:{}}),e=>e?.code==='STORAGE_READ_GUARD');
+  assert.equal(data.get('state'),raw,'array-shaped original must remain byte-for-byte untouched');
 }
 
 {
