@@ -49,14 +49,44 @@
     }
   }
 
+  function writeError(code,message){
+    const err=new Error(message);
+    err.code=code;
+    return err;
+  }
+
+  function encodeJSONObject(value){
+    if(!value||typeof value!=='object'||Array.isArray(value)){
+      throw writeError('STORAGE_WRITE_INVALID_SHAPE','Teacher OS state must be a JSON object. Refusing to write an unreadable top-level value.');
+    }
+    let raw;
+    try{
+      raw=JSON.stringify(value);
+    }catch{
+      throw writeError('STORAGE_SERIALIZE_FAILED','Teacher OS state could not be serialized. Existing stored data was left unchanged.');
+    }
+    if(typeof raw!=='string'){
+      throw writeError('STORAGE_WRITE_INVALID_SHAPE','Teacher OS state did not serialize to JSON. Existing stored data was left unchanged.');
+    }
+    try{
+      const roundTrip=JSON.parse(raw);
+      if(!roundTrip||typeof roundTrip!=='object'||Array.isArray(roundTrip)){
+        throw writeError('STORAGE_WRITE_INVALID_SHAPE','Teacher OS state serialized to an unreadable top-level JSON shape. Existing stored data was left unchanged.');
+      }
+    }catch(err){
+      if(err&&err.code==='STORAGE_WRITE_INVALID_SHAPE')throw err;
+      throw writeError('STORAGE_SERIALIZE_FAILED','Teacher OS state could not be validated after serialization. Existing stored data was left unchanged.');
+    }
+    return raw;
+  }
+
   function writeJSON(key,value){
     const k=keyOf(key);
     if(readErrors.has(k)){
-      const err=new Error('Teacher OS stored data could not be read. Refusing to overwrite it until recovery is completed.');
-      err.code='STORAGE_READ_GUARD';
-      throw err;
+      throw writeError('STORAGE_READ_GUARD','Teacher OS stored data could not be read. Refusing to overwrite it until recovery is completed.');
     }
-    localStorage.setItem(k,JSON.stringify(value));
+    const raw=encodeJSONObject(value);
+    localStorage.setItem(k,raw);
     return value;
   }
 
