@@ -1,0 +1,95 @@
+name: Teacher OS v34 Autopilot Guard
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teacher-os-v34-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-and-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run every regression test
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in tests/core-tests.js $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do
+            echo "== $f =="
+            node "$f"
+          done
+
+      - name: Syntax guard latest automation layers
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check agent-core-v33.js
+          node --check app-v33.js
+          node --check integration-core-v34.js
+          node --check app-v34.js
+          cp backend/apps-script/Code.gs /tmp/teacher-os-apps-script.js
+          node --check /tmp/teacher-os-apps-script.js
+
+      - name: Google autopilot privacy and policy guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "ALLOWED_ORIGIN: 'https://puzzlex5.github.io'" backend/apps-script/Code.gs
+          grep -q 'MYSELF' backend/apps-script/appsscript.json
+          grep -q "gmail.readonly" backend/apps-script/appsscript.json
+          grep -q "15" backend/apps-script/Code.gs
+          grep -q "everyMinutes(15)" backend/apps-script/Code.gs
+          grep -q "GmailApp.search" backend/apps-script/Code.gs
+          grep -q "getInboxFolder_" backend/apps-script/Code.gs
+          grep -q "CalendarApp.getDefaultCalendar" backend/apps-script/Code.gs
+          grep -q "maybeCreateSafeReminder_" backend/apps-script/Code.gs
+          grep -q "review_conflict" backend/apps-script/Code.gs
+          grep -q "외부 발송·삭제·기존 일정 변경을 실행하지 않습니다" backend/apps-script/Code.gs
+          grep -q "gmail_send" integration-core-v34.js
+          grep -q "calendar_delete" integration-core-v34.js
+          grep -q "requiresApproval" integration-core-v34.js
+          grep -q "app-v34.js" index.html
+          grep -q "app-v34.css" index.html
+          grep -q "integration-core-v34.js" index.html
+
+      - name: Public repository data leak guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! find . -type f -not -path './.git/*' \( -name 'teacher-os-private-state.json' -o -name '*.token' -o -name '*credentials*.json' -o -name '*secret*.json' \) | grep .
+          ! grep -R --exclude-dir=.git -E 'ya29\.|AIza[0-9A-Za-z_-]{20,}|-----BEGIN PRIVATE KEY-----' .
+
+      - name: Loader regression guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "app-v33.js" index.html
+          grep -q "agent-core-v33.js" index.html
+          grep -q "app-v32.js" index.html
+          grep -q "core-v31.js" index.html
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Teacher OS v34 Autopilot Guard'
+            echo '- Full regression test suite: executed'
+            echo '- v33/v34 JavaScript syntax: checked'
+            echo '- Apps Script gateway syntax: checked'
+            echo '- Google privacy boundary and approval policy: checked'
+            echo '- Public-repository secret/data leak patterns: checked'
+            echo '- v34 loader wiring with prior layers: checked'
+          } >> "$GITHUB_STEP_SUMMARY"
