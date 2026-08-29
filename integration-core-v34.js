@@ -89,7 +89,7 @@
 
   function retryDelayMs(attempt){
     const n=Math.max(0,Number(attempt)||0);
-    return Math.min(5*60*1000,1000*Math.pow(2,Math.min(n,8)));
+    return Math.min(5*60*1000,1000*Math.pow(2,Math.min(n,12)));
   }
 
   function summarizeSnapshot(snapshot){
