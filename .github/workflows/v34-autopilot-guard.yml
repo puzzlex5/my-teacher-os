@@ -49,8 +49,7 @@ jobs:
           set -euo pipefail
           grep -q "ALLOWED_ORIGIN: 'https://puzzlex5.github.io'" backend/apps-script/Code.gs
           grep -q 'MYSELF' backend/apps-script/appsscript.json
-          grep -q "gmail.readonly" backend/apps-script/appsscript.json
-          grep -q "15" backend/apps-script/Code.gs
+          grep -q "https://mail.google.com/" backend/apps-script/appsscript.json
           grep -q "everyMinutes(15)" backend/apps-script/Code.gs
           grep -q "GmailApp.search" backend/apps-script/Code.gs
           grep -q "getInboxFolder_" backend/apps-script/Code.gs
