@@ -1,6 +1,8 @@
 name: Teacher OS v34 Autopilot Guard
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
