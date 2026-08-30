@@ -1,0 +1,90 @@
+name: Teacher OS v36 Desktop Bridge Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teacher-os-v36-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-privacy-local-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Full regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+          (cd local_bridge && python test_bridge.py)
+
+      - name: Latest syntax checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check desktop-core-v36.js
+          node --check app-v36.js
+          python -m py_compile local_bridge/bridge.py local_bridge/test_bridge.py
+
+      - name: Loopback and origin boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'HOST = "127.0.0.1"' local_bridge/bridge.py
+          grep -q 'PORT = 43135' local_bridge/bridge.py
+          grep -q 'ALLOWED_ORIGIN = "https://puzzlex5.github.io"' local_bridge/bridge.py
+          grep -q 'X-Teacher-OS-Token' local_bridge/bridge.py
+          grep -q 'secrets.compare_digest' local_bridge/bridge.py
+          ! grep -R --exclude-dir=.git -E '0\.0\.0\.0|allow-origin: \*|Access-Control-Allow-Origin.{0,10}\*' local_bridge app-v36.js desktop-core-v36.js
+
+      - name: Privacy and non-bypass policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'never uploads source files or raw document text' local_bridge/bridge.py
+          grep -q '원문은 PC 밖으로 보내지 않고' app-v36.js
+          grep -q 'Legacy .hwp is intentionally metadata-only' local_bridge/bridge.py
+          ! grep -R --exclude-dir=.git -E 'NEIS_PASSWORD|EDUFIN_PASSWORD|certificate_password|loginBypass|selenium.*password|requests\.(post|get).*neis' local_bridge
+          ! grep -R --exclude-dir=.git -E 'AIza[0-9A-Za-z_-]{20,}|ya29\.|-----BEGIN PRIVATE KEY-----' local_bridge app-v36.js desktop-core-v36.js
+
+      - name: Non-destructive apply policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "type:'project'" desktop-core-v36.js
+          grep -q "type:'calendar'" desktop-core-v36.js
+          grep -q "type:'task'" desktop-core-v36.js
+          ! grep -E 'splice\(|\.filter\(.*delete|calendarEvents\s*=\s*\[\]|projects\s*=\s*\[\]|tasks\s*=\s*\[\]' desktop-core-v36.js
+          grep -q 'app-v36.js' index.html
+          grep -q 'app-v36.css' index.html
+          grep -q 'desktop-core-v36.js' index.html
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Teacher OS v36 Desktop Bridge Guard'
+            echo '- Full JavaScript regression: executed'
+            echo '- Local Bridge Python parser tests: executed'
+            echo '- Loopback-only + origin + pairing-token boundary: checked'
+            echo '- Raw-document non-upload policy: checked'
+            echo '- Credential/bypass and secret patterns: checked'
+            echo '- Non-destructive Teacher OS apply policy: checked'
+          } >> "$GITHUB_STEP_SUMMARY"

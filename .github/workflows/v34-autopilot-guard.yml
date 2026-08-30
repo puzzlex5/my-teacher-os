@@ -71,7 +71,7 @@ jobs:
         run: |
           set -euo pipefail
           ! find . -type f -not -path './.git/*' \( -name 'teacher-os-private-state.json' -o -name '*.token' -o -name '*credentials*.json' -o -name '*secret*.json' \) | grep .
-          ! grep -R --exclude-dir=.git --exclude='v34-autopilot-guard.yml' -E 'ya29\.|AIza[0-9A-Za-z_-]{20,}|-----BEGIN PRIVATE KEY-----' .
+          ! grep -R --exclude-dir=.git --exclude='*-guard.yml' -E 'ya29\.|AIza[0-9A-Za-z_-]{20,}|-----BEGIN PRIVATE KEY-----' .
 
       - name: Loader regression guard
         shell: bash

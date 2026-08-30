@@ -38,6 +38,11 @@ jobs:
           test -f neis-core-v35.js
           test -f app-v35.js
           test -f app-v35.css
+          test -f desktop-core-v36.js
+          test -f app-v36.js
+          test -f app-v36.css
+          test -f local_bridge/bridge.py
+          test -f local_bridge/install_windows.ps1
           test -f app-v32.js
           test -f app-v32.css
           test -f core-v31.js
@@ -72,18 +77,23 @@ jobs:
             echo "== $f =="
             node "$f"
           done
+          (cd local_bridge && python3 test_bridge.py)
 
-      - name: JavaScript syntax checks
+      - name: JavaScript and Python syntax checks
         run: |
           set -euo pipefail
-          for f in $(find . -maxdepth 1 -type f \( -name 'app-v*.js' -o -name 'core-v*.js' -o -name 'agent-core-v*.js' -o -name 'integration-core-v*.js' -o -name 'neis-core-v*.js' -o -name 'seed-v*.js' \) | sort -V); do
+          for f in $(find . -maxdepth 1 -type f \( -name 'app-v*.js' -o -name 'core-v*.js' -o -name 'agent-core-v*.js' -o -name 'integration-core-v*.js' -o -name 'neis-core-v*.js' -o -name 'desktop-core-v*.js' -o -name 'seed-v*.js' \) | sort -V); do
             node --check "$f"
           done
           node --check scripts/sync-comcigan.mjs
+          python3 -m py_compile local_bridge/bridge.py local_bridge/test_bridge.py
 
       - name: Verify latest layers are wired
         run: |
           set -euo pipefail
+          grep -q 'app-v36.js' index.html
+          grep -q 'app-v36.css' index.html
+          grep -q 'desktop-core-v36.js' index.html
           grep -q 'app-v35.js' index.html
           grep -q 'app-v35.css' index.html
           grep -q 'neis-core-v35.js' index.html
