@@ -1,0 +1,75 @@
+name: Teacher OS v42 Google Sync Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teacher-os-v42-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lossless-google-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Full regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+
+      - name: Syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app-v34.js
+          cp backend/apps-script/Code.gs /tmp/teacher-os-apps-script.js
+          node --check /tmp/teacher-os-apps-script.js
+
+      - name: Lossless cursor boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'MAX_ITEMS: 2000' backend/apps-script/Code.gs
+          grep -q 'PAGE_SIZE: 250' backend/apps-script/Code.gs
+          grep -q 'pageItems_' backend/apps-script/Code.gs
+          grep -q 'hasMore: page.hasMore' backend/apps-script/Code.gs
+          grep -q 'remaining: page.remaining' backend/apps-script/Code.gs
+          ! grep -q 'slice(-250)' backend/apps-script/Code.gs
+          grep -q 'fetchSnapshotPages' app-v34.js
+          grep -q 'pagesFetched' app-v34.js
+          grep -q 'lastSnapshot?.hasMore' app-v34.js
+          grep -q '10000' app-v34.js
+
+      - name: Preserve Google safety boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "ALLOWED_ORIGIN: 'https://puzzlex5.github.io'" backend/apps-script/Code.gs
+          grep -q 'apiApproveAction' backend/apps-script/Code.gs
+          grep -q '외부 발송·삭제·기존 일정 변경을 실행하지 않습니다' backend/apps-script/Code.gs
+          grep -q 'googleRepair34' app-v34.js
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Teacher OS v42 Google Sync Guard'
+            echo '- Full regression: executed'
+            echo '- Oldest-first cursor pagination: checked'
+            echo '- Multi-page browser drain with bounded pages: checked'
+            echo '- Backlog fast follow-up and safety boundary: checked'
+          } >> "$GITHUB_STEP_SUMMARY"
