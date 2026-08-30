@@ -1,0 +1,43 @@
+name: Teacher OS v45 Local Watchdog Guard
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Full regression
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py && python3 test_kedufine_adapter.py && python3 test_pairing_v44.py && python3 test_watchdog_v45.py)
+      - name: Syntax
+        run: |
+          set -euo pipefail
+          python3 -m py_compile local_bridge/watchdog_v45.py local_bridge/test_watchdog_v45.py
+      - name: Watchdog safety boundary
+        run: |
+          set -euo pipefail
+          grep -q 'HEALTH_URL = f"http://{HOST}:{PORT}/v1/health"' local_bridge/watchdog_v45.py
+          grep -q 'ALLOWED_ORIGIN = "https://puzzlex5.github.io"' local_bridge/watchdog_v45.py
+          grep -q 'BRIDGE = Path(__file__).with_name("bridge_v44.py")' local_bridge/watchdog_v45.py
+          grep -q 'MAX_BACKOFF_SECONDS = 300' local_bridge/watchdog_v45.py
+          grep -q 'Local\\\\TeacherOSBridgeWatchdogV45' local_bridge/watchdog_v45.py
+          grep -q 'watchdog_v45.py' local_bridge/install_windows.ps1
+          grep -q 'Teacher OS Watchdog' local_bridge/install_windows.ps1
+          ! grep -Eq 'GmailApp|CalendarApp|DriveApp|requests\.(post|put|delete)|urllib\.request.*https://' local_bridge/watchdog_v45.py
+          ! grep -Eq 'token\s*=|password\s*=|secret\s*=' local_bridge/watchdog_v45.py
+      - name: Documentation
+        run: |
+          set -euo pipefail
+          grep -q 'Teacher OS Desktop Bridge v0.45' local_bridge/README.md
+          grep -q 'watchdog-v45.jsonl' local_bridge/README.md
