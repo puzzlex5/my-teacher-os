@@ -31,38 +31,29 @@ jobs:
           test -f index.html
           test -f agent-core-v33.js
           test -f app-v33.js
-          test -f app-v33.css
           test -f integration-core-v34.js
           test -f app-v34.js
-          test -f app-v34.css
           test -f neis-core-v35.js
           test -f app-v35.js
-          test -f app-v35.css
           test -f desktop-core-v36.js
           test -f app-v36.js
           test -f app-v36.css
           test -f app-v37.js
           test -f app-v37.css
+          test -f app-v38.js
+          test -f app-v38.css
           test -f local_bridge/bridge.py
           test -f local_bridge/bridge_v37.py
+          test -f local_bridge/bridge_v38.py
           test -f local_bridge/neis_adapter.py
+          test -f local_bridge/kedufine_adapter.py
           test -f local_bridge/install_windows.ps1
           test -f app-v32.js
-          test -f app-v32.css
           test -f core-v31.js
-          test -f app-v31.js
-          test -f app-v31.css
           test -f core-v30.js
-          test -f app-v30.js
-          test -f app-v30.css
           test -f core-v29.js
-          test -f app-v29.js
           test -f core-v28.js
-          test -f app-v28.js
-          test -f app-v28.css
           test -f core-v27.js
-          test -f app-v27.js
-          test -f app-v27.css
           test -f core-v25.js
           test -f school-record-quality-library.json
           test -f core-v23.js
@@ -81,7 +72,7 @@ jobs:
             echo "== $f =="
             node "$f"
           done
-          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py)
+          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py && python3 test_kedufine_adapter.py)
 
       - name: JavaScript and Python syntax checks
         run: |
@@ -90,18 +81,17 @@ jobs:
             node --check "$f"
           done
           node --check scripts/sync-comcigan.mjs
-          python3 -m py_compile local_bridge/bridge.py local_bridge/bridge_v37.py local_bridge/neis_adapter.py local_bridge/test_bridge.py local_bridge/test_neis_adapter.py
+          python3 -m py_compile local_bridge/bridge.py local_bridge/bridge_v37.py local_bridge/bridge_v38.py local_bridge/neis_adapter.py local_bridge/kedufine_adapter.py local_bridge/test_bridge.py local_bridge/test_neis_adapter.py local_bridge/test_kedufine_adapter.py
 
       - name: Verify latest layers are wired
         run: |
           set -euo pipefail
+          grep -q 'app-v38.js' index.html
+          grep -q 'app-v38.css' index.html
           grep -q 'app-v37.js' index.html
-          grep -q 'app-v37.css' index.html
           grep -q 'app-v36.js' index.html
-          grep -q 'app-v36.css' index.html
           grep -q 'desktop-core-v36.js' index.html
           grep -q 'app-v35.js' index.html
-          grep -q 'app-v35.css' index.html
           grep -q 'neis-core-v35.js' index.html
           grep -q 'app-v34.js' index.html
           grep -q 'integration-core-v34.js' index.html

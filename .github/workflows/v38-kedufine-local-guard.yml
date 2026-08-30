@@ -1,0 +1,74 @@
+name: Teacher OS v38 K-Edufine Local Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teacher-os-v38-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kedufine-local-privacy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Full regression and adapter tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+          (cd local_bridge && python test_bridge.py && python test_neis_adapter.py && python test_kedufine_adapter.py)
+
+      - name: Syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app-v38.js
+          python -m py_compile local_bridge/bridge.py local_bridge/bridge_v37.py local_bridge/bridge_v38.py local_bridge/neis_adapter.py local_bridge/kedufine_adapter.py
+
+      - name: K-Edufine privacy boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'No document body, approval text, personal name, or raw row is returned' local_bridge/kedufine_adapter.py
+          grep -q 'K-에듀파인 내보내기 자료를 개인정보 없이 집계했습니다' local_bridge/bridge_v38.py
+          grep -q '문서 본문, 결재 의견, 개인 이름, 원문 행은 Teacher OS로 전달하지 않습니다' app-v38.js
+          ! grep -R --exclude-dir=.git -E 'certificate_password|공동인증서.*비밀번호|loginBypass|bypassAuth|자동.?로그인' local_bridge/kedufine_adapter.py local_bridge/bridge_v38.py
+
+      - name: Preserve loopback and loader boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'HOST = "127.0.0.1"' local_bridge/bridge.py
+          grep -q 'ALLOWED_ORIGIN = "https://puzzlex5.github.io"' local_bridge/bridge.py
+          grep -q 'app-v38.js' index.html
+          grep -q 'app-v38.css' index.html
+          ! grep -E 'raw(Text|Rows|Content)|documentBody|approvalText|personName' app-v38.js
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Teacher OS v38 K-Edufine Local Guard'
+            echo '- Full regression: executed'
+            echo '- K-Edufine aggregate parser tests: executed'
+            echo '- Raw document/approval/name non-export boundary: checked'
+            echo '- Credential/auth-bypass patterns: checked'
+            echo '- Loopback and v38 loader boundary: checked'
+          } >> "$GITHUB_STEP_SUMMARY"
