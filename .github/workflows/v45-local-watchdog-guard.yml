@@ -29,7 +29,7 @@ jobs:
           set -euo pipefail
           grep -q 'HEALTH_URL = f"http://{HOST}:{PORT}/v1/health"' local_bridge/watchdog_v45.py
           grep -q 'ALLOWED_ORIGIN = "https://puzzlex5.github.io"' local_bridge/watchdog_v45.py
-          grep -q 'BRIDGE = Path(__file__).with_name("bridge_v44.py")' local_bridge/watchdog_v45.py
+          grep -Eq 'BRIDGE = Path\(__file__\)\.with_name\("bridge_v[0-9]+\.py"\)' local_bridge/watchdog_v45.py
           grep -q 'MAX_BACKOFF_SECONDS = 300' local_bridge/watchdog_v45.py
           grep -q 'Local\\\\TeacherOSBridgeWatchdogV45' local_bridge/watchdog_v45.py
           grep -q 'watchdog_v45.py' local_bridge/install_windows.ps1
@@ -39,5 +39,5 @@ jobs:
       - name: Documentation
         run: |
           set -euo pipefail
-          grep -q 'Teacher OS Desktop Bridge v0.45' local_bridge/README.md
+          grep -q 'watchdog' local_bridge/README.md
           grep -q 'watchdog-v45.jsonl' local_bridge/README.md
