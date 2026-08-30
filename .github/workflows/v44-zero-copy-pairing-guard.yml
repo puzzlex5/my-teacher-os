@@ -48,4 +48,4 @@ jobs:
           grep -q 'app-v44.js' index.html
           grep -q 'bridge_v44.py' local_bridge/install_windows.ps1
           grep -q 'pairing_v44.py' local_bridge/install_windows.ps1
-          grep -q 'Teacher OS Desktop Bridge v0.44' local_bridge/README.md
+          grep -q '5분 동안 한 번만 쓸 수 있는 임시 nonce' local_bridge/README.md
