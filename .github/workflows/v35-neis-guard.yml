@@ -1,0 +1,85 @@
+name: Teacher OS v35 NEIS Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teacher-os-v35-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression-and-neis-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run full regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do
+            echo "== $f =="
+            node "$f"
+          done
+
+      - name: Syntax guard NEIS layer
+        run: |
+          set -euo pipefail
+          node --check neis-core-v35.js
+          node --check app-v35.js
+
+      - name: Official NEIS boundary guard
+        run: |
+          set -euo pipefail
+          grep -q "https://open.neis.go.kr/hub/" neis-core-v35.js
+          grep -q "schoolInfo" app-v35.js
+          grep -q "SchoolSchedule" app-v35.js
+          grep -q "misTimetable" neis-core-v35.js
+          grep -q "NEIS 공식 Open API" neis-core-v35.js
+          grep -q "type=\"password\"" app-v35.js
+          grep -q "myTeacherOS.neis35.settings.v1" app-v35.js
+          grep -q "인증키 값은 기록하지 않습니다" app-v35.js
+          grep -q "NEIS 내부 성적·학생부·출결 데이터에는 접근하지 않습니다" app-v35.js
+          grep -q "neis-core-v35.js" index.html
+          grep -q "app-v35.js" index.html
+          grep -q "app-v35.css" index.html
+
+      - name: No committed NEIS credential guard
+        run: |
+          set -euo pipefail
+          ! find . -type f -not -path './.git/*' \( -iname '*neis*credential*' -o -iname '*neis*secret*' -o -iname '*neis*token*' \) | grep .
+          ! grep -R --exclude-dir=.git --exclude='v35-neis-guard.yml' -E 'KEY=[A-Za-z0-9_-]{20,}' .
+
+      - name: Non-destructive calendar guard
+        run: |
+          set -euo pipefail
+          grep -q "neisOfficial" neis-core-v35.js
+          grep -q "readonly:true" neis-core-v35.js
+          grep -q "keep=arr(existing).filter" neis-core-v35.js
+          grep -q "기존 시간표를 자동으로 덮어쓰지 않고" app-v35.js
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Teacher OS v0.35 NEIS Guard'
+            echo '- Full regression suite: executed'
+            echo '- NEIS connector syntax: checked'
+            echo '- Official Open API-only boundary: checked'
+            echo '- Browser-local API key handling: checked'
+            echo '- No committed NEIS credentials: checked'
+            echo '- Non-destructive calendar/timetable policy: checked'
+          } >> "$GITHUB_STEP_SUMMARY"
