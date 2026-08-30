@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Teacher OS Desktop Bridge v0.45 local watchdog.
+"""Teacher OS Desktop Bridge local watchdog, upgraded for privacy shield v0.46.
 
 Keeps the loopback Bridge alive without admin rights. It never reads source documents,
 credentials, or the pairing token; it only checks the public loopback health endpoint
-and starts bridge_v44.py when needed.
+and starts bridge_v46.py when needed.
 """
 from __future__ import annotations
 
@@ -23,10 +23,11 @@ HEALTH_URL = f"http://{HOST}:{PORT}/v1/health"
 ALLOWED_ORIGIN = "https://puzzlex5.github.io"
 APP_DIR = Path.home() / ".teacher-os"
 LOG_FILE = APP_DIR / "watchdog-v45.jsonl"
-BRIDGE = Path(__file__).with_name("bridge_v44.py")
+BRIDGE = Path(__file__).with_name("bridge_v46.py")
 HEALTH_INTERVAL = 20
 START_WAIT_SECONDS = 15
 MAX_BACKOFF_SECONDS = 300
+MIN_BRIDGE_MAJOR = 46
 _MUTEX_HANDLE = None
 
 
@@ -39,7 +40,7 @@ def next_delay(failures: int) -> int:
     return min(MAX_BACKOFF_SECONDS, 5 * (2 ** min(n, 6)))
 
 
-def health_payload_ok(payload: object, min_major: int = 44) -> bool:
+def health_payload_ok(payload: object, min_major: int = MIN_BRIDGE_MAJOR) -> bool:
     if not isinstance(payload, dict) or payload.get("ok") is not True:
         return False
     try:
@@ -125,7 +126,7 @@ def main() -> int:
     APP_DIR.mkdir(parents=True, exist_ok=True)
     failures = 0
     child = None
-    log("watchdog_start", version="45.0")
+    log("watchdog_start", version="46.0", minimumBridge=MIN_BRIDGE_MAJOR)
     while True:
         try:
             if bridge_healthy():
@@ -133,7 +134,6 @@ def main() -> int:
                 time.sleep(HEALTH_INTERVAL)
                 continue
             if child is not None and child.poll() is None:
-                # A just-started child may need a moment before the health endpoint is ready.
                 if wait_for_health(4):
                     failures = 0
                     continue
