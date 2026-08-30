@@ -36,6 +36,7 @@ jobs:
           test -f work-entity-core-v39.js
           test -f autonomous-core-v40.js
           test -f supervisor-core-v41.js
+          test -f pairing-core-v44.js
           test -f app-v33.js
           test -f app-v34.js
           test -f app-v35.js
@@ -48,9 +49,12 @@ jobs:
           test -f app-v40.css
           test -f app-v41.js
           test -f app-v41.css
+          test -f app-v44.js
           test -f local_bridge/bridge.py
           test -f local_bridge/bridge_v37.py
           test -f local_bridge/bridge_v38.py
+          test -f local_bridge/bridge_v44.py
+          test -f local_bridge/pairing_v44.py
           test -f local_bridge/neis_adapter.py
           test -f local_bridge/kedufine_adapter.py
           test -f local_bridge/install_windows.ps1
@@ -78,20 +82,23 @@ jobs:
             echo "== $f =="
             node "$f"
           done
-          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py && python3 test_kedufine_adapter.py)
+          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py && python3 test_kedufine_adapter.py && python3 test_pairing_v44.py)
 
       - name: JavaScript and Python syntax checks
         run: |
           set -euo pipefail
-          for f in $(find . -maxdepth 1 -type f \( -name 'app-v*.js' -o -name 'core-v*.js' -o -name 'agent-core-v*.js' -o -name 'integration-core-v*.js' -o -name 'neis-core-v*.js' -o -name 'desktop-core-v*.js' -o -name 'work-entity-core-v*.js' -o -name 'autonomous-core-v*.js' -o -name 'supervisor-core-v*.js' -o -name 'seed-v*.js' \) | sort -V); do
+          for f in $(find . -maxdepth 1 -type f \( -name 'app-v*.js' -o -name 'core-v*.js' -o -name 'agent-core-v*.js' -o -name 'integration-core-v*.js' -o -name 'neis-core-v*.js' -o -name 'desktop-core-v*.js' -o -name 'work-entity-core-v*.js' -o -name 'autonomous-core-v*.js' -o -name 'supervisor-core-v*.js' -o -name 'pairing-core-v*.js' -o -name 'seed-v*.js' \) | sort -V); do
             node --check "$f"
           done
           node --check scripts/sync-comcigan.mjs
-          python3 -m py_compile local_bridge/bridge.py local_bridge/bridge_v37.py local_bridge/bridge_v38.py local_bridge/neis_adapter.py local_bridge/kedufine_adapter.py local_bridge/test_bridge.py local_bridge/test_neis_adapter.py local_bridge/test_kedufine_adapter.py
+          python3 -m py_compile local_bridge/bridge.py local_bridge/bridge_v37.py local_bridge/bridge_v38.py local_bridge/bridge_v44.py local_bridge/pairing_v44.py local_bridge/neis_adapter.py local_bridge/kedufine_adapter.py local_bridge/test_bridge.py local_bridge/test_neis_adapter.py local_bridge/test_kedufine_adapter.py local_bridge/test_pairing_v44.py
 
       - name: Verify latest layers are wired
         run: |
           set -euo pipefail
+          grep -q 'pairing-core-v44.js' index.html
+          grep -q 'app-v44.js' index.html
+          grep -q 'bridge_v44.py' local_bridge/install_windows.ps1
           grep -q 'supervisor-core-v41.js' index.html
           grep -q 'app-v41.js' index.html
           grep -q 'app-v41.css' index.html
