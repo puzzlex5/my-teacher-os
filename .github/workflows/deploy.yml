@@ -55,6 +55,7 @@ jobs:
           test -f local_bridge/bridge_v38.py
           test -f local_bridge/bridge_v44.py
           test -f local_bridge/pairing_v44.py
+          test -f local_bridge/watchdog_v45.py
           test -f local_bridge/neis_adapter.py
           test -f local_bridge/kedufine_adapter.py
           test -f local_bridge/install_windows.ps1
@@ -82,7 +83,7 @@ jobs:
             echo "== $f =="
             node "$f"
           done
-          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py && python3 test_kedufine_adapter.py && python3 test_pairing_v44.py)
+          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py && python3 test_kedufine_adapter.py && python3 test_pairing_v44.py && python3 test_watchdog_v45.py)
 
       - name: JavaScript and Python syntax checks
         run: |
@@ -91,11 +92,12 @@ jobs:
             node --check "$f"
           done
           node --check scripts/sync-comcigan.mjs
-          python3 -m py_compile local_bridge/bridge.py local_bridge/bridge_v37.py local_bridge/bridge_v38.py local_bridge/bridge_v44.py local_bridge/pairing_v44.py local_bridge/neis_adapter.py local_bridge/kedufine_adapter.py local_bridge/test_bridge.py local_bridge/test_neis_adapter.py local_bridge/test_kedufine_adapter.py local_bridge/test_pairing_v44.py
+          python3 -m py_compile local_bridge/bridge.py local_bridge/bridge_v37.py local_bridge/bridge_v38.py local_bridge/bridge_v44.py local_bridge/pairing_v44.py local_bridge/watchdog_v45.py local_bridge/neis_adapter.py local_bridge/kedufine_adapter.py local_bridge/test_bridge.py local_bridge/test_neis_adapter.py local_bridge/test_kedufine_adapter.py local_bridge/test_pairing_v44.py local_bridge/test_watchdog_v45.py
 
       - name: Verify latest layers are wired
         run: |
           set -euo pipefail
+          grep -q 'watchdog_v45.py' local_bridge/install_windows.ps1
           grep -q 'pairing-core-v44.js' index.html
           grep -q 'app-v44.js' index.html
           grep -q 'bridge_v44.py' local_bridge/install_windows.ps1
