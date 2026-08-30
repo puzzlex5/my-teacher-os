@@ -7,10 +7,11 @@ const TOS34 = Object.freeze({
   CALENDAR_NAME: 'Teacher OS',
   TRIGGER_FN: 'automationScanTrigger',
   DEFAULT_GMAIL_QUERY: 'newer_than:7d (공문 OR 제출 OR 마감 OR 회신 OR 수행평가 OR 지필평가 OR 일정 OR 업무 OR 협조)',
-  MAX_ITEMS: 500,
+  MAX_ITEMS: 2000,
   MAX_AUDIT: 500,
   MAX_APPROVALS: 200,
-  MAX_SEEN: 1800
+  MAX_SEEN: 1800,
+  PAGE_SIZE: 250
 });
 
 function doGet() {
@@ -42,6 +43,22 @@ function apiHealth() {
   return buildHealth_(state);
 }
 
+function pageItems_(items, cursor, limit) {
+  const n = Number(cursor) || 0;
+  const cap = Math.max(1, Math.min(500, Number(limit) || TOS34.PAGE_SIZE));
+  const unseen = (items || [])
+    .filter(x => Number(x.seq || 0) > n)
+    .sort((a,b) => Number(a.seq || 0) - Number(b.seq || 0));
+  const page = unseen.slice(0, cap);
+  const nextCursor = page.reduce((m,x)=>Math.max(m,Number(x.seq||0)),n);
+  return {
+    items: page,
+    cursor: nextCursor,
+    hasMore: unseen.length > page.length,
+    remaining: Math.max(0, unseen.length - page.length)
+  };
+}
+
 function apiSyncSnapshot(cursor) {
   ensureInstalled_();
   let state = loadState_();
@@ -50,14 +67,14 @@ function apiSyncSnapshot(cursor) {
     try { automationScan_('client-stale-repair'); } catch (e) { /* state records failure */ }
     state = loadState_();
   }
-  const n = Number(cursor) || 0;
-  const items = (state.items || []).filter(x => Number(x.seq || 0) > n).slice(-250);
-  const maxSeq = (state.items || []).reduce((m,x)=>Math.max(m,Number(x.seq||0)),n);
+  const page = pageItems_(state.items || [], cursor, TOS34.PAGE_SIZE);
   return {
     version: TOS34.VERSION,
-    cursor: maxSeq,
+    cursor: page.cursor,
+    hasMore: page.hasMore,
+    remaining: page.remaining,
     lastScanAt: state.lastScanAt || '',
-    items,
+    items: page.items,
     approvals: (state.approvals || []).filter(x => x.status === 'pending').slice(-100),
     audit: (state.audit || []).slice(-80),
     health: buildHealth_(state),
