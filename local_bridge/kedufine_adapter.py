@@ -9,6 +9,7 @@ from dataclasses import dataclass, asdict
 
 HINTS=("k-에듀파인","에듀파인","업무관리","문서함","공문","접수","결재","기안","품의","예산","지출","정산","회계")
 ISSUES=("미처리","미결재","결재대기","대기","반려","보완","미접수","미완료","누락","마감")
+ISSUE_RE=re.compile("|".join(re.escape(x) for x in sorted(ISSUES,key=len,reverse=True)),re.I)
 
 @dataclass(frozen=True)
 class EdufineAggregate:
@@ -32,8 +33,7 @@ def detect_kind(name:str,text:str)->str:
     return "admin_document"
 
 def count_issues(text:str)->int:
-    hay=text[:100000]
-    return min(999,sum(len(re.findall(re.escape(w),hay,re.I)) for w in ISSUES))
+    return min(999,len(ISSUE_RE.findall(text[:100000])))
 
 def analyze(name:str,text:str):
     if not looks_like_kedufine(name,text): return None
