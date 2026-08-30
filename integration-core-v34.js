@@ -5,6 +5,9 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   const arr=v=>Array.isArray(v)?v:[];
   const txt=v=>String(v??'').trim();
+  function privacy(){try{return globalThis.TeacherOSPrivacy46||null}catch{return null}}
+  function safeTitle(v,category){const p=privacy();return p?p.safeTitle(v,category):txt(v)}
+  function safeSummary(v){const p=privacy();return p?p.safeSummary(v):txt(v)}
 
   function normalizeGatewayUrl(value){
     const raw=txt(value);
@@ -18,8 +21,10 @@
     return u.href.replace(/[#?].*$/,'');
   }
 
+  function identityKey(item){return [txt(item?.source),txt(item?.externalId||item?.id)].join('|')}
   function sourceKey(item){
-    return [txt(item?.source),txt(item?.externalId||item?.id),txt(item?.date),txt(item?.title)].join('|');
+    const titleHash=hash36(txt(item?.title));
+    return [txt(item?.source),txt(item?.externalId||item?.id),txt(item?.date),titleHash].join('|');
   }
 
   function existingExternalKeys(year){
@@ -27,6 +32,14 @@
     ['calendarEvents','projects','assessments','tasks'].forEach(k=>arr(year?.[k]).forEach(x=>{
       const k1=txt(x?.externalKey||x?.agentExternalKey||x?.googleExternalKey);
       if(k1)out.add(k1);
+    }));
+    return out;
+  }
+  function existingIdentityKeys(year){
+    const out=new Set();
+    ['calendarEvents','projects','assessments','tasks'].forEach(k=>arr(year?.[k]).forEach(x=>{
+      const id=txt(x?.externalId);if(id)out.add([txt(String(x?.source||'').replace(/^Google 자동동기화 · /,'')),id].join('|'));
+      if(id)out.add('calendar|'+id),out.add('gmail|'+id),out.add('drive|'+id);
     }));
     return out;
   }
@@ -45,16 +58,17 @@
   }
 
   function planSafeChanges(year,snapshot){
-    const items=arr(snapshot?.items),existing=existingExternalKeys(year),changes=[];
+    const items=arr(snapshot?.items),existing=existingExternalKeys(year),identities=existingIdentityKeys(year),changes=[];
     for(const item of items){
-      const key=sourceKey(item);if(!key||existing.has(key))continue;
+      const key=sourceKey(item),identity=identityKey(item);if(!key||existing.has(key)||identities.has(identity))continue;
       const type=safeType(item);if(!type)continue;
-      const base={externalKey:key,googleExternalKey:key,agentGenerated:true,source:`Google 자동동기화 · ${txt(item.source)||'source'}`,sourceDetail:txt(item.sourceDetail||item.title),confidence:Number(item.confidence)||0,createdAt:new Date().toISOString()};
-      if(type==='calendar')changes.push({type,key,record:{...base,id:'gcal-'+hash36(key),date:txt(item.date),title:txt(item.title)||'Google Calendar 일정',type:'Google Calendar',readonly:true,externalId:txt(item.externalId)}});
-      if(type==='project')changes.push({type,key,record:{...base,id:'gproj-'+hash36(key),name:txt(item.title)||'자동 감지 업무',desc:txt(item.summary||item.sourceDetail),due:txt(item.date),externalId:txt(item.externalId)}});
-      if(type==='assessment')changes.push({type,key,record:{...base,id:'gass-'+hash36(key),name:txt(item.title)||'자동 감지 평가',due:txt(item.date),target:txt(item.target),weight:txt(item.weight),externalId:txt(item.externalId),provisional:false}});
-      if(type==='task')changes.push({type,key,record:{...base,id:'gtask-'+hash36(key),text:buildTaskText(item),done:false,agentExternalKey:key,externalId:txt(item.externalId)}});
-      existing.add(key);
+      const category=txt(item?.category),publicTitle=safeTitle(item?.title,category),publicSummary=safeSummary(item?.summary||item?.sourceDetail);
+      const base={externalKey:key,googleExternalKey:key,agentGenerated:true,source:`Google 자동동기화 · ${txt(item.source)||'source'}`,sourceDetail:safeSummary(item.sourceDetail||publicTitle),confidence:Number(item.confidence)||0,createdAt:new Date().toISOString(),privacyVersion:privacy()?46:0};
+      if(type==='calendar')changes.push({type,key,record:{...base,id:'gcal-'+hash36(key),date:txt(item.date),title:publicTitle||'Google Calendar 일정',type:'Google Calendar',readonly:true,externalId:txt(item.externalId)}});
+      if(type==='project')changes.push({type,key,record:{...base,id:'gproj-'+hash36(key),name:publicTitle||'자동 감지 업무',desc:publicSummary,due:txt(item.date),externalId:txt(item.externalId)}});
+      if(type==='assessment')changes.push({type,key,record:{...base,id:'gass-'+hash36(key),name:publicTitle||'자동 감지 평가',due:txt(item.date),target:safeSummary(item.target),weight:txt(item.weight),externalId:txt(item.externalId),provisional:false}});
+      if(type==='task')changes.push({type,key,record:{...base,id:'gtask-'+hash36(key),text:buildTaskText({...item,title:publicTitle}),done:false,agentExternalKey:key,externalId:txt(item.externalId)}});
+      existing.add(key);identities.add(identity);
     }
     return changes;
   }
@@ -62,7 +76,7 @@
   function buildTaskText(item){
     const when=item?.date?` (${txt(item.date)})`:'';
     const source=item?.source?` · ${txt(item.source)}`:'';
-    return `${txt(item?.title)||'확인 필요'}${when}${source}`;
+    return `${safeTitle(item?.title,item?.category)||'확인 필요'}${when}${source}`;
   }
 
   function applySafeChanges(year,changes){
@@ -108,5 +122,5 @@
     let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return(h>>>0).toString(36);
   }
 
-  return{normalizeGatewayUrl,sourceKey,safeType,planSafeChanges,applySafeChanges,riskLevel,mayAutoExecute,retryDelayMs,summarizeSnapshot,hash36};
+  return{normalizeGatewayUrl,identityKey,sourceKey,safeType,planSafeChanges,applySafeChanges,riskLevel,mayAutoExecute,retryDelayMs,summarizeSnapshot,hash36};
 });
