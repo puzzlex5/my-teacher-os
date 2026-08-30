@@ -1,0 +1,77 @@
+name: Teacher OS v40 Autonomous Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teacher-os-v40-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  autonomous-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Full regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+
+      - name: Syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check autonomous-core-v40.js
+          node --check app-v40.js
+
+      - name: Autonomous risk boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "neis_score_write" autonomous-core-v40.js
+          grep -q "student_record_commit" autonomous-core-v40.js
+          grep -q "kedufine_approve" autonomous-core-v40.js
+          grep -q "finance_execute" autonomous-core-v40.js
+          grep -q "gmail_send" autonomous-core-v40.js
+          grep -q "task_add" autonomous-core-v40.js
+          grep -q "safeTaskCandidates" autonomous-core-v40.js
+          grep -q "외부 발송·결재·성적/학생부 확정은 자동 실행하지 않습니다" app-v40.js
+          ! grep -E "apiApproveAction|GmailApp|CalendarApp|DriveApp|google\.script|fetch\(.+neis|fetch\(.+edufine" app-v40.js
+
+      - name: Derived-only and loader boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "workEntities39" autonomous-core-v40.js
+          grep -q "sourceEntityId" autonomous-core-v40.js
+          grep -q "autonomous-core-v40.js" index.html
+          grep -q "app-v40.js" index.html
+          grep -q "app-v40.css" index.html
+          grep -q "work-entity-core-v39.js" index.html
+          grep -q "desktop-core-v36.js" index.html
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Teacher OS v40 Autonomous Guard'
+            echo '- Full regression: executed'
+            echo '- Autonomous priority engine syntax: checked'
+            echo '- Safe-local allowlist / high-risk denylist: checked'
+            echo '- External send, approval, score/record commit boundary: checked'
+            echo '- v39 derived Work Entity dependency and loader: checked'
+          } >> "$GITHUB_STEP_SUMMARY"
