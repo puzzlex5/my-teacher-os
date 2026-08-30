@@ -12,10 +12,12 @@ class WatchdogV45Tests(unittest.TestCase):
         self.assertEqual(W.next_delay(20), 300)
 
     def test_health_payload_requires_supported_bridge(self):
-        self.assertTrue(W.health_payload_ok({'ok': True, 'version': '44.0'}))
-        self.assertTrue(W.health_payload_ok({'ok': True, 'version': '45.2'}))
+        self.assertFalse(W.health_payload_ok({'ok': True, 'version': '44.0'}))
+        self.assertFalse(W.health_payload_ok({'ok': True, 'version': '45.2'}))
+        self.assertTrue(W.health_payload_ok({'ok': True, 'version': '46.0'}))
+        self.assertTrue(W.health_payload_ok({'ok': True, 'version': '47.1'}))
         self.assertFalse(W.health_payload_ok({'ok': True, 'version': '38.0'}))
-        self.assertFalse(W.health_payload_ok({'ok': False, 'version': '44.0'}))
+        self.assertFalse(W.health_payload_ok({'ok': False, 'version': '46.0'}))
         self.assertFalse(W.health_payload_ok({'ok': True, 'version': 'bad'}))
 
 
