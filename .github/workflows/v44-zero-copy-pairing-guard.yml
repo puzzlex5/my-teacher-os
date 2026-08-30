@@ -1,0 +1,51 @@
+name: Teacher OS v44 Zero-copy Pairing Guard
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Full regression
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py && python3 test_kedufine_adapter.py && python3 test_pairing_v44.py)
+      - name: Syntax
+        run: |
+          set -euo pipefail
+          node --check pairing-core-v44.js
+          node --check app-v44.js
+          python3 -m py_compile local_bridge/pairing_v44.py local_bridge/bridge_v44.py local_bridge/test_pairing_v44.py
+      - name: Pairing boundary
+        run: |
+          set -euo pipefail
+          grep -q "127.0.0.1" local_bridge/bridge.py
+          grep -q "ALLOWED_ORIGIN = \"https://puzzlex5.github.io\"" local_bridge/bridge.py
+          grep -q 'parsed.path == "/v1/pair"' local_bridge/bridge_v44.py
+          grep -q 'P.exchange(B.CONFIG_FILE' local_bridge/bridge_v44.py
+          grep -q 'pairExpiresAt' local_bridge/pairing_v44.py
+          grep -q 'data.pop("pairNonce"' local_bridge/pairing_v44.py
+          grep -q 'history.replaceState' app-v44.js
+          grep -q "referrerPolicy:'no-referrer'" app-v44.js
+          grep -q 'teacheros-pair=' local_bridge/install_windows.ps1
+          grep -q 'AddMinutes(5)' local_bridge/install_windows.ps1
+          ! grep -q "pairUrl.*token" local_bridge/install_windows.ps1
+          ! grep -q "Pairing token:" local_bridge/bridge_v44.py
+      - name: Wiring
+        run: |
+          set -euo pipefail
+          grep -q 'pairing-core-v44.js' index.html
+          grep -q 'app-v44.js' index.html
+          grep -q 'bridge_v44.py' local_bridge/install_windows.ps1
+          grep -q 'pairing_v44.py' local_bridge/install_windows.ps1
+          grep -q 'Teacher OS Desktop Bridge v0.44' local_bridge/README.md
