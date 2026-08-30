@@ -47,4 +47,5 @@ jobs:
           node tests/v46-tests.js | grep -q 'passed'
           (cd local_bridge && python3 test_privacy_v46.py)
           ! grep -Eq 'sourceName:String\(x\.sourceName' desktop-core-v36.js
-          ! grep -Eq 'source_name.*path\.name' local_bridge/bridge_v46.py
+          ! grep -Fq '(key, B.now_iso(), path.name' local_bridge/bridge_v46.py
+          grep -q 'source_name = R.safe_source_name(path.name, category)' local_bridge/bridge_v46.py
