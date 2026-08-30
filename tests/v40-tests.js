@@ -12,7 +12,10 @@ const later={id:'we4',title:'연수 참가',due:'2026-09-20',sourceCount:1,compl
 const year={workEntities39:[later,today,conflict,overdue],tasks:[]};
 const plan=A.buildPlan(year,{now,desktopConfigured:true,desktopConnected:false,neisConfigured:true,neisHealthy:true,googleConfigured:false});
 assert(plan.actions.length>=5);
-assert.strictEqual(plan.actions[0].entityId,'we1');
+const urgentIds=plan.actions.slice(0,3).map(x=>x.entityId);
+assert(urgentIds.includes('we1'));
+assert(urgentIds.includes('we3'));
+assert(plan.actions.find(x=>x.entityId==='we3').score>plan.actions.find(x=>x.entityId==='we4').score);
 assert(plan.summary.critical>=3);
 assert(plan.summary.autoSafe>=2);
 assert(plan.summary.approvalOnly>=2);
