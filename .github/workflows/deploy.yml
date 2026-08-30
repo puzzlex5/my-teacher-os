@@ -41,7 +41,11 @@ jobs:
           test -f desktop-core-v36.js
           test -f app-v36.js
           test -f app-v36.css
+          test -f app-v37.js
+          test -f app-v37.css
           test -f local_bridge/bridge.py
+          test -f local_bridge/bridge_v37.py
+          test -f local_bridge/neis_adapter.py
           test -f local_bridge/install_windows.ps1
           test -f app-v32.js
           test -f app-v32.css
@@ -77,7 +81,7 @@ jobs:
             echo "== $f =="
             node "$f"
           done
-          (cd local_bridge && python3 test_bridge.py)
+          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py)
 
       - name: JavaScript and Python syntax checks
         run: |
@@ -86,11 +90,13 @@ jobs:
             node --check "$f"
           done
           node --check scripts/sync-comcigan.mjs
-          python3 -m py_compile local_bridge/bridge.py local_bridge/test_bridge.py
+          python3 -m py_compile local_bridge/bridge.py local_bridge/bridge_v37.py local_bridge/neis_adapter.py local_bridge/test_bridge.py local_bridge/test_neis_adapter.py
 
       - name: Verify latest layers are wired
         run: |
           set -euo pipefail
+          grep -q 'app-v37.js' index.html
+          grep -q 'app-v37.css' index.html
           grep -q 'app-v36.js' index.html
           grep -q 'app-v36.css' index.html
           grep -q 'desktop-core-v36.js' index.html

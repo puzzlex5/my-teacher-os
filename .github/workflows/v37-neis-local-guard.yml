@@ -1,0 +1,74 @@
+name: Teacher OS v37 NEIS Local Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teacher-os-v37-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  neis-local-privacy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Full regression and local adapter tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+          (cd local_bridge && python test_bridge.py && python test_neis_adapter.py)
+
+      - name: Syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check app-v37.js
+          python -m py_compile local_bridge/bridge.py local_bridge/bridge_v37.py local_bridge/neis_adapter.py local_bridge/test_neis_adapter.py
+
+      - name: NEIS privacy boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'never returns names, raw rows' local_bridge/neis_adapter.py
+          grep -q 'issue_count' local_bridge/neis_adapter.py
+          grep -q 'NEIS 내보내기 자료를 개인정보 없이 집계했습니다' local_bridge/bridge_v37.py
+          grep -q '학생 이름과 원문 행은 Teacher OS로 전달하지 않습니다' app-v37.js
+          ! grep -R --exclude-dir=.git -E 'password|passwd|certificate_password|공동인증서.*비밀번호|자동.?로그인|loginBypass|bypassAuth' local_bridge/neis_adapter.py local_bridge/bridge_v37.py
+
+      - name: No raw text in browser layer
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -E 'raw(Text|Rows|Content)|documentText|studentName' app-v37.js
+          grep -q 'Desktop Bridge 자동감지' app-v37.js
+          grep -q 'app-v37.js' index.html
+          grep -q 'app-v37.css' index.html
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Teacher OS v37 NEIS Local Guard'
+            echo '- Full regression: executed'
+            echo '- NEIS aggregate parser tests: executed'
+            echo '- Student-name/raw-row non-export boundary: checked'
+            echo '- Credential/login-bypass patterns: checked'
+            echo '- v37 UI wiring: checked'
+          } >> "$GITHUB_STEP_SUMMARY"
