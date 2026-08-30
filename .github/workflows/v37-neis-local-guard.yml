@@ -46,7 +46,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'names and raw' local_bridge/neis_adapter.py
+          grep -q 'never returns names, raw rows' local_bridge/neis_adapter.py
           grep -q 'issue_count' local_bridge/neis_adapter.py
           grep -q 'NEIS 내보내기 자료를 개인정보 없이 집계했습니다' local_bridge/bridge_v37.py
           grep -q '학생 이름과 원문 행은 Teacher OS로 전달하지 않습니다' app-v37.js
