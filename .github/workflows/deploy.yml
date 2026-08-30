@@ -35,6 +35,7 @@ jobs:
           test -f desktop-core-v36.js
           test -f work-entity-core-v39.js
           test -f autonomous-core-v40.js
+          test -f supervisor-core-v41.js
           test -f app-v33.js
           test -f app-v34.js
           test -f app-v35.js
@@ -45,6 +46,8 @@ jobs:
           test -f app-v39.css
           test -f app-v40.js
           test -f app-v40.css
+          test -f app-v41.js
+          test -f app-v41.css
           test -f local_bridge/bridge.py
           test -f local_bridge/bridge_v37.py
           test -f local_bridge/bridge_v38.py
@@ -80,7 +83,7 @@ jobs:
       - name: JavaScript and Python syntax checks
         run: |
           set -euo pipefail
-          for f in $(find . -maxdepth 1 -type f \( -name 'app-v*.js' -o -name 'core-v*.js' -o -name 'agent-core-v*.js' -o -name 'integration-core-v*.js' -o -name 'neis-core-v*.js' -o -name 'desktop-core-v*.js' -o -name 'work-entity-core-v*.js' -o -name 'autonomous-core-v*.js' -o -name 'seed-v*.js' \) | sort -V); do
+          for f in $(find . -maxdepth 1 -type f \( -name 'app-v*.js' -o -name 'core-v*.js' -o -name 'agent-core-v*.js' -o -name 'integration-core-v*.js' -o -name 'neis-core-v*.js' -o -name 'desktop-core-v*.js' -o -name 'work-entity-core-v*.js' -o -name 'autonomous-core-v*.js' -o -name 'supervisor-core-v*.js' -o -name 'seed-v*.js' \) | sort -V); do
             node --check "$f"
           done
           node --check scripts/sync-comcigan.mjs
@@ -89,6 +92,9 @@ jobs:
       - name: Verify latest layers are wired
         run: |
           set -euo pipefail
+          grep -q 'supervisor-core-v41.js' index.html
+          grep -q 'app-v41.js' index.html
+          grep -q 'app-v41.css' index.html
           grep -q 'autonomous-core-v40.js' index.html
           grep -q 'app-v40.js' index.html
           grep -q 'app-v40.css' index.html
