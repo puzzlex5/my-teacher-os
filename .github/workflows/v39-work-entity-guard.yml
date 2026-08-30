@@ -1,0 +1,68 @@
+name: Teacher OS v39 Work Entity Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teacher-os-v39-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  entity-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Full JavaScript regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+
+      - name: Syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check work-entity-core-v39.js
+          node --check app-v39.js
+
+      - name: Conservative matching boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'gap!==null&&gap>2' work-entity-core-v39.js
+          grep -q 'if(!strong)return false' work-entity-core-v39.js
+          grep -q 'workEntities39' app-v39.js
+          ! grep -E '\.splice\(|delete\s+year\.|tasks\s*=\s*\[\]|projects\s*=\s*\[\]|assessments\s*=\s*\[\]|calendarEvents\s*=\s*\[\]' work-entity-core-v39.js app-v39.js
+          grep -q '원본 기록은 삭제하거나 합쳐 쓰지 않습니다' app-v39.js
+
+      - name: Loader boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'work-entity-core-v39.js' index.html
+          grep -q 'app-v39.js' index.html
+          grep -q 'app-v39.css' index.html
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Teacher OS v39 Work Entity Guard'
+            echo '- Full regression: executed'
+            echo '- Conservative due/token matching: checked'
+            echo '- Original-record non-destructive boundary: checked'
+            echo '- v39 loader wiring: checked'
+          } >> "$GITHUB_STEP_SUMMARY"
