@@ -27,7 +27,17 @@ jobs:
 
       - name: Verify deploy files
         run: |
+          set -euo pipefail
           test -f index.html
+          test -f agent-core-v33.js
+          test -f app-v33.js
+          test -f app-v33.css
+          test -f integration-core-v34.js
+          test -f app-v34.js
+          test -f app-v34.css
+          test -f neis-core-v35.js
+          test -f app-v35.js
+          test -f app-v35.css
           test -f app-v32.js
           test -f app-v32.css
           test -f core-v31.js
@@ -44,31 +54,10 @@ jobs:
           test -f core-v27.js
           test -f app-v27.js
           test -f app-v27.css
-          test -f app-v26.js
-          test -f app-v26.css
           test -f core-v25.js
-          test -f app-v25.js
-          test -f app-v25.css
           test -f school-record-quality-library.json
-          test -f app-v24.js
-          test -f app-v24.css
           test -f core-v23.js
-          test -f app-v23.js
-          test -f app-v23.css
-          test -f app-v22.js
-          test -f app-v22.css
-          test -f app-v21.js
-          test -f app-v21.css
-          test -f app-v20.js
-          test -f app-v20.css
-          test -f app-v19.js
-          test -f app-v19.css
           test -f work-library.json
-          test -f app-v18.js
-          test -f app-v18.css
-          test -f app-v17.html
-          test -f app-v17.js
-          test -f app-v17.css
           test -f comcigan-config.json
           test -f scripts/sync-comcigan.mjs
           test -f policy-registry.json
@@ -77,75 +66,32 @@ jobs:
 
       - name: Run regression checks
         run: |
+          set -euo pipefail
           node tests/core-tests.js
-          node tests/v06-tests.js
-          node tests/v07-tests.js
-          node tests/v08-tests.js
-          node tests/v09-tests.js
-          node tests/v10-tests.js
-          node tests/v11-tests.js
-          node tests/v12-tests.js
-          node tests/v13-tests.js
-          node tests/v14-tests.js
-          node tests/v15-tests.js
-          node tests/v16-tests.js
-          node tests/v17-tests.js
-          node tests/v18-tests.js
-          node tests/v19-tests.js
-          node tests/v20-tests.js
-          node tests/v21-tests.js
-          node tests/v22-tests.js
-          node tests/v23-tests.js
-          node tests/v24-tests.js
-          node tests/v25-tests.js
-          node tests/v26-tests.js
-          node tests/v27-tests.js
-          node tests/v28-tests.js
-          node tests/v29-tests.js
-          node tests/v30-tests.js
-          node tests/v31-tests.js
-          node tests/v32-tests.js
-          node --check app-v07.js
-          node --check app-v08.js
-          node --check app-v09.js
-          node --check app-v10.js
-          node --check app-v11.js
-          node --check app-v12.js
-          node --check app-v13.js
-          node --check app-v14.js
-          node --check app-v15.js
-          node --check app-v16.js
-          node --check app-v17.js
-          node --check app-v18.js
-          node --check app-v19.js
-          node --check app-v20.js
-          node --check app-v21.js
-          node --check app-v22.js
-          node --check app-v23.js
-          node --check app-v24.js
-          node --check app-v25.js
-          node --check app-v26.js
-          node --check app-v27.js
-          node --check app-v28.js
-          node --check app-v29.js
-          node --check app-v30.js
-          node --check app-v31.js
-          node --check app-v32.js
-          node --check core-v23.js
-          node --check core-v25.js
-          node --check core-v27.js
-          node --check core-v28.js
-          node --check core-v29.js
-          node --check core-v30.js
-          node --check core-v31.js
-          node --check core-v09.js
-          node --check seed-v07.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do
+            echo "== $f =="
+            node "$f"
+          done
+
+      - name: JavaScript syntax checks
+        run: |
+          set -euo pipefail
+          for f in $(find . -maxdepth 1 -type f \( -name 'app-v*.js' -o -name 'core-v*.js' -o -name 'agent-core-v*.js' -o -name 'integration-core-v*.js' -o -name 'neis-core-v*.js' -o -name 'seed-v*.js' \) | sort -V); do
+            node --check "$f"
+          done
           node --check scripts/sync-comcigan.mjs
 
-      - name: Verify v0.32 is wired
+      - name: Verify latest layers are wired
         run: |
+          set -euo pipefail
+          grep -q 'app-v35.js' index.html
+          grep -q 'app-v35.css' index.html
+          grep -q 'neis-core-v35.js' index.html
+          grep -q 'app-v34.js' index.html
+          grep -q 'integration-core-v34.js' index.html
+          grep -q 'app-v33.js' index.html
+          grep -q 'agent-core-v33.js' index.html
           grep -q 'app-v32.js' index.html
-          grep -q 'app-v32.css' index.html
           grep -q 'myTeacherOS.deviceStorageSelfTest.v1' app-v32.js
           grep -q 'opt.disabled=!passed' app-v32.js
 
