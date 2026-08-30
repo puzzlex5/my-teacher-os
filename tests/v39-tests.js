@@ -1,0 +1,17 @@
+const assert=require('assert');
+const W=require('../work-entity-core-v39.js');
+assert.deepEqual(W.tokens('K-에듀파인 · 수행평가 계획 제출 · 2026-09-10').includes('수행평가'),true);
+assert.equal(W.dayGap('2026-09-10','2026-09-12'),2);
+const baseA={id:'a',kind:'project',title:'2학기 수행평가 계획 제출',due:'2026-09-10',source:'K-에듀파인',sourceKind:'kedufine',tokens:W.tokens('2학기 수행평가 계획 제출'),cleanTitle:W.cleanTitle('2학기 수행평가 계획 제출')};
+const baseB={id:'b',kind:'task',title:'음악과 2학기 수행평가 계획',due:'2026-09-10',source:'Drive',sourceKind:'drive',tokens:W.tokens('음악과 2학기 수행평가 계획'),cleanTitle:W.cleanTitle('음악과 2학기 수행평가 계획')};
+assert.equal(W.shouldMerge(baseA,baseB),true,'same assessment workflow should link');
+const far={...baseB,id:'c',due:'2026-09-20'};
+assert.equal(W.shouldMerge(baseA,far),false,'far deadlines must not link');
+const student={id:'s',kind:'task',title:'NEIS 학생부 점검',due:'',source:'Desktop Bridge 자동감지',sourceKind:'neis',tokens:W.tokens('NEIS 학생부 점검'),cleanTitle:W.cleanTitle('NEIS 학생부 점검')};
+const attendance={id:'t',kind:'task',title:'NEIS 출결 점검',due:'',source:'Desktop Bridge 자동감지',sourceKind:'neis',tokens:W.tokens('NEIS 출결 점검'),cleanTitle:W.cleanTitle('NEIS 출결 점검')};
+assert.equal(W.shouldMerge(student,attendance),false,'different NEIS work must stay separate');
+const year={tasks:[{id:'t1',text:'음악과 2학기 수행평가 계획',due:'2026-09-10',source:'Drive'}],projects:[{id:'p1',name:'2학기 수행평가 계획 제출',due:'2026-09-10',source:'K-에듀파인'}],assessments:[],calendarEvents:[]};
+const entities=W.build(year);assert.equal(entities.length,1);assert.equal(entities[0].members.length,2);assert.equal(entities[0].sourceCount,2);assert.equal(entities[0].dueConflict,false);
+const conflictYear={tasks:[{id:'1',text:'교과협의회 일정',due:'2026-09-01',source:'Gmail'},{id:'2',text:'교과협의회 일정',due:'2026-09-08',source:'Calendar'}],projects:[],assessments:[],calendarEvents:[]};
+assert.equal(W.build(conflictYear).length,2,'large date gap should not merge into false conflict');
+console.log('v39 work entity tests passed');
