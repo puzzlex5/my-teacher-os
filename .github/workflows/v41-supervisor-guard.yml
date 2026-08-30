@@ -1,0 +1,73 @@
+name: Teacher OS v41 Supervisor Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teacher-os-v41-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  self-healing-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Full regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+
+      - name: Syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check supervisor-core-v41.js
+          node --check app-v41.js
+
+      - name: Safe recovery allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "desktop_rescan" supervisor-core-v41.js
+          grep -q "neis_sync" supervisor-core-v41.js
+          grep -q "google_repair" supervisor-core-v41.js
+          grep -q "#desktopRescan36" app-v41.js
+          grep -q "#neisSync35" app-v41.js
+          grep -q "#googleRepair34" app-v41.js
+          ! grep -E "googleApprovals34|apiApproveAction|gmail_send|kedufine_approve|finance_execute|neis_score_write|student_record_commit|calendar_delete|drive_delete" app-v41.js
+
+      - name: Loader and audit boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "supervisor-core-v41.js" index.html
+          grep -q "app-v41.js" index.html
+          grep -q "app-v41.css" index.html
+          grep -q "myTeacherOS.supervisor41.audit.v1" app-v41.js
+          grep -q "감사로그" app-v41.js
+          grep -q "autonomous-core-v40.js" index.html
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Teacher OS v41 Supervisor Guard'
+            echo '- Full regression: executed'
+            echo '- Safe recovery allowlist: checked'
+            echo '- Approval/send/delete/write paths excluded: checked'
+            echo '- Audit export and loader wiring: checked'
+          } >> "$GITHUB_STEP_SUMMARY"
