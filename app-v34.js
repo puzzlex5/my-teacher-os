@@ -83,6 +83,18 @@
     });
   }
 
+  async function fetchSnapshotPages(cursor,maxPages=5){
+    let next=Number(cursor)||0,last=null,pages=0;const items=[];
+    while(pages<maxPages){
+      const before=next,snap=await rpc('apiSyncSnapshot',[next],2);pages++;last=snap||{};
+      items.push(...(Array.isArray(last.items)?last.items:[]));
+      next=Number(last.cursor||before);
+      if(!last.hasMore)break;
+      if(next<=before)throw new Error('Google 동기화 페이지 cursor가 진행되지 않습니다.');
+    }
+    return Object.assign({},last||{},{items,cursor:next,pagesFetched:pages,hasMore:!!last?.hasMore,remaining:Number(last?.remaining||0)});
+  }
+
   async function syncNow(manual=false){
     if(busy)return;if(!I.normalizeGatewayUrl(settings().gatewayUrl)){ensureUI();setStatus('Google 연결 필요','pending');return}
     busy=true;const btn=q('#googleSync34');if(btn)btn.disabled=true;
@@ -91,23 +103,27 @@
       const st=readState(),y=currentYear();
       const cursor=y?Number(st.cursor||0):0;
       setStatus('Gmail · Drive · Calendar 동기화 중…','pending');
-      const snap=await rpc('apiSyncSnapshot',[cursor],2);lastSnapshot=snap;
+      const snap=await fetchSnapshotPages(cursor,5);lastSnapshot=snap;
       let applied={applied:0,byType:{}};
       if(y){
         const plan=I.planSafeChanges(y,snap);applied=I.applySafeChanges(y,plan);
         if(applied.applied){directSave();localAudit('auto-apply',`안전 항목 ${applied.applied}건을 Teacher OS에 자동 반영했습니다.`,applied.byType)}
         writeState({...st,cursor:Number(snap.cursor||st.cursor||0),lastSyncAt:new Date().toISOString(),lastError:'',connected:true});
+        if(snap.pagesFetched>1)localAudit('pagination',`Google 대량 변경 ${snap.pagesFetched}페이지를 순서대로 누락 없이 동기화했습니다.`,{cursor:snap.cursor,remaining:snap.remaining,hasMore:snap.hasMore});
         if(applied.applied&&typeof globalThis.render==='function'){try{globalThis.render()}catch{}}
         if(typeof globalThis.TeacherOSAgent33?.run==='function')setTimeout(()=>globalThis.TeacherOSAgent33.run(false),0);
       }else{
         writeState({...st,lastSyncAt:new Date().toISOString(),lastError:'',connected:true});
       }
       renderSnapshot(snap,applied);const h=snap.health||{};
-      setStatus(h.ok?'완전 자동화 정상':'자동화 점검 필요',h.ok?'ok':'warn');
-      if(manual)localAudit('sync','사용자 요청 동기화를 완료했습니다.',{cursor:snap.cursor,applied:applied.applied});
+      setStatus(snap.hasMore?'대량 데이터 추가 동기화 중':h.ok?'완전 자동화 정상':'자동화 점검 필요',snap.hasMore?'pending':h.ok?'ok':'warn');
+      if(manual)localAudit('sync','사용자 요청 동기화를 완료했습니다.',{cursor:snap.cursor,pages:snap.pagesFetched,remaining:snap.remaining,applied:applied.applied});
     }catch(e){
       const msg=String(e?.message||e);writeState({...readState(),lastError:msg,connected:false});localAudit('failure','Google 자동 동기화 실패',{error:msg});setStatus('동기화 실패 · 자동 재시도 예정','fail');renderSnapshot(lastSnapshot);
-    }finally{busy=false;if(btn)btn.disabled=false;schedule()}
+    }finally{
+      busy=false;if(btn)btn.disabled=false;
+      if(lastSnapshot?.hasMore&&settings().autoSync){if(timer)clearTimeout(timer);timer=setTimeout(()=>syncNow(false),10000)}else schedule();
+    }
   }
 
   function renderSnapshot(snap,applied){
