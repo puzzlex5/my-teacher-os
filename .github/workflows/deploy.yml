@@ -34,6 +34,7 @@ jobs:
           test -f neis-core-v35.js
           test -f desktop-core-v36.js
           test -f work-entity-core-v39.js
+          test -f autonomous-core-v40.js
           test -f app-v33.js
           test -f app-v34.js
           test -f app-v35.js
@@ -42,6 +43,8 @@ jobs:
           test -f app-v38.js
           test -f app-v39.js
           test -f app-v39.css
+          test -f app-v40.js
+          test -f app-v40.css
           test -f local_bridge/bridge.py
           test -f local_bridge/bridge_v37.py
           test -f local_bridge/bridge_v38.py
@@ -77,16 +80,18 @@ jobs:
       - name: JavaScript and Python syntax checks
         run: |
           set -euo pipefail
-          for f in $(find . -maxdepth 1 -type f \( -name 'app-v*.js' -o -name 'core-v*.js' -o -name 'agent-core-v*.js' -o -name 'integration-core-v*.js' -o -name 'neis-core-v*.js' -o -name 'desktop-core-v*.js' -o -name 'seed-v*.js' \) | sort -V); do
+          for f in $(find . -maxdepth 1 -type f \( -name 'app-v*.js' -o -name 'core-v*.js' -o -name 'agent-core-v*.js' -o -name 'integration-core-v*.js' -o -name 'neis-core-v*.js' -o -name 'desktop-core-v*.js' -o -name 'work-entity-core-v*.js' -o -name 'autonomous-core-v*.js' -o -name 'seed-v*.js' \) | sort -V); do
             node --check "$f"
           done
-          node --check work-entity-core-v39.js
           node --check scripts/sync-comcigan.mjs
           python3 -m py_compile local_bridge/bridge.py local_bridge/bridge_v37.py local_bridge/bridge_v38.py local_bridge/neis_adapter.py local_bridge/kedufine_adapter.py local_bridge/test_bridge.py local_bridge/test_neis_adapter.py local_bridge/test_kedufine_adapter.py
 
       - name: Verify latest layers are wired
         run: |
           set -euo pipefail
+          grep -q 'autonomous-core-v40.js' index.html
+          grep -q 'app-v40.js' index.html
+          grep -q 'app-v40.css' index.html
           grep -q 'work-entity-core-v39.js' index.html
           grep -q 'app-v39.js' index.html
           grep -q 'app-v39.css' index.html
