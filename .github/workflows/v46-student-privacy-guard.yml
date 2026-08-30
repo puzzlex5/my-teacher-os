@@ -1,0 +1,51 @@
+name: Teacher OS v46 Student Privacy Guard
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Full regression
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py && python3 test_kedufine_adapter.py && python3 test_pairing_v44.py && python3 test_watchdog_v45.py && python3 test_privacy_v46.py)
+      - name: Syntax
+        run: |
+          set -euo pipefail
+          node --check privacy-core-v46.js
+          node --check desktop-core-v36.js
+          node --check integration-core-v34.js
+          python3 -m py_compile local_bridge/privacy_v46.py local_bridge/bridge_v46.py local_bridge/test_privacy_v46.py
+      - name: Privacy contract
+        run: |
+          set -euo pipefail
+          grep -q 'LABELED_NAME_RE' local_bridge/privacy_v46.py
+          grep -q 'STUDENT_NO_RE' local_bridge/privacy_v46.py
+          grep -q 'RRN_RE' local_bridge/privacy_v46.py
+          grep -q '학생부 자료' local_bridge/privacy_v46.py
+          grep -q 'safe_audit_details' local_bridge/bridge_v46.py
+          grep -q 'privacyVersion' desktop-core-v36.js
+          grep -q 'privacy-core-v46.js' index.html
+          grep -q 'bridge_v46.py' local_bridge/watchdog_v45.py
+          grep -q 'MIN_BRIDGE_MAJOR = 46' local_bridge/watchdog_v45.py
+          grep -q 'bridge_v46.py' local_bridge/install_windows.ps1
+          grep -q 'privacy_v46.py' local_bridge/install_windows.ps1
+      - name: No sensitive test fixture escape
+        run: |
+          set -euo pipefail
+          node tests/v46-tests.js | grep -q 'passed'
+          (cd local_bridge && python3 test_privacy_v46.py)
+          ! grep -Eq 'sourceName:String\(x\.sourceName' desktop-core-v36.js
+          ! grep -Fq '(key, B.now_iso(), path.name' local_bridge/bridge_v46.py
+          grep -q 'source_name = R.safe_source_name(path.name, category)' local_bridge/bridge_v46.py
