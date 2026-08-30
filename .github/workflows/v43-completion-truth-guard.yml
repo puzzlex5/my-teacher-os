@@ -1,0 +1,67 @@
+name: Teacher OS v43 Completion Truth Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: teacher-os-v43-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  completion-truth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Full regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+
+      - name: Syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check work-entity-core-v39.js
+          node --check autonomous-core-v40.js
+
+      - name: Completion semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "blocking=items.filter(x=>x.kind!=='calendar')" work-entity-core-v39.js
+          grep -q 'contextOnly:blocking.length===0' work-entity-core-v39.js
+          grep -q 'actionable:blocking.length>0' work-entity-core-v39.js
+          grep -q "!x?.contextOnly" autonomous-core-v40.js
+          grep -q "x?.actionable!==false" autonomous-core-v40.js
+
+      - name: Preserve non-destructive entity model
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'members:members.map' work-entity-core-v39.js
+          ! grep -E 'splice\(|\.pop\(|\.shift\(|delete year|delete state' work-entity-core-v39.js
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo '## Teacher OS v43 Completion Truth Guard'
+            echo '- Full regression: executed'
+            echo '- Calendar context is non-blocking: checked'
+            echo '- Calendar-only entity excluded from autonomous task generation: checked'
+            echo '- Derived entity model remains non-destructive: checked'
+          } >> "$GITHUB_STEP_SUMMARY"
