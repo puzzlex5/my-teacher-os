@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const U=globalThis.TeacherOSSimpleUI48;if(!U)return;
-  const q=s=>document.querySelector(s),qa=s=>Array.from(document.querySelectorAll(s));
+  const q=s=>document.querySelector(s);
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   let timer=null;
   function read(key){try{return JSON.parse(localStorage.getItem(key)||'{}')||{}}catch{return{}}}
@@ -9,7 +9,6 @@
   function openView(view){const b=q(`#nav button[data-view="${view}"]`);if(b)b.click()}
   function simplifyNav(){
     const nav=q('#nav');if(!nav)return;
-    const labels=new Map(U.PRIMARY_NAV.map(x=>[x.view,x.label]));
     U.SECONDARY_NAV.forEach(x=>{const b=nav.querySelector(`button[data-view="${x.view}"]`);if(b)b.dataset.simple48Secondary='1'});
     U.PRIMARY_NAV.forEach(x=>{const b=nav.querySelector(`button[data-view="${x.view}"]`);if(!b)return;const s=b.querySelector('span');if(s)s.textContent=x.label});
     const brand=q('.brand small');if(brand){brand.textContent='오늘 필요한 것만 보여줍니다.';brand.classList.add('simple48-brand-copy')}
@@ -17,7 +16,7 @@
   }
   function connectionReady(){
     const neis=read('myTeacherOS.neis35.settings.v1'),desktop=read('myTeacherOS.desktop36.settings.v1'),ds=read('myTeacherOS.desktop36.state.v1');
-    return !!neis.apiKey&&!!desktop.token&&ds.connected!==false;
+    return !!neis.apiKey&&!!desktop.token&&ds.connected===true;
   }
   function renderBrief(){
     const dash=q('#dashboardBody');if(!dash)return;
