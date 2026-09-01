@@ -1,0 +1,38 @@
+name: Teacher OS v47 Zero-config Health Guard
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Full regression
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py && python3 test_kedufine_adapter.py && python3 test_pairing_v44.py && python3 test_watchdog_v45.py && python3 test_privacy_v46.py)
+      - name: Syntax
+        run: |
+          set -euo pipefail
+          node --check setup-health-core-v47.js
+          node --check app-v47.js
+          node --check app-v44.js
+      - name: Zero-config contract
+        run: |
+          set -euo pipefail
+          grep -q '필수 자동화 설정 완료' setup-health-core-v47.js
+          grep -q '자동 페어링 완료 · 토큰 재입력 불필요' app-v47.js
+          grep -q 'NEIS 인증키 설정 완료' app-v47.js
+          grep -q 'setup-health-core-v47.js?v=47.0-zero-config' app-v44.js
+          grep -q 'app-v47.js?v=47.0-zero-config' app-v44.js
+          grep -q '127.0.0.1' desktop-core-v36.js
+          ! grep -Eq 'localStorage\.setItem\([^,]+,[^)]*(password|secret)' app-v47.js
