@@ -1,0 +1,41 @@
+name: Teacher OS v48 Simple UI Guard
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - main
+      - 'feat/v48-*'
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Full regression
+        run: |
+          set -euo pipefail
+          node tests/core-tests.js
+          for f in $(find tests -maxdepth 1 -name 'v*-tests.js' | sort -V); do node "$f"; done
+          (cd local_bridge && python3 test_bridge.py && python3 test_neis_adapter.py && python3 test_kedufine_adapter.py && python3 test_pairing_v44.py && python3 test_watchdog_v45.py && python3 test_privacy_v46.py)
+      - name: Syntax
+        run: |
+          set -euo pipefail
+          node --check simple-ui-core-v48.js
+          node --check app-v48.js
+          node --check app-v47.js
+      - name: Simple UI contract
+        run: |
+          set -euo pipefail
+          grep -q "label:'오늘'" simple-ui-core-v48.js
+          grep -q "label:'시스템'" simple-ui-core-v48.js
+          grep -q "data-simple48-secondary" app-v48.css
+          grep -q '오늘 할 일' app-v48.js
+          grep -q '연결 세부설정' app-v48.js
+          grep -q '추가 기능' app-v48.js
+          grep -q 'simple-ui-core-v48.js?v=48.0-simple' app-v47.js
+          grep -q 'app-v48.js?v=48.0-simple' app-v47.js

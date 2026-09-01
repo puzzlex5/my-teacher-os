@@ -39,3 +39,8 @@
   setTimeout(()=>{ensureUI();refresh(false);schedule()},1000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh(false)});window.addEventListener('online',()=>refresh(false));
   globalThis.TeacherOSSetupRuntime47={refresh};
 })();
+
+(function loadV48(){
+  if(document.getElementById('teacherSimpleCore48')||document.getElementById('teacherSimpleApp48'))return;
+  const core=document.createElement('script');core.id='teacherSimpleCore48';core.src='simple-ui-core-v48.js?v=48.0-simple';core.onload=()=>{const app=document.createElement('script');app.id='teacherSimpleApp48';app.src='app-v48.js?v=48.0-simple';document.body.appendChild(app)};document.body.appendChild(core);
+})();
